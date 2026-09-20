@@ -20,7 +20,7 @@ function halton(index, base) {
   return result;
 }
 
-const STARS = Array.from({ length: 160 }, (_, i) => {
+const STARS = Array.from({ length: 150 }, (_, i) => {
   const left = (halton(i + 1, 2) * 98.5 + 0.8).toFixed(2);
   const top = (halton(i + 1, 3) * 98.5 + 0.8).toFixed(2);
   const isLarge = i % 14 === 0;
@@ -44,9 +44,9 @@ const STARS = Array.from({ length: 160 }, (_, i) => {
 });
 
 const METEORS = [
-  { id: 1, top: '12%', left: '88%', delay: '2s', duration: '7.5s' },
-  { id: 2, top: '38%', left: '68%', delay: '6s', duration: '8.5s' },
-  { id: 3, top: '9%', left: '45%', delay: '10s', duration: '9.5s' },
+  { id: 1, top: '15%', left: '85%', delay: '2s', duration: '7.5s' },
+  { id: 2, top: '42%', left: '72%', delay: '6s', duration: '8.5s' },
+  { id: 3, top: '10%', left: '40%', delay: '10s', duration: '9.5s' },
 ];
 
 export default function Login() {
@@ -103,122 +103,125 @@ export default function Login() {
         ))}
 
         {/* Ambient cosmic stardust */}
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-blue-900/10 via-transparent to-transparent pointer-events-none" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-blue-900/15 via-transparent to-transparent pointer-events-none" />
       </div>
 
-      {/* Main Two-Column Layout: Text to the LEFT, Login Box shifted to the RIGHT */}
-      <div className="flex-1 flex flex-col lg:flex-row relative z-10 w-full justify-between items-stretch">
-        {/* LEFT SIDE: Original Brand Showcase Text with 3D Rotating A380 Emblem */}
-        <div className="flex-1 flex flex-col justify-between p-8 sm:p-12 lg:p-16 z-10 max-w-2xl">
-          <div>
+      {/* Centered Enterprise Hero Layout: Harmonious balance between Left Showcase and Right Sign-In */}
+      <div className="flex-1 flex items-center justify-center p-4 sm:p-8 lg:p-12 relative z-10 w-full">
+        <div className="w-full max-w-5xl xl:max-w-6xl mx-auto flex flex-col lg:flex-row items-center justify-between gap-8 lg:gap-12 xl:gap-16 py-4">
+          
+          {/* LEFT SIDE: Brand Showcase with 3D Rotating A380 Emblem */}
+          <div className="flex-1 w-full max-w-xl space-y-5">
             {/* Top Brand Tag */}
-            <div className="inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/30 text-blue-400 text-xs font-bold tracking-wider uppercase mb-8 shadow-sm">
+            <div className="inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded-full bg-blue-500/15 border border-blue-400/30 text-blue-300 text-xs font-bold tracking-wider uppercase shadow-sm">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
               <span>GCAA CAR 145 & EASA Part 145 Verified</span>
             </div>
 
             {/* Hero 3D Emblem and Branding with A380 Logo */}
-            <div className="mt-4 sm:mt-8 max-w-xl">
-              <div className="flex items-center gap-6 mb-6">
+            <div>
+              <div className="flex items-center gap-5 sm:gap-6 mb-3">
                 {/* 3D Continuously Rotating & Glowing Airbus A380 Emblem */}
                 <div className="relative group shrink-0">
-                  <div className="w-22 h-22 sm:w-26 sm:h-26 rounded-3xl bg-gradient-to-br from-blue-500 via-sky-400 to-indigo-600 p-0.5 shadow-2xl animate-rotate-3d-glow">
+                  <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-3xl bg-gradient-to-br from-blue-500 via-sky-400 to-indigo-600 p-0.5 shadow-2xl animate-rotate-3d-glow">
                     <div className="w-full h-full bg-slate-950/85 rounded-[22px] backdrop-blur-md flex items-center justify-center border border-blue-400/50 relative overflow-hidden">
                       <div className="absolute inset-0 bg-gradient-to-tr from-blue-400/20 via-transparent to-white/30 pointer-events-none" />
-                      <A380Icon className="w-14 h-14 sm:w-16 sm:h-16 transform -rotate-12 drop-shadow-[0_0_16px_rgba(56,189,248,0.95)]" />
+                      <A380Icon className="w-13 h-13 sm:w-16 sm:h-16 transform -rotate-12 drop-shadow-[0_0_16px_rgba(56,189,248,0.95)]" />
                     </div>
                   </div>
-                  <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 w-16 h-3 bg-blue-500/40 blur-lg rounded-full" />
+                  <div className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 w-16 h-3 bg-blue-500/40 blur-lg rounded-full" />
                 </div>
 
                 <div>
-                  <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-white">
+                  <h1 className="text-3xl sm:text-4xl xl:text-5xl font-black tracking-tight text-white drop-shadow-md">
                     UUDS <span className="bg-gradient-to-r from-blue-400 via-sky-300 to-indigo-300 bg-clip-text text-transparent">AERO</span>
                   </h1>
-                  <p className="text-sm font-semibold text-blue-400/90 tracking-wide mt-0.5">
+                  <p className="text-xs sm:text-sm font-semibold text-blue-400/90 tracking-wide mt-1">
                     Training Compliance & Manpower Tracker
                   </p>
                 </div>
               </div>
 
-              <p className="text-sm sm:text-base text-slate-400 leading-relaxed mt-4">
+              <p className="text-xs sm:text-sm text-slate-300 leading-relaxed mt-3">
                 Enterprise aviation compliance system providing end-to-end monitoring of mandatory qualifications, recurrent safety training, automated expiry alerts, and direct staff communication.
               </p>
             </div>
 
-            {/* Key Aviation Capabilities */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-8 sm:mt-12 max-w-xl">
-              <div className="p-4 rounded-2xl bg-slate-900/60 border border-slate-800/80 backdrop-blur-sm flex items-start gap-3 hover:border-blue-500/40 transition">
-                <div className="p-2.5 rounded-xl bg-blue-600/20 text-blue-400 shrink-0">
-                  <Shield className="w-5 h-5" />
+            {/* Key Aviation Capabilities Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+              <div className="p-3.5 rounded-2xl bg-slate-900/60 backdrop-blur-md border border-slate-700/60 hover:border-blue-400/40 transition flex items-start gap-3">
+                <div className="p-2 rounded-xl bg-blue-600/20 text-blue-400 shrink-0">
+                  <Shield className="w-4 h-4" />
                 </div>
                 <div>
-                  <h4 className="text-xs font-bold text-slate-200">Regulatory Audit Readiness</h4>
+                  <h4 className="text-xs font-bold text-slate-100">Regulatory Audit Readiness</h4>
                   <p className="text-[11px] text-slate-400 mt-0.5 leading-snug">Full compliance auditing across Technical, Line & Base Maintenance.</p>
                 </div>
               </div>
 
-              <div className="p-4 rounded-2xl bg-slate-900/60 border border-slate-800/80 backdrop-blur-sm flex items-start gap-3 hover:border-blue-500/40 transition">
-                <div className="p-2.5 rounded-xl bg-amber-600/20 text-amber-400 shrink-0">
-                  <Bell className="w-5 h-5" />
+              <div className="p-3.5 rounded-2xl bg-slate-900/60 backdrop-blur-md border border-slate-700/60 hover:border-amber-400/40 transition flex items-start gap-3">
+                <div className="p-2 rounded-xl bg-amber-600/20 text-amber-400 shrink-0">
+                  <Bell className="w-4 h-4" />
                 </div>
                 <div>
-                  <h4 className="text-xs font-bold text-slate-200">Early Expiry Tracking</h4>
+                  <h4 className="text-xs font-bold text-slate-100">Early Expiry Tracking</h4>
                   <p className="text-[11px] text-slate-400 mt-0.5 leading-snug">Proactive 30-day notifications and overdue alerts for continuous readiness.</p>
                 </div>
               </div>
 
-              <div className="p-4 rounded-2xl bg-slate-900/60 border border-slate-800/80 backdrop-blur-sm flex items-start gap-3 hover:border-blue-500/40 transition">
-                <div className="p-2.5 rounded-xl bg-emerald-600/20 text-emerald-400 shrink-0">
-                  <Award className="w-5 h-5" />
+              <div className="p-3.5 rounded-2xl bg-slate-900/60 backdrop-blur-md border border-slate-700/60 hover:border-emerald-400/40 transition flex items-start gap-3">
+                <div className="p-2 rounded-xl bg-emerald-600/20 text-emerald-400 shrink-0">
+                  <Award className="w-4 h-4" />
                 </div>
                 <div>
-                  <h4 className="text-xs font-bold text-slate-200">Staff Training Profiles</h4>
+                  <h4 className="text-xs font-bold text-slate-100">Staff Training Profiles</h4>
                   <p className="text-[11px] text-slate-400 mt-0.5 leading-snug">Complete individual matrix with instantaneous certificate date updating.</p>
                 </div>
               </div>
 
-              <div className="p-4 rounded-2xl bg-slate-900/60 border border-slate-800/80 backdrop-blur-sm flex items-start gap-3 hover:border-blue-500/40 transition">
-                <div className="p-2.5 rounded-xl bg-indigo-600/20 text-indigo-400 shrink-0">
-                  <CheckCircle2 className="w-5 h-5" />
+              <div className="p-3.5 rounded-2xl bg-slate-900/60 backdrop-blur-md border border-slate-700/60 hover:border-indigo-400/40 transition flex items-start gap-3">
+                <div className="p-2 rounded-xl bg-indigo-600/20 text-indigo-400 shrink-0">
+                  <CheckCircle2 className="w-4 h-4" />
                 </div>
                 <div>
-                  <h4 className="text-xs font-bold text-slate-200">Direct WhatsApp & Email</h4>
+                  <h4 className="text-xs font-bold text-slate-100">Direct WhatsApp & Email</h4>
                   <p className="text-[11px] text-slate-400 mt-0.5 leading-snug">One-click reminder dispatch with custom templates for department managers.</p>
                 </div>
               </div>
             </div>
+
+            <div className="pt-2 text-xs text-slate-400 flex items-center gap-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />
+              <span>UUDS Aero (DXB) • Aviation Compliance Portal</span>
+            </div>
           </div>
 
-          <div className="mt-8 text-xs text-slate-500">
-            UUDS Aero (DXB) • Aviation Compliance Portal
-          </div>
-        </div>
+          {/* RIGHT SIDE: Dedicated Sign-In Card */}
+          <div className="w-full lg:w-[420px] xl:w-[460px] shrink-0">
+            <div className="p-7 sm:p-9 rounded-3xl bg-slate-900/75 backdrop-blur-2xl border border-blue-500/25 shadow-[0_20px_60px_rgba(0,0,0,0.8),0_0_35px_rgba(59,130,246,0.18)] relative overflow-hidden transition-all hover:border-blue-400/40">
+              {/* Subtle top card glow highlight */}
+              <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-blue-400 to-transparent opacity-70" />
 
-        {/* RIGHT SIDE: Dedicated Sign-In Card (firmly shifted to the right) */}
-        <div className="w-full lg:w-[480px] xl:w-[540px] flex items-center justify-center lg:justify-end p-6 sm:p-12 lg:p-16 z-10">
-          <div className="w-full max-w-md">
-            <div className="glass-panel-glow p-8 sm:p-10 rounded-3xl border border-slate-800 shadow-2xl relative">
               {/* Form Header */}
-              <div className="mb-8">
+              <div className="mb-7">
                 <h2 className="text-2xl font-black text-white tracking-tight">
                   Account Sign In
                 </h2>
-                <p className="text-xs text-slate-400 mt-1">
+                <p className="text-xs text-slate-300 mt-1">
                   Enter your authorized credentials to access compliance records
                 </p>
               </div>
 
               {error && (
-                <div className="mb-6 p-3.5 rounded-2xl bg-red-950/70 border border-red-500/40 text-red-300 text-xs flex items-center gap-3 animate-scale-in">
+                <div className="mb-5 p-3 rounded-2xl bg-red-950/80 border border-red-500/40 text-red-200 text-xs flex items-center gap-2.5 animate-scale-in">
                   <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
                   <span>{error}</span>
                 </div>
               )}
 
-              <form onSubmit={handleSubmit} className="space-y-5">
+              <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                  <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">
+                  <label className="block text-xs font-bold text-slate-200 uppercase tracking-wider mb-2">
                     Username
                   </label>
                   <div className="relative">
@@ -229,13 +232,13 @@ export default function Login() {
                       value={username}
                       onChange={(e) => setUsername(e.target.value)}
                       placeholder="Enter your username"
-                      className="w-full pl-10 pr-4 py-3 bg-slate-900/90 border border-slate-700/80 rounded-2xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 transition shadow-inner"
+                      className="w-full pl-10 pr-4 py-3 bg-slate-950/80 border border-slate-700/80 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-500/30 transition shadow-inner"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-2">
+                  <label className="block text-xs font-bold text-slate-200 uppercase tracking-wider mb-2">
                     Password
                   </label>
                   <div className="relative">
@@ -246,7 +249,7 @@ export default function Login() {
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="Enter your password"
-                      className="w-full pl-10 pr-4 py-3 bg-slate-900/90 border border-slate-700/80 rounded-2xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30 transition shadow-inner"
+                      className="w-full pl-10 pr-4 py-3 bg-slate-950/80 border border-slate-700/80 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-500/30 transition shadow-inner"
                     />
                   </div>
                 </div>
@@ -254,16 +257,16 @@ export default function Login() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full mt-3 py-3.5 px-5 rounded-2xl text-sm font-bold text-white bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 shadow-xl shadow-blue-900/40 border border-blue-400/40 flex items-center justify-center gap-2 transition-all duration-200 hover:scale-[1.01] active:scale-95 disabled:opacity-50"
+                  className="w-full mt-2 py-3.5 px-5 rounded-xl text-sm font-bold text-white bg-gradient-to-r from-blue-600 via-sky-500 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 shadow-xl shadow-blue-900/50 border border-blue-400/40 flex items-center justify-center gap-2 transition-all duration-200 hover:scale-[1.01] active:scale-95 disabled:opacity-50"
                 >
                   <span>{loading ? 'Authenticating System...' : 'Sign In to Portal'}</span>
                   <ArrowRight className="w-4 h-4" />
                 </button>
               </form>
 
-              <div className="mt-8 pt-6 border-t border-slate-800/80 flex items-center justify-between text-[11px] text-slate-500">
+              <div className="mt-7 pt-5 border-t border-slate-800 flex items-center justify-between text-[11px] text-slate-400">
                 <span>Dubai International Airport (DXB)</span>
-                <span className="font-mono text-blue-400/80">v2.4 Pro</span>
+                <span className="font-mono text-blue-400/90 font-semibold">v2.4 Pro</span>
               </div>
             </div>
           </div>
@@ -271,7 +274,7 @@ export default function Login() {
       </div>
 
       {/* Global Developer Footer */}
-      <footer className="w-full py-4 px-4 text-center text-xs sm:text-sm font-semibold tracking-wider text-slate-300 border-t border-slate-800/60 bg-slate-950/60 backdrop-blur-md z-10 shadow-lg">
+      <footer className="w-full py-3.5 px-4 text-center text-xs font-semibold tracking-wider text-slate-300 border-t border-slate-800/60 bg-slate-950/70 backdrop-blur-md z-10 shrink-0 shadow-lg">
         *** Designed and developed by | Khurram Munir Basra | UUDS DXB Stores ***
       </footer>
     </div>
