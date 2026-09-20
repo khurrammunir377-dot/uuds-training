@@ -21,7 +21,9 @@ class VercelPathNormalizer:
 
     async def __call__(self, scope, receive, send):
         if scope["type"] == "http":
-            path = scope.get("path", "")
+            orig_path = scope.get("path", "")
+            scope["original_path"] = orig_path
+            path = orig_path
             
             # If path starts with /api/index.py, strip it
             if path.startswith("/api/index.py"):
