@@ -35,8 +35,9 @@ class VercelPathNormalizer:
                 if path.startswith("/api/index.py"):
                     subpath = path[len("/api/index.py"):]
                     scope["path"] = f"/api{subpath}" if subpath else "/api"
-                elif not path.startswith("/api"):
-                    scope["path"] = f"/api{path}" if path.startswith("/") else f"/api/{path}"
+                elif path == "/api" or path.startswith("/api/"):
+                    scope["path"] = path
+                # Leave frontend paths (/, /index.html, /assets/*, etc.) untouched
 
         await self.app(scope, receive, send)
 

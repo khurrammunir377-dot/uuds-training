@@ -859,15 +859,16 @@ if not os.environ.get("VERCEL") and not os.environ.get("AWS_LAMBDA_FUNCTION_NAME
     scheduler_thread = threading.Thread(target=background_scheduler, daemon=True)
     scheduler_thread.start()
 
-# ----------------- Frontend Static Files Serving (Desktop / Local server mode) -----------------
-if not os.environ.get("VERCEL"):
-    frontend_dist = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "frontend", "dist")
+# ----------------- Frontend Static Files Serving -----------------
+frontend_dist = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "frontend", "dist")
 
-    if os.path.exists(frontend_dist):
-        app.mount("/assets", StaticFiles(directory=os.path.join(frontend_dist, "assets")), name="assets")
+if os.path.exists(frontend_dist):
+    assets_dir = os.path.join(frontend_dist, "assets")
+    if os.path.exists(assets_dir):
+        app.mount("/assets", StaticFiles(directory=assets_dir), name="assets")
 
-    @app.get("/{full_path:path}")
-    def serve_spa(full_path: str):
+@app.get("/{full_path:path}")
+def serve_spa(full_path: str):
         # If API call not found
         if full_path.startswith("api/"):
             raise HTTPException(status_code=404, detail="API route not found")
