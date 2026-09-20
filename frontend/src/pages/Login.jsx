@@ -112,12 +112,6 @@ export default function Login() {
           
           {/* LEFT SIDE: Brand Showcase with 3D Rotating A380 Emblem */}
           <div className="flex-1 w-full max-w-xl space-y-5">
-            {/* Top Brand Tag */}
-            <div className="inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded-full bg-blue-500/15 border border-blue-400/30 text-blue-300 text-xs font-bold tracking-wider uppercase shadow-sm">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-              <span>GCAA CAR 145 & EASA Part 145 Verified</span>
-            </div>
-
             {/* Hero 3D Emblem and Branding with A380 Logo */}
             <div>
               <div className="flex items-center gap-5 sm:gap-6 mb-3">
