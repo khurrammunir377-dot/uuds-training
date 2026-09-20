@@ -14,7 +14,7 @@ if BACKEND_DIR not in sys.path:
 
 from backend.server import app as fastapi_app
 
-class VercelPathNormalizer:
+class UniversalVercelRouter:
     def __init__(self, app):
         self.app = app
 
@@ -27,18 +27,15 @@ class VercelPathNormalizer:
                 route = params.pop("__route__")[0]
                 if not route.startswith("/"):
                     route = "/" + route
-                scope["path"] = f"/api{route}"
+                scope["path"] = route
                 clean_params = [(k, v) for k, vs in params.items() for v in vs]
                 scope["query_string"] = urllib.parse.urlencode(clean_params).encode("utf-8")
             else:
                 path = scope.get("path", "")
                 if path.startswith("/api/index.py"):
                     subpath = path[len("/api/index.py"):]
-                    scope["path"] = f"/api{subpath}" if subpath else "/api"
-                elif path == "/api" or path.startswith("/api/"):
-                    scope["path"] = path
-                # Leave frontend paths (/, /index.html, /assets/*, etc.) untouched
+                    scope["path"] = subpath if subpath else "/"
 
         await self.app(scope, receive, send)
 
-app = VercelPathNormalizer(fastapi_app)
+app = UniversalVercelRouter(fastapi_app)
