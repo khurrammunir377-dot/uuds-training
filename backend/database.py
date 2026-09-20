@@ -19,6 +19,12 @@ else:
     DB_PATH = ORIG_DB
 
 def get_db():
+    if os.environ.get("VERCEL") or os.environ.get("AWS_LAMBDA_FUNCTION_NAME"):
+        if not os.path.exists(DB_PATH) and os.path.exists(ORIG_DB):
+            try:
+                shutil.copy2(ORIG_DB, DB_PATH)
+            except Exception as e:
+                print("DB copy error:", e)
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     return conn

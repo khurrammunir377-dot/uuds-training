@@ -11,4 +11,36 @@ if ROOT_DIR not in sys.path:
 if BACKEND_DIR not in sys.path:
     sys.path.insert(0, BACKEND_DIR)
 
-from backend.server import app
+from backend.server import app as fastapi_app
+
+# Vercel ASGI path normalizer ensures routes match seamlessly
+# whether Vercel passes /auth/login, /api/auth/login, or /api/index.py/auth/login
+class VercelPathNormalizer:
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] == "http":
+            path = scope.get("path", "")
+            
+            # If path starts with /api/index.py, strip it
+            if path.startswith("/api/index.py"):
+                path = path[len("/api/index.py"):]
+            elif path.startswith("api/index.py"):
+                path = path[len("api/index.py"):]
+
+            if not path.startswith("/"):
+                path = "/" + path
+
+            # Ensure the path begins with /api to match FastAPI route definitions
+            if not path.startswith("/api"):
+                if path == "/":
+                    path = "/api"
+                else:
+                    path = "/api" + path
+
+            scope["path"] = path
+
+        await self.app(scope, receive, send)
+
+app = VercelPathNormalizer(fastapi_app)

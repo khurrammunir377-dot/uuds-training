@@ -36,18 +36,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-@app.middleware("http")
-async def vercel_path_rewrite_middleware(request: Request, call_next):
-    # On Vercel, requests to serverless functions are rewritten to /api/index.py.
-    # Restore the actual intended path from x-matched-path or x-invoke-path header.
-    matched_path = request.headers.get("x-matched-path") or request.headers.get("x-invoke-path")
-    if matched_path:
-        request.scope["path"] = matched_path.split("?")[0]
-    elif request.scope.get("path", "").startswith("/api/index.py"):
-        subpath = request.scope["path"].replace("/api/index.py", "", 1)
-        request.scope["path"] = f"/api{subpath}" if subpath else "/api"
-
-    return await call_next(request)
 
 @app.get("/api")
 @app.get("/api/")
@@ -871,26 +859,27 @@ if not os.environ.get("VERCEL") and not os.environ.get("AWS_LAMBDA_FUNCTION_NAME
     scheduler_thread = threading.Thread(target=background_scheduler, daemon=True)
     scheduler_thread.start()
 
-# ----------------- Frontend Static Files Serving -----------------
-frontend_dist = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "frontend", "dist")
+# ----------------- Frontend Static Files Serving (Desktop / Local server mode) -----------------
+if not os.environ.get("VERCEL"):
+    frontend_dist = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "frontend", "dist")
 
-if os.path.exists(frontend_dist):
-    app.mount("/assets", StaticFiles(directory=os.path.join(frontend_dist, "assets")), name="assets")
+    if os.path.exists(frontend_dist):
+        app.mount("/assets", StaticFiles(directory=os.path.join(frontend_dist, "assets")), name="assets")
 
-@app.get("/{full_path:path}")
-def serve_spa(full_path: str):
-    # If API call not found
-    if full_path.startswith("api/"):
-        raise HTTPException(status_code=404, detail="API route not found")
-        
-    index_file = os.path.join(frontend_dist, "index.html")
-    if os.path.exists(index_file):
-        # Check if requesting specific file in dist
-        file_path = os.path.join(frontend_dist, full_path)
-        if full_path and os.path.exists(file_path) and os.path.isfile(file_path):
-            return FileResponse(file_path)
-        return FileResponse(index_file)
-    return HTMLResponse("<h1>UUDS Training Compliance Tracker</h1><p>Frontend is currently building. Please wait...</p>")
+    @app.get("/{full_path:path}")
+    def serve_spa(full_path: str):
+        # If API call not found
+        if full_path.startswith("api/"):
+            raise HTTPException(status_code=404, detail="API route not found")
+            
+        index_file = os.path.join(frontend_dist, "index.html")
+        if os.path.exists(index_file):
+            # Check if requesting specific file in dist
+            file_path = os.path.join(frontend_dist, full_path)
+            if full_path and os.path.exists(file_path) and os.path.isfile(file_path):
+                return FileResponse(file_path)
+            return FileResponse(index_file)
+        return HTMLResponse("<h1>UUDS Training Compliance Tracker</h1><p>Frontend is currently building. Please wait...</p>")
 
 if __name__ == "__main__":
     import uvicorn
