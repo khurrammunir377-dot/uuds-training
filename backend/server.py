@@ -49,6 +49,11 @@ async def vercel_path_rewrite_middleware(request: Request, call_next):
 
     return await call_next(request)
 
+@app.get("/api")
+@app.get("/api/")
+def api_root():
+    return {"status": "online", "service": "UUDS Aviation Training Compliance API", "version": "1.0.0"}
+
 # ----------------- JWT / Simple Token Auth -----------------
 TOKENS = {} # token -> {user_id, username, role, full_name, email}
 
