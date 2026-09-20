@@ -1,10 +1,22 @@
 import sqlite3
 import os
+import shutil
 import hashlib
 import json
 from datetime import datetime
 
-DB_PATH = os.path.join(os.path.dirname(__file__), "uuds_training.db")
+ORIG_DB = os.path.join(os.path.dirname(__file__), "uuds_training.db")
+
+# In Vercel / serverless environments, root is read-only so use /tmp for writable SQLite
+if os.environ.get("VERCEL") or os.environ.get("AWS_LAMBDA_FUNCTION_NAME"):
+    DB_PATH = "/tmp/uuds_training.db"
+    if not os.path.exists(DB_PATH) and os.path.exists(ORIG_DB):
+        try:
+            shutil.copy2(ORIG_DB, DB_PATH)
+        except Exception as e:
+            print("DB copy error:", e)
+else:
+    DB_PATH = ORIG_DB
 
 def get_db():
     conn = sqlite3.connect(DB_PATH)
