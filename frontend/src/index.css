@@ -1,0 +1,236 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-slate-950 text-slate-100 font-sans antialiased;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+}
+
+/* Custom modern scrollbar */
+::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+::-webkit-scrollbar-track {
+  background: #090d16;
+}
+::-webkit-scrollbar-thumb {
+  background: #1e293b;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #334155;
+}
+
+/* Glassmorphism utility */
+.glass-panel {
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.glass-panel-glow {
+  background: rgba(15, 23, 42, 0.85);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  box-shadow: 0 0 30px -10px rgba(59, 130, 246, 0.15);
+}
+
+/* 3D card tilt & hover effects */
+.card-hover-3d {
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.card-hover-3d:hover {
+  transform: translateY(-3px) scale(1.01);
+  box-shadow: 0 15px 30px -8px rgba(0, 0, 0, 0.6), 0 0 20px -3px rgba(59, 130, 246, 0.25);
+  border-color: rgba(59, 130, 246, 0.4);
+}
+
+/* Glowing text */
+.text-glow-blue {
+  text-shadow: 0 0 15px rgba(59, 130, 246, 0.6);
+}
+.text-glow-green {
+  text-shadow: 0 0 15px rgba(16, 185, 129, 0.6);
+}
+.text-glow-amber {
+  text-shadow: 0 0 15px rgba(245, 158, 11, 0.6);
+}
+.text-glow-red {
+  text-shadow: 0 0 15px rgba(239, 68, 68, 0.6);
+}
+
+/* 3D Floating and Glowing Keyframes */
+@keyframes floatSlow {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-8px) rotate(1.5deg);
+  }
+}
+
+@keyframes float3D {
+  0%, 100% {
+    transform: perspective(800px) rotateX(8deg) rotateY(-8deg) translateY(0px);
+  }
+  50% {
+    transform: perspective(800px) rotateX(14deg) rotateY(6deg) translateY(-10px);
+  }
+}
+
+@keyframes pulseGlow {
+  0%, 100% {
+    box-shadow: 0 0 20px 4px rgba(59, 130, 246, 0.4), 0 0 40px 8px rgba(99, 102, 241, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 35px 8px rgba(59, 130, 246, 0.75), 0 0 65px 15px rgba(99, 102, 241, 0.4);
+  }
+}
+
+.animate-float {
+  animation: floatSlow 4s ease-in-out infinite;
+}
+
+.animate-float-3d {
+  animation: float3D 5s ease-in-out infinite;
+}
+
+.animate-glow-pulse {
+  animation: pulseGlow 3s ease-in-out infinite;
+}
+
+/* Continuous 3D Rotating Logo with Neon Glow */
+@keyframes continuousRotate3DGlow {
+  0% {
+    transform: perspective(900px) rotateX(16deg) rotateY(0deg) translateY(0px);
+    box-shadow: 0 0 25px 5px rgba(59, 130, 246, 0.6), 0 0 50px 10px rgba(99, 102, 241, 0.35);
+  }
+  25% {
+    transform: perspective(900px) rotateX(22deg) rotateY(90deg) translateY(-8px);
+    box-shadow: 0 0 35px 8px rgba(14, 165, 233, 0.7), 0 0 70px 15px rgba(59, 130, 246, 0.45);
+  }
+  50% {
+    transform: perspective(900px) rotateX(16deg) rotateY(180deg) translateY(0px);
+    box-shadow: 0 0 45px 10px rgba(99, 102, 241, 0.8), 0 0 80px 20px rgba(168, 85, 247, 0.45);
+  }
+  75% {
+    transform: perspective(900px) rotateX(10deg) rotateY(270deg) translateY(-8px);
+    box-shadow: 0 0 35px 8px rgba(59, 130, 246, 0.7), 0 0 65px 15px rgba(14, 165, 233, 0.45);
+  }
+  100% {
+    transform: perspective(900px) rotateX(16deg) rotateY(360deg) translateY(0px);
+    box-shadow: 0 0 25px 5px rgba(59, 130, 246, 0.6), 0 0 50px 10px rgba(99, 102, 241, 0.35);
+  }
+}
+
+.animate-rotate-3d-glow {
+  animation: continuousRotate3DGlow 9s ease-in-out infinite;
+  transform-style: preserve-3d;
+}
+
+/* Space Background Color Transition (Slow & Continuous across full viewport) */
+@keyframes spaceBgColorShift {
+  0% {
+    background-color: #030511; /* Midnight Obsidian */
+  }
+  20% {
+    background-color: #060e29; /* Deep Cosmic Sapphire */
+  }
+  40% {
+    background-color: #041b36; /* Deep Aerospace Navy */
+  }
+  60% {
+    background-color: #12082b; /* Deep Space Nebula Purple */
+  }
+  80% {
+    background-color: #041026; /* Deep Cosmic Cobalt */
+  }
+  100% {
+    background-color: #030511;
+  }
+}
+
+.animate-space-bg {
+  animation: spaceBgColorShift 20s ease-in-out infinite;
+  transition: background-color 3s ease;
+}
+
+/* Starfield drifting and twinkling */
+@keyframes starDrift {
+  0% {
+    transform: translateY(0px) translateX(0px);
+  }
+  50% {
+    transform: translateY(-20px) translateX(10px);
+  }
+  100% {
+    transform: translateY(0px) translateX(0px);
+  }
+}
+
+@keyframes starTwinkle {
+  0%, 100% {
+    opacity: 0.2;
+    transform: scale(0.85);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.4);
+    box-shadow: 0 0 8px 2px rgba(255, 255, 255, 0.9);
+  }
+}
+
+.star-particle {
+  position: absolute;
+  border-radius: 9999px;
+  background-color: #ffffff;
+  pointer-events: none;
+}
+
+/* Shooting Stars / Meteors */
+@keyframes shootingStarAnim {
+  0% {
+    transform: translateX(0) translateY(0) rotate(-40deg);
+    opacity: 0;
+  }
+  5% {
+    opacity: 1;
+  }
+  18% {
+    transform: translateX(-400px) translateY(340px) rotate(-40deg);
+    opacity: 0;
+  }
+  100% {
+    transform: translateX(-400px) translateY(340px) rotate(-40deg);
+    opacity: 0;
+  }
+}
+
+.meteor-streak {
+  position: absolute;
+  width: 140px;
+  height: 2px;
+  background: linear-gradient(90deg, rgba(255,255,255,0.95), rgba(96,165,250,0.7), transparent);
+  border-radius: 9999px;
+  filter: drop-shadow(0 0 6px rgba(147, 197, 253, 0.8));
+  pointer-events: none;
+}
+
+/* Print styles for employee training records */
+@media print {
+  body {
+    background: white !important;
+    color: black !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+  .print-only {
+    display: block !important;
+  }
+}
