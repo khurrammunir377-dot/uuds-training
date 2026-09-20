@@ -108,100 +108,100 @@ export default function Login() {
 
       {/* Centered Enterprise Hero Layout: Harmonious balance between Left Showcase and Right Sign-In */}
       <div className="flex-1 flex items-center justify-center p-4 sm:p-8 lg:p-12 relative z-10 w-full">
-        <div className="w-full max-w-5xl xl:max-w-6xl mx-auto flex flex-col lg:flex-row items-center justify-between gap-8 lg:gap-12 xl:gap-16 py-4">
+        <div className="w-full max-w-6xl xl:max-w-7xl mx-auto flex flex-col lg:flex-row items-center justify-between gap-12 lg:gap-16 xl:gap-24 py-6">
           
-          {/* LEFT SIDE: Brand Showcase with 3D Rotating A380 Emblem */}
-          <div className="flex-1 w-full max-w-xl space-y-5">
+          {/* LEFT SIDE: Brand Showcase with 3D Rotating A380 Emblem and Enlarged Typography */}
+          <div className="flex-1 w-full max-w-2xl xl:max-w-3xl space-y-6 lg:space-y-7">
             {/* Hero 3D Emblem and Branding with A380 Logo */}
             <div>
-              <div className="flex items-center gap-5 sm:gap-6 mb-3">
+              <div className="flex items-center gap-6 sm:gap-7 mb-4">
                 {/* 3D Continuously Rotating & Glowing Airbus A380 Emblem */}
                 <div className="relative group shrink-0">
-                  <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-3xl bg-gradient-to-br from-blue-500 via-sky-400 to-indigo-600 p-0.5 shadow-2xl animate-rotate-3d-glow">
+                  <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-3xl bg-gradient-to-br from-blue-500 via-sky-400 to-indigo-600 p-0.5 shadow-2xl animate-rotate-3d-glow">
                     <div className="w-full h-full bg-slate-950/85 rounded-[22px] backdrop-blur-md flex items-center justify-center border border-blue-400/50 relative overflow-hidden">
                       <div className="absolute inset-0 bg-gradient-to-tr from-blue-400/20 via-transparent to-white/30 pointer-events-none" />
-                      <A380Icon className="w-13 h-13 sm:w-16 sm:h-16 transform -rotate-12 drop-shadow-[0_0_16px_rgba(56,189,248,0.95)]" />
+                      <A380Icon className="w-16 h-16 sm:w-18 sm:h-18 transform -rotate-12 drop-shadow-[0_0_18px_rgba(56,189,248,0.95)]" />
                     </div>
                   </div>
-                  <div className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 w-16 h-3 bg-blue-500/40 blur-lg rounded-full" />
+                  <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 w-20 h-3.5 bg-blue-500/40 blur-lg rounded-full" />
                 </div>
 
                 <div>
-                  <h1 className="text-3xl sm:text-4xl xl:text-5xl font-black tracking-tight text-white drop-shadow-md">
+                  <h1 className="text-4xl sm:text-5xl xl:text-6xl font-black tracking-tight text-white drop-shadow-lg leading-none">
                     UUDS <span className="bg-gradient-to-r from-blue-400 via-sky-300 to-indigo-300 bg-clip-text text-transparent">AERO</span>
                   </h1>
-                  <p className="text-xs sm:text-sm font-semibold text-blue-400/90 tracking-wide mt-1">
+                  <p className="text-sm sm:text-base xl:text-lg font-bold text-blue-400/90 tracking-wide mt-2">
                     Training Compliance & Manpower Tracker
                   </p>
                 </div>
               </div>
 
-              <p className="text-xs sm:text-sm text-slate-300 leading-relaxed mt-3">
+              <p className="text-sm sm:text-base xl:text-lg text-slate-200 leading-relaxed mt-4 font-normal">
                 Enterprise aviation compliance system providing end-to-end monitoring of mandatory qualifications, recurrent safety training, automated expiry alerts, and direct staff communication.
               </p>
             </div>
 
             {/* Key Aviation Capabilities Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-              <div className="p-3.5 rounded-2xl bg-slate-900/60 backdrop-blur-md border border-slate-700/60 hover:border-blue-400/40 transition flex items-start gap-3">
-                <div className="p-2 rounded-xl bg-blue-600/20 text-blue-400 shrink-0">
-                  <Shield className="w-4 h-4" />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+              <div className="p-4 sm:p-5 rounded-2xl bg-slate-900/65 backdrop-blur-md border border-slate-700/70 hover:border-blue-400/50 shadow-lg transition flex items-start gap-3.5">
+                <div className="p-2.5 sm:p-3 rounded-xl bg-blue-600/20 text-blue-400 shrink-0">
+                  <Shield className="w-5 h-5" />
                 </div>
                 <div>
-                  <h4 className="text-xs font-bold text-slate-100">Regulatory Audit Readiness</h4>
-                  <p className="text-[11px] text-slate-400 mt-0.5 leading-snug">Full compliance auditing across Technical, Line & Base Maintenance.</p>
+                  <h4 className="text-sm sm:text-base font-bold text-white">Regulatory Audit Readiness</h4>
+                  <p className="text-xs sm:text-sm text-slate-300 mt-1 leading-snug">Full compliance auditing across Technical, Line & Base Maintenance.</p>
                 </div>
               </div>
 
-              <div className="p-3.5 rounded-2xl bg-slate-900/60 backdrop-blur-md border border-slate-700/60 hover:border-amber-400/40 transition flex items-start gap-3">
-                <div className="p-2 rounded-xl bg-amber-600/20 text-amber-400 shrink-0">
-                  <Bell className="w-4 h-4" />
+              <div className="p-4 sm:p-5 rounded-2xl bg-slate-900/65 backdrop-blur-md border border-slate-700/70 hover:border-amber-400/50 shadow-lg transition flex items-start gap-3.5">
+                <div className="p-2.5 sm:p-3 rounded-xl bg-amber-600/20 text-amber-400 shrink-0">
+                  <Bell className="w-5 h-5" />
                 </div>
                 <div>
-                  <h4 className="text-xs font-bold text-slate-100">Early Expiry Tracking</h4>
-                  <p className="text-[11px] text-slate-400 mt-0.5 leading-snug">Proactive 30-day notifications and overdue alerts for continuous readiness.</p>
+                  <h4 className="text-sm sm:text-base font-bold text-white">Early Expiry Tracking</h4>
+                  <p className="text-xs sm:text-sm text-slate-300 mt-1 leading-snug">Proactive 30-day notifications and overdue alerts for continuous readiness.</p>
                 </div>
               </div>
 
-              <div className="p-3.5 rounded-2xl bg-slate-900/60 backdrop-blur-md border border-slate-700/60 hover:border-emerald-400/40 transition flex items-start gap-3">
-                <div className="p-2 rounded-xl bg-emerald-600/20 text-emerald-400 shrink-0">
-                  <Award className="w-4 h-4" />
+              <div className="p-4 sm:p-5 rounded-2xl bg-slate-900/65 backdrop-blur-md border border-slate-700/70 hover:border-emerald-400/50 shadow-lg transition flex items-start gap-3.5">
+                <div className="p-2.5 sm:p-3 rounded-xl bg-emerald-600/20 text-emerald-400 shrink-0">
+                  <Award className="w-5 h-5" />
                 </div>
                 <div>
-                  <h4 className="text-xs font-bold text-slate-100">Staff Training Profiles</h4>
-                  <p className="text-[11px] text-slate-400 mt-0.5 leading-snug">Complete individual matrix with instantaneous certificate date updating.</p>
+                  <h4 className="text-sm sm:text-base font-bold text-white">Staff Training Profiles</h4>
+                  <p className="text-xs sm:text-sm text-slate-300 mt-1 leading-snug">Complete individual matrix with instantaneous certificate date updating.</p>
                 </div>
               </div>
 
-              <div className="p-3.5 rounded-2xl bg-slate-900/60 backdrop-blur-md border border-slate-700/60 hover:border-indigo-400/40 transition flex items-start gap-3">
-                <div className="p-2 rounded-xl bg-indigo-600/20 text-indigo-400 shrink-0">
-                  <CheckCircle2 className="w-4 h-4" />
+              <div className="p-4 sm:p-5 rounded-2xl bg-slate-900/65 backdrop-blur-md border border-slate-700/70 hover:border-indigo-400/50 shadow-lg transition flex items-start gap-3.5">
+                <div className="p-2.5 sm:p-3 rounded-xl bg-indigo-600/20 text-indigo-400 shrink-0">
+                  <CheckCircle2 className="w-5 h-5" />
                 </div>
                 <div>
-                  <h4 className="text-xs font-bold text-slate-100">Direct WhatsApp & Email</h4>
-                  <p className="text-[11px] text-slate-400 mt-0.5 leading-snug">One-click reminder dispatch with custom templates for department managers.</p>
+                  <h4 className="text-sm sm:text-base font-bold text-white">Direct WhatsApp & Email</h4>
+                  <p className="text-xs sm:text-sm text-slate-300 mt-1 leading-snug">One-click reminder dispatch with custom templates for department managers.</p>
                 </div>
               </div>
             </div>
 
-            <div className="pt-2 text-xs text-slate-400 flex items-center gap-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />
+            <div className="pt-2 text-xs sm:text-sm text-slate-400 flex items-center gap-2.5 font-medium">
+              <span className="w-2 h-2 rounded-full bg-blue-400 shadow-glow-blue" />
               <span>UUDS Aero (DXB) • Aviation Compliance Portal</span>
             </div>
           </div>
 
           {/* RIGHT SIDE: Dedicated Sign-In Card */}
-          <div className="w-full lg:w-[420px] xl:w-[460px] shrink-0">
-            <div className="p-7 sm:p-9 rounded-3xl bg-slate-900/75 backdrop-blur-2xl border border-blue-500/25 shadow-[0_20px_60px_rgba(0,0,0,0.8),0_0_35px_rgba(59,130,246,0.18)] relative overflow-hidden transition-all hover:border-blue-400/40">
+          <div className="w-full lg:w-[440px] xl:w-[480px] shrink-0">
+            <div className="p-8 sm:p-10 rounded-3xl bg-slate-900/75 backdrop-blur-2xl border border-blue-500/25 shadow-[0_20px_60px_rgba(0,0,0,0.8),0_0_35px_rgba(59,130,246,0.18)] relative overflow-hidden transition-all hover:border-blue-400/40">
               {/* Subtle top card glow highlight */}
               <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-blue-400 to-transparent opacity-70" />
 
               {/* Form Header */}
               <div className="mb-7">
-                <h2 className="text-2xl font-black text-white tracking-tight">
+                <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
                   Account Sign In
                 </h2>
-                <p className="text-xs text-slate-300 mt-1">
+                <p className="text-xs sm:text-sm text-slate-300 mt-1">
                   Enter your authorized credentials to access compliance records
                 </p>
               </div>
