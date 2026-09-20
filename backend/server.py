@@ -36,6 +36,19 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.middleware("http")
+async def vercel_path_rewrite_middleware(request: Request, call_next):
+    # On Vercel, requests to serverless functions are rewritten to /api/index.py.
+    # Restore the actual intended path from x-matched-path or x-invoke-path header.
+    matched_path = request.headers.get("x-matched-path") or request.headers.get("x-invoke-path")
+    if matched_path:
+        request.scope["path"] = matched_path.split("?")[0]
+    elif request.scope.get("path", "").startswith("/api/index.py"):
+        subpath = request.scope["path"].replace("/api/index.py", "", 1)
+        request.scope["path"] = f"/api{subpath}" if subpath else "/api"
+
+    return await call_next(request)
+
 # ----------------- JWT / Simple Token Auth -----------------
 TOKENS = {} # token -> {user_id, username, role, full_name, email}
 
@@ -848,9 +861,10 @@ def background_scheduler():
             
         time.sleep(600) # Check every 10 mins
 
-# Start background thread
-scheduler_thread = threading.Thread(target=background_scheduler, daemon=True)
-scheduler_thread.start()
+# Start background scheduler thread only in persistent server mode (not serverless lambda)
+if not os.environ.get("VERCEL") and not os.environ.get("AWS_LAMBDA_FUNCTION_NAME"):
+    scheduler_thread = threading.Thread(target=background_scheduler, daemon=True)
+    scheduler_thread.start()
 
 # ----------------- Frontend Static Files Serving -----------------
 frontend_dist = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "frontend", "dist")
