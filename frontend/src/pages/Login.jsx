@@ -106,12 +106,12 @@ export default function Login() {
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-blue-900/15 via-transparent to-transparent pointer-events-none" />
       </div>
 
-      {/* Centered Enterprise Hero Layout: Harmonious balance between Left Showcase and Right Sign-In */}
-      <div className="flex-1 flex items-center justify-center p-4 sm:p-8 lg:p-12 relative z-10 w-full">
-        <div className="w-full max-w-6xl xl:max-w-7xl mx-auto flex flex-col lg:flex-row items-center justify-between gap-12 lg:gap-16 xl:gap-24 py-6">
+      {/* Centered Enterprise Hero Layout: Ample spacious breathing room between Left Showcase and Right Sign-In */}
+      <div className="flex-1 flex items-center justify-center p-4 sm:p-8 lg:p-14 relative z-10 w-full">
+        <div className="w-full max-w-[1550px] mx-auto flex flex-col lg:flex-row items-center justify-between gap-14 lg:gap-24 xl:gap-32 2xl:gap-40 px-4 sm:px-8 lg:px-12 py-6">
           
           {/* LEFT SIDE: Brand Showcase with 3D Rotating A380 Emblem and Enlarged Typography */}
-          <div className="flex-1 w-full max-w-2xl xl:max-w-3xl space-y-6 lg:space-y-7">
+          <div className="flex-1 w-full max-w-xl xl:max-w-2xl space-y-6 lg:space-y-7">
             {/* Hero 3D Emblem and Branding with A380 Logo */}
             <div>
               <div className="flex items-center gap-6 sm:gap-7 mb-4">
