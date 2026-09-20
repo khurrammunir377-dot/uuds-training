@@ -1,5 +1,6 @@
 import os
 import sys
+import urllib.parse
 
 # Ensure project root and backend are in sys.path
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -13,35 +14,29 @@ if BACKEND_DIR not in sys.path:
 
 from backend.server import app as fastapi_app
 
-# Vercel ASGI path normalizer ensures routes match seamlessly
-# whether Vercel passes /auth/login, /api/auth/login, or /api/index.py/auth/login
 class VercelPathNormalizer:
     def __init__(self, app):
         self.app = app
 
     async def __call__(self, scope, receive, send):
         if scope["type"] == "http":
-            orig_path = scope.get("path", "")
-            scope["original_path"] = orig_path
-            path = orig_path
+            query_string = scope.get("query_string", b"").decode("utf-8", errors="ignore")
+            params = urllib.parse.parse_qs(query_string, keep_blank_values=True)
             
-            # If path starts with /api/index.py, strip it
-            if path.startswith("/api/index.py"):
-                path = path[len("/api/index.py"):]
-            elif path.startswith("api/index.py"):
-                path = path[len("api/index.py"):]
-
-            if not path.startswith("/"):
-                path = "/" + path
-
-            # Ensure the path begins with /api to match FastAPI route definitions
-            if not path.startswith("/api"):
-                if path == "/":
-                    path = "/api"
-                else:
-                    path = "/api" + path
-
-            scope["path"] = path
+            if "__route__" in params:
+                route = params.pop("__route__")[0]
+                if not route.startswith("/"):
+                    route = "/" + route
+                scope["path"] = f"/api{route}"
+                clean_params = [(k, v) for k, vs in params.items() for v in vs]
+                scope["query_string"] = urllib.parse.urlencode(clean_params).encode("utf-8")
+            else:
+                path = scope.get("path", "")
+                if path.startswith("/api/index.py"):
+                    subpath = path[len("/api/index.py"):]
+                    scope["path"] = f"/api{subpath}" if subpath else "/api"
+                elif not path.startswith("/api"):
+                    scope["path"] = f"/api{path}" if path.startswith("/") else f"/api/{path}"
 
         await self.app(scope, receive, send)
 

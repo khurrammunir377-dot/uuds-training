@@ -39,15 +39,8 @@ app.add_middleware(
 
 @app.get("/api")
 @app.get("/api/")
-def api_root(request: Request):
-    return {
-        "status": "online",
-        "service": "UUDS Aviation Training Compliance API",
-        "scope_path": request.scope.get("path"),
-        "original_path": request.scope.get("original_path"),
-        "raw_path": str(request.scope.get("raw_path")),
-        "headers": dict(request.headers),
-    }
+def api_root():
+    return {"status": "online", "service": "UUDS Aviation Training Compliance API", "version": "1.0.0"}
 
 # ----------------- JWT / Simple Token Auth -----------------
 TOKENS = {} # token -> {user_id, username, role, full_name, email}
