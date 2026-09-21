@@ -2,6 +2,7 @@ import React from 'react';
 import { 
   LayoutDashboard, 
   Users, 
+  Table,
   AlertTriangle, 
   BookOpen, 
   Mail, 
@@ -35,6 +36,15 @@ export default function Sidebar({ activeTab, setActiveTab, counts = {} }) {
       activeBg: isDark ? 'bg-purple-600/20 text-purple-400 border-purple-500/30' : 'bg-purple-50 text-purple-700 border-purple-200',
       badge: counts.employees || '244', 
       badgeColor: isDark ? 'bg-purple-500/15 text-purple-400 border border-purple-500/30' : 'bg-purple-100 text-purple-800 font-bold' 
+    },
+    { 
+      id: 'matrix', 
+      label: 'Training Matrix', 
+      icon: Table, 
+      iconColor: 'text-indigo-500', 
+      activeBg: isDark ? 'bg-indigo-600/20 text-indigo-400 border-indigo-500/30' : 'bg-indigo-50 text-indigo-700 border-indigo-200',
+      badge: 'Fast Edit', 
+      badgeColor: isDark ? 'bg-indigo-500/15 text-indigo-400 border border-indigo-500/30 font-bold' : 'bg-indigo-100 text-indigo-800 font-bold' 
     },
     { 
       id: 'reminders', 

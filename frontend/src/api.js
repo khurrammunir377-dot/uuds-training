@@ -96,4 +96,12 @@ export const api = {
   updateSettings: (settings) => apiRequest('/settings', { method: 'PUT', body: JSON.stringify({ settings }) }),
   testSmtp: () => apiRequest('/settings/test-smtp', { method: 'POST' }),
   reimportData: () => apiRequest('/system/re-import', { method: 'POST' }),
+
+  // Matrix View & Batch Update
+  getMatrixData: (params = {}) => {
+    const query = new URLSearchParams(params).toString();
+    return apiRequest(`/matrix?${query}`);
+  },
+  batchUpdateMatrix: (data) => apiRequest('/matrix/batch-update', { method: 'POST', body: JSON.stringify(data) }),
 };
+

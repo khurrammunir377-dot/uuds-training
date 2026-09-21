@@ -9,6 +9,7 @@ import EmployeeProfileModal from './pages/EmployeeProfileModal';
 import Reminders from './pages/Reminders';
 import Notifications from './pages/Notifications';
 import Courses from './pages/Courses';
+import TrainingMatrix from './pages/TrainingMatrix';
 import Settings from './pages/Settings';
 import Login from './pages/Login';
 import { api } from './api';
@@ -80,6 +81,12 @@ export default function App() {
 
           {activeTab === 'employees' && (
             <Employees 
+              onSelectEmployee={(id) => setSelectedEmployeeId(id)}
+            />
+          )}
+
+          {activeTab === 'matrix' && (
+            <TrainingMatrix 
               onSelectEmployee={(id) => setSelectedEmployeeId(id)}
             />
           )}

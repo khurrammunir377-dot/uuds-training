@@ -120,6 +120,13 @@ class ManagerEmailRequest(BaseModel):
     message_body: str
     include_report: Optional[bool] = True
 
+class BatchMatrixUpdateRequest(BaseModel):
+    employee_ids: List[int]
+    course_id: int
+    completion_date: Optional[str] = None
+    expiry_date: Optional[str] = None
+    notes: Optional[str] = None
+
 # ----------------- Auth Routes -----------------
 @app.post("/api/auth/login")
 def login(req: LoginRequest):
@@ -557,6 +564,160 @@ def update_or_create_employee_course(emp_id: int, course_id: int, req: RecordUpd
     
     log_audit(user["username"], f"Course {course_id} date updated for employee {emp_id}", "employee", emp_id)
     return {"message": "Record saved successfully", "status": status_calc}
+
+# ----------------- Training Compliance Matrix Routes -----------------
+@app.get("/api/matrix")
+def get_matrix_data(
+    status: Optional[str] = "Active",
+    team: Optional[str] = None,
+    search: Optional[str] = None,
+    course_category: Optional[str] = None,
+):
+    conn = get_db()
+    cursor = conn.cursor()
+    
+    # 1. Fetch courses
+    course_query = "SELECT id, code, name, category, validity_months FROM courses WHERE 1=1"
+    course_params = []
+    if course_category and course_category != "All":
+        course_query += " AND category = ?"
+        course_params.append(course_category)
+    course_query += " ORDER BY code ASC"
+    cursor.execute(course_query, course_params)
+    courses = [dict(row) for row in cursor.fetchall()]
+    
+    # 2. Fetch employees matching filters
+    emp_query = """
+    SELECT id, uuds_no, contingent_id, full_name, position, team, employment_status
+    FROM employees
+    WHERE 1=1
+    """
+    emp_params = []
+    if status and status != "All":
+        emp_query += " AND employment_status = ?"
+        emp_params.append(status)
+    if team and team != "All":
+        emp_query += " AND team = ?"
+        emp_params.append(team)
+    if search:
+        s = f"%{search.strip()}%"
+        emp_query += " AND (uuds_no LIKE ? OR full_name LIKE ? OR contingent_id LIKE ? OR position LIKE ?)"
+        emp_params.extend([s, s, s, s])
+        
+    emp_query += " ORDER BY full_name ASC"
+    cursor.execute(emp_query, emp_params)
+    employees = [dict(row) for row in cursor.fetchall()]
+    
+    emp_ids = [e["id"] for e in employees]
+    
+    # 3. Fetch training records for these employees
+    records = {} # key: f"{employee_id}_{course_id}"
+    stats = {
+        "valid": 0,
+        "due_soon": 0,
+        "overdue": 0,
+        "not_recorded": 0,
+        "total_cells": len(employees) * len(courses)
+    }
+    
+    if emp_ids:
+        placeholders = ",".join("?" * len(emp_ids))
+        cursor.execute(f"""
+        SELECT id, employee_id, course_id, completion_date, expiry_date, status, notes
+        FROM training_records
+        WHERE employee_id IN ({placeholders})
+        """, emp_ids)
+        for row in cursor.fetchall():
+            r = dict(row)
+            key = f"{r['employee_id']}_{r['course_id']}"
+            st = r["status"] or "Not Recorded"
+            records[key] = {
+                "id": r["id"],
+                "completion_date": r["completion_date"],
+                "expiry_date": r["expiry_date"],
+                "status": st,
+                "notes": r["notes"] or ""
+            }
+            if st == "Valid":
+                stats["valid"] += 1
+            elif st == "Due Within 30 Days":
+                stats["due_soon"] += 1
+            elif st == "Overdue":
+                stats["overdue"] += 1
+            else:
+                stats["not_recorded"] += 1
+                
+    recorded_cells = stats["valid"] + stats["due_soon"] + stats["overdue"] + stats["not_recorded"]
+    stats["not_recorded"] += max(0, stats["total_cells"] - recorded_cells)
+    
+    # Also fetch all distinct teams and statuses for filter dropdowns
+    cursor.execute("SELECT DISTINCT team FROM employees WHERE team IS NOT NULL AND team != '' ORDER BY team ASC")
+    teams = [row[0] for row in cursor.fetchall()]
+    
+    cursor.execute("SELECT DISTINCT employment_status FROM employees WHERE employment_status IS NOT NULL ORDER BY employment_status ASC")
+    statuses = [row[0] for row in cursor.fetchall()]
+    
+    cursor.execute("SELECT DISTINCT category FROM courses WHERE category IS NOT NULL ORDER BY category ASC")
+    categories = [row[0] for row in cursor.fetchall()]
+    
+    conn.close()
+    
+    return {
+        "courses": courses,
+        "employees": employees,
+        "records": records,
+        "stats": stats,
+        "filter_options": {
+            "teams": teams,
+            "statuses": statuses,
+            "categories": categories
+        }
+    }
+
+@app.post("/api/matrix/batch-update")
+def batch_update_matrix(req: BatchMatrixUpdateRequest, user: dict = Depends(get_current_user)):
+    if not req.employee_ids:
+        raise HTTPException(status_code=400, detail="No employee IDs provided")
+        
+    conn = get_db()
+    cursor = conn.cursor()
+    
+    expiry_date_str = req.expiry_date.strip() if req.expiry_date else None
+    completion_date_str = req.completion_date.strip() if req.completion_date else None
+    notes_str = req.notes.strip() if req.notes else None
+    status_calc = calculate_status(expiry_date_str, notes_str)
+    
+    updated_records = {}
+    for emp_id in req.employee_ids:
+        cursor.execute("""
+        INSERT INTO training_records (employee_id, course_id, completion_date, expiry_date, status, notes, updated_by)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(employee_id, course_id) DO UPDATE SET
+            completion_date = excluded.completion_date,
+            expiry_date = excluded.expiry_date,
+            status = excluded.status,
+            notes = excluded.notes,
+            updated_by = excluded.updated_by,
+            updated_at = CURRENT_TIMESTAMP
+        """, (emp_id, req.course_id, completion_date_str, expiry_date_str, status_calc, notes_str, user["username"]))
+        
+        updated_records[f"{emp_id}_{req.course_id}"] = {
+            "completion_date": completion_date_str,
+            "expiry_date": expiry_date_str,
+            "status": status_calc,
+            "notes": notes_str
+        }
+        
+    conn.commit()
+    conn.close()
+    
+    log_audit(user["username"], f"Batch updated Course {req.course_id} for {len(req.employee_ids)} employees", "course", req.course_id)
+    return {
+        "message": f"Successfully updated {len(req.employee_ids)} training records",
+        "updated_count": len(req.employee_ids),
+        "status": status_calc,
+        "updated_records": updated_records
+    }
 
 # ----------------- Courses Catalogue Routes -----------------
 @app.get("/api/courses")
