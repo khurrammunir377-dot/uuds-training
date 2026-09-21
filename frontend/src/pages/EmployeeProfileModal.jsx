@@ -21,6 +21,7 @@ import { useToast } from '../components/Toast';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { formatDate, formatDateTime } from '../utils/dateUtils';
+import { openWhatsApp } from '../utils/whatsapp';
 
 const DAYS = Array.from({ length: 31 }, (_, i) => String(i + 1).padStart(2, '0'));
 const MONTHS = [
@@ -191,13 +192,6 @@ export default function EmployeeProfileModal({ employeeId, onClose, onRefresh })
       toast.warning('No mobile number registered. Please click Edit Info to add one.');
       return;
     }
-    let clean = rawMobile.replace(/\D/g, '');
-    if (clean.startsWith('0')) {
-      clean = '971' + clean.slice(1);
-    } else if (clean.length === 9) {
-      clean = '971' + clean;
-    }
-
     const pendingCourses = (profile.courses || [])
       .filter(c => c.status === 'Overdue' || c.status === 'Due Within 30 Days')
       .map(c => `- ${c.course_code}: ${c.course_name} (Expiry: ${formatDate(c.expiry_date)} - ${c.status})`)
@@ -211,8 +205,7 @@ export default function EmployeeProfileModal({ employeeId, onClose, onRefresh })
     }
     text += `Best regards,\nManager Training, UUDS Aero (DXB)`;
 
-    const waWin = window.open(`https://wa.me/${clean}?text=${encodeURIComponent(text)}`, 'uuds_whatsapp_window');
-    if (waWin) waWin.focus();
+    openWhatsApp(rawMobile, text);
   };
 
   const printRecord = () => {

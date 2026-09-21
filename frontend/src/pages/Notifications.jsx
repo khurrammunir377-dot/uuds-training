@@ -21,6 +21,7 @@ import { api } from '../api';
 import { useToast } from '../components/Toast';
 import { useTheme } from '../context/ThemeContext';
 import { formatDate, formatDateTime } from '../utils/dateUtils';
+import { openWhatsApp as sendWhatsApp } from '../utils/whatsapp';
 
 export default function Notifications({ onSelectEmployee }) {
   const { isDark } = useTheme();
@@ -153,29 +154,13 @@ export default function Notifications({ onSelectEmployee }) {
       toast.warning(`No mobile number on file for ${item.full_name}. Please update in profile.`);
       return;
     }
-    let clean = rawMobile.replace(/\D/g, '');
-    if (clean.startsWith('0')) {
-      clean = '971' + clean.slice(1);
-    } else if (clean.length === 9) {
-      clean = '971' + clean;
-    }
-
-    const isOverdue = item.status === 'Overdue';
-    const urgency = isOverdue ? 'OVERDUE' : 'due for renewal';
-    const formattedDate = formatDate(item.expiry_date);
-    const daysNotice = isOverdue 
-      ? `expired on ${formattedDate} (+${Math.abs(item.days_diff || 0)} days overdue)` 
-      : `expires on ${formattedDate} (${item.days_diff || 0} days remaining)`;
-
-    const msg = encodeURIComponent(
-      `Dear ${item.full_name},\n\n` +
+    const msg = `Dear ${item.full_name},\n\n` +
       `This is an official training compliance reminder from UUDS Aero (DXB).\n` +
       `Your mandatory qualification for "${item.course_code} - ${item.course_name}" is ${urgency} (${daysNotice}).\n\n` +
       `Please report to the Training Department to schedule your recurrent training session.\n\n` +
-      `Best regards,\nManager Training, UUDS Aero (DXB)`
-    );
-    const waWin = window.open(`https://wa.me/${clean}?text=${msg}`, 'uuds_whatsapp_window');
-    if (waWin) waWin.focus();
+      `Best regards,\nManager Training, UUDS Aero (DXB)`;
+
+    sendWhatsApp(rawMobile, msg);
   };
 
   const filteredStaff = urgentStaff.filter(item => {

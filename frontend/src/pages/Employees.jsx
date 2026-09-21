@@ -21,6 +21,7 @@ import { useTheme } from '../context/ThemeContext';
 import ConfirmationModal from '../components/ConfirmationModal';
 import { formatDate } from '../utils/dateUtils';
 import { exportToCSV, printTableAsPDF } from '../utils/exportUtils';
+import { openWhatsApp as sendWhatsApp } from '../utils/whatsapp';
 
 export default function Employees({ onSelectEmployee }) {
   const { isAdmin } = useAuth();
@@ -137,19 +138,9 @@ export default function Employees({ onSelectEmployee }) {
       toast.warning(`No mobile number saved for ${emp.full_name}.`);
       return;
     }
-    let clean = rawMobile.replace(/\D/g, '');
-    if (clean.startsWith('0')) {
-      clean = '971' + clean.slice(1);
-    } else if (clean.length === 9) {
-      clean = '971' + clean;
-    }
-
-    const msg = encodeURIComponent(
-      `Hello ${emp.full_name},\n\nThis is an official notification regarding your aviation training compliance status.\n` +
-      `Please contact training coordinator to check your certification timeline.\n\nThank you,\nManager Training, UUDS Aero (DXB)`
-    );
-    const waWin = window.open(`https://wa.me/${clean}?text=${msg}`, 'uuds_whatsapp_window');
-    if (waWin) waWin.focus();
+    const msg = `Hello ${emp.full_name},\n\nThis is an official notification regarding your aviation training compliance status.\n` +
+      `Please contact training coordinator to check your certification timeline.\n\nThank you,\nManager Training, UUDS Aero (DXB)`;
+    sendWhatsApp(rawMobile, msg);
   };
 
   const teamsList = [

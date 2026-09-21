@@ -16,6 +16,7 @@ import StatusBadge from '../components/StatusBadge';
 import { useToast } from '../components/Toast';
 import { useTheme } from '../context/ThemeContext';
 import { formatDate } from '../utils/dateUtils';
+import { openWhatsApp } from '../utils/whatsapp';
 
 export default function Dashboard({ onNavigate, onSelectEmployee }) {
   const { isDark } = useTheme();
@@ -45,21 +46,11 @@ export default function Dashboard({ onNavigate, onSelectEmployee }) {
       toast.warning(`No mobile number recorded for ${emp.full_name}. Please update in profile.`);
       return;
     }
-    let clean = rawMobile.replace(/\D/g, '');
-    if (clean.startsWith('0')) {
-      clean = '971' + clean.slice(1);
-    } else if (clean.length === 9) {
-      clean = '971' + clean;
-    }
-    
     const formattedExpiry = formatDate(expiryDate);
-    const message = encodeURIComponent(
-      `Dear ${emp.full_name},\n\nThis is a compliance reminder regarding your aviation training records.\n` +
+    const message = `Dear ${emp.full_name},\n\nThis is a compliance reminder regarding your aviation training records.\n` +
       `Your certification for "${courseName}" requires attention (Expiry: ${formattedExpiry || 'Immediate'}).\n\n` +
-      `Please contact the training coordinator to schedule your recurrent session.\n\nThank you,\nManager Training, UUDS Aero (DXB)`
-    );
-    const waWin = window.open(`https://wa.me/${clean}?text=${message}`, 'uuds_whatsapp_window');
-    if (waWin) waWin.focus();
+      `Please contact the training coordinator to schedule your recurrent session.\n\nThank you,\nManager Training, UUDS Aero (DXB)`;
+    openWhatsApp(rawMobile, message);
   };
 
   if (loading || !stats) {
