@@ -19,8 +19,6 @@ import {
   Check, 
   Layers, 
   ShieldCheck, 
-  CheckSquare, 
-  Square,
   ArrowUpDown,
   FileSpreadsheet
 } from 'lucide-react';
@@ -48,9 +46,6 @@ export default function TrainingMatrix({ onSelectEmployee }) {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [complianceHighlight, setComplianceHighlight] = useState('All'); // 'All', 'Valid', 'Due Soon', 'Overdue', 'Not Recorded'
 
-  // Selection for Batch Update
-  const [selectedEmpIds, setSelectedEmpIds] = useState(new Set());
-
   // Quick Inline Edit Modal state
   const [editModal, setEditModal] = useState({
     isOpen: false,
@@ -69,22 +64,6 @@ export default function TrainingMatrix({ onSelectEmployee }) {
     isManualExpiry: false
   });
   const [savingEdit, setSavingEdit] = useState(false);
-
-  // Batch Update Modal state
-  const [batchModal, setBatchModal] = useState({
-    isOpen: false,
-    courseId: '',
-    completionDate: '',
-    expiryDate: '',
-    notes: '',
-    day: '01',
-    month: '01',
-    year: '2026',
-    expDay: '01',
-    expMonth: '01',
-    expYear: '2028'
-  });
-  const [savingBatch, setSavingBatch] = useState(false);
 
   const currentYear = new Date().getFullYear();
   const days = Array.from({ length: 31 }, (_, i) => String(i + 1).padStart(2, '0'));
@@ -123,7 +102,6 @@ export default function TrainingMatrix({ onSelectEmployee }) {
       setRecords(data.records || {});
       setStats(data.stats || { valid: 0, due_soon: 0, overdue: 0, not_recorded: 0, total_cells: 0 });
       setFilterOptions(data.filter_options || { teams: [], statuses: [], categories: [] });
-      setSelectedEmpIds(new Set()); // clear selection on reload
     } catch (err) {
       console.error(err);
       toast.error('Failed to load training matrix data: ' + err.message);
@@ -357,77 +335,6 @@ export default function TrainingMatrix({ onSelectEmployee }) {
     }
   };
 
-  // Selection Checkbox handling
-  const toggleSelectAll = () => {
-    if (selectedEmpIds.size === filteredEmployees.length) {
-      setSelectedEmpIds(new Set());
-    } else {
-      setSelectedEmpIds(new Set(filteredEmployees.map(e => e.id)));
-    }
-  };
-
-  const toggleSelectEmp = (id) => {
-    setSelectedEmpIds(prev => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  };
-
-  // Batch Update Execution
-  const handleOpenBatchModal = (preselectedCourseId = '') => {
-    if (selectedEmpIds.size === 0) {
-      toast.warning('Please select one or more staff members using the row checkboxes.');
-      return;
-    }
-    const now = new Date();
-    const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-    const expStr = calculateExpiry(todayStr, 24);
-    const [ey, em, ed] = expStr.split('-');
-
-    setBatchModal({
-      isOpen: true,
-      courseId: preselectedCourseId || (courses[0]?.id || ''),
-      completionDate: todayStr,
-      expiryDate: expStr,
-      notes: '',
-      day: String(now.getDate()).padStart(2, '0'),
-      month: String(now.getMonth() + 1).padStart(2, '0'),
-      year: String(now.getFullYear()),
-      expDay: ed,
-      expMonth: em,
-      expYear: ey
-    });
-  };
-
-  const handleExecuteBatchUpdate = async () => {
-    if (!batchModal.courseId) {
-      toast.error('Please select a course to update.');
-      return;
-    }
-    setSavingBatch(true);
-    try {
-      const empIdsArray = Array.from(selectedEmpIds);
-      const res = await api.batchUpdateMatrix({
-        employee_ids: empIdsArray,
-        course_id: parseInt(batchModal.courseId, 10),
-        completion_date: batchModal.completionDate,
-        expiry_date: batchModal.expiryDate,
-        notes: batchModal.notes
-      });
-
-      toast.success(res.message || `Updated records for ${empIdsArray.length} employees`);
-      setBatchModal(prev => ({ ...prev, isOpen: false }));
-      setSelectedEmpIds(new Set());
-      await loadMatrix();
-    } catch (err) {
-      toast.error('Batch update failed: ' + err.message);
-    } finally {
-      setSavingBatch(false);
-    }
-  };
-
   // Export to CSV
   const handleExportCSV = () => {
     if (!filteredEmployees.length) {
@@ -552,16 +459,6 @@ export default function TrainingMatrix({ onSelectEmployee }) {
 
           {/* Action Buttons */}
           <div className="flex flex-wrap items-center gap-2">
-            {selectedEmpIds.size > 0 && (
-              <button
-                onClick={() => handleOpenBatchModal()}
-                className="flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 shadow-lg shadow-blue-500/20 transition active:scale-95 animate-pulse"
-              >
-                <Sparkles className="w-4 h-4" />
-                <span>Batch Update ({selectedEmpIds.size} Selected)</span>
-              </button>
-            )}
-
             <button
               onClick={handleExportCSV}
               className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold border transition ${
@@ -766,32 +663,15 @@ export default function TrainingMatrix({ onSelectEmployee }) {
                 isDark ? 'bg-slate-950 text-slate-200 border-b border-slate-800' : 'bg-slate-100 text-slate-800 border-b border-slate-300'
               }`}>
                 <tr>
-                  {/* Select All Checkbox */}
-                  <th className={`p-3 sticky left-0 z-30 w-10 text-center ${
-                    isDark ? 'bg-slate-950' : 'bg-slate-100'
-                  }`}>
-                    <button 
-                      onClick={toggleSelectAll}
-                      title="Select all staff in view"
-                      className="p-1 rounded text-slate-400 hover:text-white"
-                    >
-                      {selectedEmpIds.size > 0 && selectedEmpIds.size === filteredEmployees.length ? (
-                        <CheckSquare className="w-4 h-4 text-blue-500" />
-                      ) : (
-                        <Square className="w-4 h-4" />
-                      )}
-                    </button>
-                  </th>
-
                   {/* Frozen Employee Column */}
-                  <th className={`p-3 sticky left-10 z-30 min-w-[210px] max-w-[210px] font-black uppercase tracking-wider text-[11px] ${
+                  <th className={`p-3 sticky left-0 z-30 min-w-[210px] max-w-[210px] font-black uppercase tracking-wider text-[11px] ${
                     isDark ? 'bg-slate-950 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.5)]' : 'bg-slate-100 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]'
                   }`}>
                     Staff Member
                   </th>
 
                   {/* Frozen UUDS No Column */}
-                  <th className={`p-3 sticky left-[250px] z-30 min-w-[110px] max-w-[110px] font-black uppercase tracking-wider text-[11px] ${
+                  <th className={`p-3 sticky left-[210px] z-30 min-w-[110px] max-w-[110px] font-black uppercase tracking-wider text-[11px] ${
                     isDark ? 'bg-slate-950 shadow-[4px_0_8px_-2px_rgba(0,0,0,0.7)]' : 'bg-slate-100 shadow-[4px_0_8px_-2px_rgba(0,0,0,0.15)]'
                   }`}>
                     UUDS ID
@@ -810,20 +690,11 @@ export default function TrainingMatrix({ onSelectEmployee }) {
                         <span className="truncate w-full text-center text-[11px] font-semibold" title={course.name}>
                           {course.name}
                         </span>
-                        <div className="flex items-center gap-1 mt-0.5">
-                          <span className={`text-[10px] px-1.5 py-0.2 rounded font-mono ${
-                            isDark ? 'bg-slate-800 text-slate-400' : 'bg-slate-200 text-slate-700'
-                          }`}>
-                            {course.validity_months || 24}m
-                          </span>
-                          <button
-                            onClick={() => handleOpenBatchModal(String(course.id))}
-                            title={`Batch set date for ${course.code}`}
-                            className="opacity-0 group-hover:opacity-100 p-0.5 text-slate-400 hover:text-blue-400 transition"
-                          >
-                            <Edit3 className="w-3 h-3" />
-                          </button>
-                        </div>
+                        <span className={`text-[10px] px-1.5 py-0.2 rounded font-mono mt-0.5 ${
+                          isDark ? 'bg-slate-800 text-slate-400' : 'bg-slate-200 text-slate-700'
+                        }`}>
+                          {course.validity_months || 24}m
+                        </span>
                       </div>
                     </th>
                   ))}
@@ -833,36 +704,17 @@ export default function TrainingMatrix({ onSelectEmployee }) {
               {/* Table Body Rows */}
               <tbody className="divide-y divide-slate-800/40">
                 {filteredEmployees.map((emp, idx) => {
-                  const isSelected = selectedEmpIds.has(emp.id);
                   return (
                     <tr 
                       key={emp.id}
                       className={`transition-colors group ${
-                        isSelected 
-                          ? isDark ? 'bg-blue-950/30' : 'bg-blue-50/70' 
-                          : idx % 2 === 0 
-                            ? isDark ? 'bg-slate-900/40' : 'bg-white' 
-                            : isDark ? 'bg-slate-900/80' : 'bg-slate-50'
+                        idx % 2 === 0 
+                          ? isDark ? 'bg-slate-900/40' : 'bg-white' 
+                          : isDark ? 'bg-slate-900/80' : 'bg-slate-50'
                       } ${isDark ? 'hover:bg-slate-800/60' : 'hover:bg-blue-50/50'}`}
                     >
-                      {/* Checkbox */}
-                      <td className={`p-3 sticky left-0 z-10 text-center ${
-                        isDark ? 'bg-slate-950' : 'bg-white'
-                      }`}>
-                        <button
-                          onClick={() => toggleSelectEmp(emp.id)}
-                          className="p-1 rounded text-slate-400 hover:text-white"
-                        >
-                          {isSelected ? (
-                            <CheckSquare className="w-4 h-4 text-blue-500" />
-                          ) : (
-                            <Square className="w-4 h-4" />
-                          )}
-                        </button>
-                      </td>
-
                       {/* Frozen Staff Name Column */}
-                      <td className={`p-3 sticky left-10 z-10 min-w-[210px] max-w-[210px] ${
+                      <td className={`p-3 sticky left-0 z-10 min-w-[210px] max-w-[210px] ${
                         isDark ? 'bg-slate-950 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.5)]' : 'bg-white shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]'
                       }`}>
                         <div className="flex flex-col">
@@ -887,7 +739,7 @@ export default function TrainingMatrix({ onSelectEmployee }) {
                       </td>
 
                       {/* Frozen UUDS ID Column */}
-                      <td className={`p-3 sticky left-[250px] z-10 min-w-[110px] max-w-[110px] ${
+                      <td className={`p-3 sticky left-[210px] z-10 min-w-[110px] max-w-[110px] ${
                         isDark ? 'bg-slate-950 shadow-[4px_0_8px_-2px_rgba(0,0,0,0.7)]' : 'bg-white shadow-[4px_0_8px_-2px_rgba(0,0,0,0.15)]'
                       }`}>
                         <span className="font-mono text-xs font-bold px-2 py-0.5 rounded-lg bg-blue-500/10 text-blue-400 border border-blue-500/20">
@@ -1242,193 +1094,6 @@ export default function TrainingMatrix({ onSelectEmployee }) {
                   <>
                     <Check className="w-3.5 h-3.5" />
                     <span>Save Date</span>
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Batch Date Updater Modal */}
-      {batchModal.isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 bg-black/80 backdrop-blur-sm animate-fade-in">
-          <div className={`w-full max-w-lg rounded-3xl border shadow-2xl p-6 overflow-hidden animate-scale-in transition-colors ${
-            isDark ? 'bg-slate-900 border-slate-700 text-slate-100' : 'bg-white border-slate-200 text-slate-900'
-          }`}>
-            <div className="flex items-start justify-between pb-4 border-b border-slate-700/50">
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-2xl bg-indigo-600/20 text-indigo-400 border border-indigo-500/30">
-                  <Sparkles className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="text-base font-bold">Batch Update Training Dates</h3>
-                  <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-600'} mt-0.5`}>
-                    Updating <strong className="text-blue-400">{selectedEmpIds.size}</strong> selected staff members simultaneously
-                  </p>
-                </div>
-              </div>
-              <button 
-                onClick={() => setBatchModal(prev => ({ ...prev, isOpen: false }))}
-                className="p-1.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div className="mt-4 space-y-4">
-              {/* Select Target Course */}
-              <div>
-                <label className="text-xs font-bold block mb-1.5">Select Course to Update:</label>
-                <select
-                  value={batchModal.courseId}
-                  onChange={(e) => {
-                    const cId = e.target.value;
-                    const cObj = courses.find(c => String(c.id) === String(cId));
-                    const autoExp = calculateExpiry(batchModal.completionDate, cObj?.validity_months || 24);
-                    const [ey, em, ed] = autoExp ? autoExp.split('-') : [batchModal.expYear, batchModal.expMonth, batchModal.expDay];
-                    setBatchModal(prev => ({
-                      ...prev,
-                      courseId: cId,
-                      expiryDate: autoExp,
-                      expDay: ed,
-                      expMonth: em,
-                      expYear: ey
-                    }));
-                  }}
-                  className={`w-full p-2 rounded-xl text-xs border outline-none font-bold ${
-                    isDark ? 'bg-slate-950 border-slate-700 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'
-                  }`}
-                >
-                  {courses.map(c => (
-                    <option key={c.id} value={c.id}>
-                      {c.code} - {c.name} ({c.validity_months || 24}m)
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Completion Date */}
-              <div>
-                <label className="text-xs font-bold flex items-center justify-between mb-1.5">
-                  <span>Completion Date (Auto-calculates expiry):</span>
-                  <span className="text-[11px] text-blue-400 font-normal">Year auto-filled</span>
-                </label>
-                <div className="grid grid-cols-3 gap-2">
-                  <select
-                    value={batchModal.day}
-                    onChange={(e) => {
-                      const newD = e.target.value;
-                      const newComp = `${batchModal.year}-${batchModal.month}-${newD}`;
-                      const cObj = courses.find(c => String(c.id) === String(batchModal.courseId));
-                      const autoExp = calculateExpiry(newComp, cObj?.validity_months || 24);
-                      const [ey, em, ed] = autoExp ? autoExp.split('-') : [batchModal.expYear, batchModal.expMonth, batchModal.expDay];
-                      setBatchModal(prev => ({
-                        ...prev,
-                        day: newD,
-                        completionDate: newComp,
-                        expiryDate: autoExp,
-                        expDay: ed,
-                        expMonth: em,
-                        expYear: ey
-                      }));
-                    }}
-                    className={`p-2 rounded-xl text-xs border outline-none font-bold ${
-                      isDark ? 'bg-slate-950 border-slate-700 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'
-                    }`}
-                  >
-                    {days.map(d => <option key={d} value={d}>Day: {d}</option>)}
-                  </select>
-
-                  <select
-                    value={batchModal.month}
-                    onChange={(e) => {
-                      const newM = e.target.value;
-                      const newComp = `${batchModal.year}-${newM}-${batchModal.day}`;
-                      const cObj = courses.find(c => String(c.id) === String(batchModal.courseId));
-                      const autoExp = calculateExpiry(newComp, cObj?.validity_months || 24);
-                      const [ey, em, ed] = autoExp ? autoExp.split('-') : [batchModal.expYear, batchModal.expMonth, batchModal.expDay];
-                      setBatchModal(prev => ({
-                        ...prev,
-                        month: newM,
-                        completionDate: newComp,
-                        expiryDate: autoExp,
-                        expDay: ed,
-                        expMonth: em,
-                        expYear: ey
-                      }));
-                    }}
-                    className={`p-2 rounded-xl text-xs border outline-none font-bold ${
-                      isDark ? 'bg-slate-950 border-slate-700 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'
-                    }`}
-                  >
-                    {months.map(m => <option key={m.num} value={m.num}>{m.name}</option>)}
-                  </select>
-
-                  <select
-                    value={batchModal.year}
-                    onChange={(e) => {
-                      const newY = e.target.value;
-                      const newComp = `${newY}-${batchModal.month}-${batchModal.day}`;
-                      const cObj = courses.find(c => String(c.id) === String(batchModal.courseId));
-                      const autoExp = calculateExpiry(newComp, cObj?.validity_months || 24);
-                      const [ey, em, ed] = autoExp ? autoExp.split('-') : [batchModal.expYear, batchModal.expMonth, batchModal.expDay];
-                      setBatchModal(prev => ({
-                        ...prev,
-                        year: newY,
-                        completionDate: newComp,
-                        expiryDate: autoExp,
-                        expDay: ed,
-                        expMonth: em,
-                        expYear: ey
-                      }));
-                    }}
-                    className={`p-2 rounded-xl text-xs border outline-none font-bold ${
-                      isDark ? 'bg-slate-950 border-slate-700 text-white' : 'bg-slate-50 border-slate-300 text-slate-900'
-                    }`}
-                  >
-                    {years.map(y => <option key={y} value={y}>{y}</option>)}
-                  </select>
-                </div>
-              </div>
-
-              {/* Calculated Expiry Info */}
-              <div className={`p-3 rounded-xl border flex items-center justify-between text-xs ${
-                isDark ? 'bg-slate-950 border-slate-800' : 'bg-slate-50 border-slate-200'
-              }`}>
-                <span className="font-semibold text-slate-400">Target Expiry Date:</span>
-                <span className="font-mono font-bold text-emerald-400">
-                  {batchModal.expiryDate || 'N/A'}
-                </span>
-              </div>
-            </div>
-
-            {/* Actions */}
-            <div className="mt-6 pt-4 border-t border-slate-700/50 flex items-center justify-end gap-3">
-              <button
-                type="button"
-                onClick={() => setBatchModal(prev => ({ ...prev, isOpen: false }))}
-                className={`px-4 py-2 rounded-xl text-xs font-bold border transition ${
-                  isDark ? 'border-slate-700 text-slate-300 hover:bg-slate-800' : 'border-slate-300 text-slate-700 hover:bg-slate-100'
-                }`}
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={handleExecuteBatchUpdate}
-                disabled={savingBatch}
-                className="px-5 py-2 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 shadow-lg shadow-blue-500/20 transition active:scale-95 disabled:opacity-50 flex items-center gap-1.5"
-              >
-                {savingBatch ? (
-                  <>
-                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                    <span>Applying...</span>
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="w-3.5 h-3.5" />
-                    <span>Apply to All {selectedEmpIds.size} Staff</span>
                   </>
                 )}
               </button>

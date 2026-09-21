@@ -148,7 +148,8 @@ export default function Employees({ onSelectEmployee }) {
       `Hello ${emp.full_name},\n\nThis is an official notification regarding your aviation training compliance status.\n` +
       `Please contact training coordinator to check your certification timeline.\n\nThank you,\nManager Training, UUDS Aero (DXB)`
     );
-    window.open(`https://wa.me/${clean}?text=${msg}`, '_blank');
+    const waWin = window.open(`https://wa.me/${clean}?text=${msg}`, 'uuds_whatsapp_window');
+    if (waWin) waWin.focus();
   };
 
   const teamsList = [

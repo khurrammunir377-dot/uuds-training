@@ -174,7 +174,8 @@ export default function Notifications({ onSelectEmployee }) {
       `Please report to the Training Department to schedule your recurrent training session.\n\n` +
       `Best regards,\nManager Training, UUDS Aero (DXB)`
     );
-    window.open(`https://wa.me/${clean}?text=${msg}`, '_blank');
+    const waWin = window.open(`https://wa.me/${clean}?text=${msg}`, 'uuds_whatsapp_window');
+    if (waWin) waWin.focus();
   };
 
   const filteredStaff = urgentStaff.filter(item => {

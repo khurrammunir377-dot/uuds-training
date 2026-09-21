@@ -211,7 +211,8 @@ export default function EmployeeProfileModal({ employeeId, onClose, onRefresh })
     }
     text += `Best regards,\nManager Training, UUDS Aero (DXB)`;
 
-    window.open(`https://wa.me/${clean}?text=${encodeURIComponent(text)}`, '_blank');
+    const waWin = window.open(`https://wa.me/${clean}?text=${encodeURIComponent(text)}`, 'uuds_whatsapp_window');
+    if (waWin) waWin.focus();
   };
 
   const printRecord = () => {

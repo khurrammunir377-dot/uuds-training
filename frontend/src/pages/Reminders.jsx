@@ -79,7 +79,8 @@ export default function Reminders({ onSelectEmployee }) {
       `Please coordinate immediately with the Training Department to schedule your recurrent training.\n\n` +
       `Best regards,\nManager Training, UUDS Aero (DXB)`
     );
-    window.open(`https://wa.me/${clean}?text=${msg}`, '_blank');
+    const waWin = window.open(`https://wa.me/${clean}?text=${msg}`, 'uuds_whatsapp_window');
+    if (waWin) waWin.focus();
   };
 
   const overdueCount = reminders.filter(r => r.status === 'Overdue').length;

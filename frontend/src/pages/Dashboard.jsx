@@ -58,7 +58,8 @@ export default function Dashboard({ onNavigate, onSelectEmployee }) {
       `Your certification for "${courseName}" requires attention (Expiry: ${formattedExpiry || 'Immediate'}).\n\n` +
       `Please contact the training coordinator to schedule your recurrent session.\n\nThank you,\nManager Training, UUDS Aero (DXB)`
     );
-    window.open(`https://wa.me/${clean}?text=${message}`, '_blank');
+    const waWin = window.open(`https://wa.me/${clean}?text=${message}`, 'uuds_whatsapp_window');
+    if (waWin) waWin.focus();
   };
 
   if (loading || !stats) {
