@@ -71,7 +71,11 @@ export default function App() {
         />
 
         {/* Dynamic Page Content Area */}
-        <main className="flex-1 overflow-y-auto p-3 sm:p-6 w-full">
+        <main className={`flex-1 w-full min-h-0 ${
+          activeTab === 'matrix' 
+            ? 'h-full overflow-hidden p-2 sm:p-3 flex flex-col' 
+            : 'overflow-y-auto p-3 sm:p-6'
+        }`}>
           {activeTab === 'dashboard' && (
             <Dashboard 
               onNavigate={(tab) => setActiveTab(tab)}

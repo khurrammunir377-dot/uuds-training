@@ -523,14 +523,14 @@ export default function TrainingMatrix({ onSelectEmployee }) {
     : 0;
 
   return (
-    <div className="space-y-4 animate-fade-in pb-12">
-      {/* Top Banner & Control Area */}
-      <div className={`p-4 sm:p-6 rounded-2xl border transition-all duration-200 ${
+    <div className="h-full w-full flex flex-col overflow-hidden gap-2.5 animate-fade-in">
+      {/* Top Banner & Control Area (Fixed Header) */}
+      <div className={`shrink-0 p-3 sm:p-4 rounded-xl border transition-all duration-200 ${
         isDark 
-          ? 'bg-slate-900/80 border-slate-800 backdrop-blur-md text-slate-100' 
+          ? 'bg-slate-900/90 border-slate-800 backdrop-blur-md text-slate-100' 
           : 'bg-white border-slate-200 text-slate-900 shadow-sm'
       }`}>
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
           <div>
             <div className="flex items-center gap-2.5">
               <div className="p-2 rounded-xl bg-blue-600/20 text-blue-500 border border-blue-500/30">
@@ -601,7 +601,7 @@ export default function TrainingMatrix({ onSelectEmployee }) {
         </div>
 
         {/* Filter Controls Row */}
-        <div className="mt-5 pt-4 border-t border-slate-700/50 flex flex-col md:flex-row md:items-center justify-between gap-3">
+        <div className="mt-2.5 pt-2.5 border-t border-slate-700/50 flex flex-col md:flex-row md:items-center justify-between gap-2.5">
           {/* Status Tabs */}
           <div className="flex flex-wrap items-center gap-1.5">
             {['Active', 'All', 'Unpaid Leave', 'DWC TX', 'Non-Technical', 'RESIGN'].map(tab => (
@@ -682,7 +682,7 @@ export default function TrainingMatrix({ onSelectEmployee }) {
         </div>
 
         {/* Status Legend Bar */}
-        <div className={`mt-4 pt-3 border-t border-slate-700/40 flex flex-wrap items-center justify-between text-xs gap-3 ${
+        <div className={`mt-2 pt-2 border-t border-slate-700/40 flex flex-wrap items-center justify-between text-xs gap-2 ${
           isDark ? 'text-slate-400' : 'text-slate-600'
         }`}>
           <div className="flex flex-wrap items-center gap-4">
@@ -739,19 +739,19 @@ export default function TrainingMatrix({ onSelectEmployee }) {
         </div>
       </div>
 
-      {/* Interactive Matrix Grid */}
-      <div className={`rounded-2xl border shadow-xl overflow-hidden transition-colors ${
+      {/* Interactive Matrix Grid (Only Data Table Moves) */}
+      <div className={`flex-1 min-h-0 flex flex-col rounded-xl border shadow-xl overflow-hidden transition-colors ${
         isDark ? 'bg-slate-900/90 border-slate-800' : 'bg-white border-slate-200'
       }`}>
         {loading ? (
-          <div className="p-16 flex flex-col items-center justify-center gap-3">
+          <div className="flex-1 flex flex-col items-center justify-center p-12 gap-3">
             <div className="w-10 h-10 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin" />
             <p className={`text-xs font-semibold uppercase tracking-wider ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
               Loading Training Matrix Data...
             </p>
           </div>
         ) : filteredEmployees.length === 0 ? (
-          <div className="p-16 text-center">
+          <div className="flex-1 flex flex-col items-center justify-center p-12 text-center">
             <AlertTriangle className="w-10 h-10 text-amber-500 mx-auto mb-2 opacity-80" />
             <h3 className="text-base font-bold">No Staff Members Found</h3>
             <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'} mt-1`}>
@@ -759,7 +759,7 @@ export default function TrainingMatrix({ onSelectEmployee }) {
             </p>
           </div>
         ) : (
-          <div className="relative overflow-x-auto max-h-[72vh] overflow-y-auto scrollbar-thin">
+          <div className="flex-1 min-h-0 w-full overflow-auto scrollbar-thin">
             <table className="w-full text-left border-collapse text-xs">
               {/* Sticky Table Header */}
               <thead className={`sticky top-0 z-20 ${
