@@ -3,7 +3,7 @@ title UUDS Training Compliance Tracker - Launcher
 cd /d "%~dp0"
 
 echo ===============================================================================
-echo                UUDS AERO SERVICES - AVIATION TRAINING COMPLIANCE TRACKER
+echo                UUDS AERO - AVIATION TRAINING COMPLIANCE TRACKER
 echo ===============================================================================
 echo.
 
