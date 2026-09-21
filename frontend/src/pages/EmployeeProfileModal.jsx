@@ -21,7 +21,7 @@ import { useToast } from '../components/Toast';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { formatDate, formatDateTime } from '../utils/dateUtils';
-import { openWhatsApp } from '../utils/whatsapp';
+import { openWhatsApp as sendWhatsAppAlert } from '../utils/whatsapp';
 
 const DAYS = Array.from({ length: 31 }, (_, i) => String(i + 1).padStart(2, '0'));
 const MONTHS = [
@@ -186,7 +186,7 @@ export default function EmployeeProfileModal({ employeeId, onClose, onRefresh })
     }
   };
 
-  const openWhatsApp = () => {
+  const handleSendWhatsAppAlert = () => {
     const rawMobile = profile?.mobile_no || '';
     if (!rawMobile) {
       toast.warning('No mobile number registered. Please click Edit Info to add one.');
@@ -205,7 +205,8 @@ export default function EmployeeProfileModal({ employeeId, onClose, onRefresh })
     }
     text += `Best regards,\nManager Training, UUDS Aero (DXB)`;
 
-    openWhatsApp(rawMobile, text);
+    sendWhatsAppAlert(rawMobile, text);
+    toast.success('Opening WhatsApp in your single WhatsApp tab...');
   };
 
   const printRecord = () => {
@@ -326,7 +327,7 @@ export default function EmployeeProfileModal({ employeeId, onClose, onRefresh })
                 {/* Right Action Buttons */}
                 <div className="flex flex-wrap items-center gap-2.5 no-print">
                   <button
-                    onClick={openWhatsApp}
+                    onClick={handleSendWhatsAppAlert}
                     title="Send personal WhatsApp reminder message"
                     className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-500 shadow-md shadow-emerald-900/30 transition hover:scale-105"
                   >
