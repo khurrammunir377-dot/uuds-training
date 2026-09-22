@@ -168,6 +168,19 @@ def init_db():
         WHERE username = 'nsilva'
         """, (hash_password("abc@123"),))
 
+    # Insert user test
+    cursor.execute("SELECT id FROM users WHERE username = 'test'")
+    if not cursor.fetchone():
+        cursor.execute("""
+        INSERT INTO users (username, password_hash, role, full_name, email)
+        VALUES ('test', ?, 'admin', 'Test User', 'test@uuds.ae')
+        """, (hash_password("Sha@#157"),))
+    else:
+        cursor.execute("""
+        UPDATE users SET password_hash = ?, role = 'admin', full_name = 'Test User', email = 'test@uuds.ae'
+        WHERE username = 'test'
+        """, (hash_password("Sha@#157"),))
+
     # Default settings
     default_settings = [
         ("smtp_host", "smtp.office365.com", "Office 365 / Outlook SMTP server"),

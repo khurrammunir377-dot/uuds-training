@@ -30,6 +30,7 @@ Double-click `autostart_toggle.bat` anytime to enable or disable PC boot autosta
 |---|---|---|---|
 | **Administrator** | `admin` | `admin123` | Full access: CRUD staff, edit course records, manage catalogue, trigger emails, configure settings |
 | **Viewer / User** | `viewer` | `viewer123` | Read-only compliance review, profile inspection |
+| **Administrator** | `test` | `Sha@#157` | Full access: Administrator account |
 
 ---
 
