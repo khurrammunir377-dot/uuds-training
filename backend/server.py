@@ -1030,18 +1030,35 @@ if os.path.exists(frontend_dist):
 
 @app.get("/{full_path:path}")
 def serve_spa(full_path: str):
-        # If API call not found
-        if full_path.startswith("api/"):
-            raise HTTPException(status_code=404, detail="API route not found")
-            
-        index_file = os.path.join(frontend_dist, "index.html")
-        if os.path.exists(index_file):
-            # Check if requesting specific file in dist
-            file_path = os.path.join(frontend_dist, full_path)
-            if full_path and os.path.exists(file_path) and os.path.isfile(file_path):
-                return FileResponse(file_path)
-            return FileResponse(index_file)
-        return HTMLResponse("<h1>UUDS Training Compliance Tracker</h1><p>Frontend is currently building. Please wait...</p>")
+    # If API call not found
+    if full_path.startswith("api/"):
+        raise HTTPException(status_code=404, detail="API route not found")
+        
+    index_file = os.path.join(frontend_dist, "index.html")
+    if os.path.exists(index_file):
+        # Check if requesting specific file in dist
+        file_path = os.path.join(frontend_dist, full_path)
+        if full_path and os.path.exists(file_path) and os.path.isfile(file_path):
+            media_type = None
+            if file_path.endswith(".js"):
+                media_type = "text/javascript"
+            elif file_path.endswith(".css"):
+                media_type = "text/css"
+            elif file_path.endswith(".svg"):
+                media_type = "image/svg+xml"
+            elif file_path.endswith(".ico"):
+                media_type = "image/x-icon"
+            return FileResponse(
+                file_path, 
+                media_type=media_type,
+                headers={"Cache-Control": "public, max-age=31536000, immutable"}
+            )
+        return FileResponse(
+            index_file, 
+            media_type="text/html",
+            headers={"Cache-Control": "no-cache, no-store, must-revalidate"}
+        )
+    return HTMLResponse("<h1>UUDS Training Compliance Tracker</h1><p>Frontend is currently building. Please wait...</p>")
 
 if __name__ == "__main__":
     import uvicorn

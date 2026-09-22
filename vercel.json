@@ -1,5 +1,4 @@
 {
-  "outputDirectory": "frontend/dist",
   "rewrites": [
     {
       "source": "/api/(.*)",
@@ -10,8 +9,8 @@
       "destination": "/api/index.py?__route__=api"
     },
     {
-      "source": "/((?!api/).*)",
-      "destination": "/index.html"
+      "source": "/(.*)",
+      "destination": "/api/index.py?__route__=$1"
     }
   ]
 }
