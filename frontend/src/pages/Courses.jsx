@@ -173,6 +173,7 @@ export default function Courses() {
       {/* Top Standardized Frozen 2-Line Header */}
       <PageHeader
         icon={BookOpen}
+        theme="purple"
         title={`Emirates MLZ Training Catalogue (${filteredCourses.length})`}
         subtitle="Mandatory aviation maintenance courses, validity cycles, and compliance rates."
         actions={
@@ -184,68 +185,58 @@ export default function Courses() {
                 placeholder="Search course code or title..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className={`w-full pl-9 pr-3 py-2 rounded-xl text-xs border focus:outline-none focus:border-blue-500 ${
+                className={`w-full pl-9 pr-3 py-2 rounded-xl text-xs border focus:outline-none focus:border-purple-500 ${
                   isDark ? 'bg-slate-900 border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-900'
                 }`}
               />
             </div>
 
-            {/* View Mode Toggle Buttons (List / Grid) */}
+            {/* View Mode Toggle Buttons (Icon-only: List / Grid) */}
             <div className={`flex items-center border rounded-xl p-0.5 shrink-0 ${
               isDark ? 'bg-slate-900 border-slate-700/80' : 'bg-slate-100 border-slate-300'
             }`}>
               <button
                 type="button"
                 onClick={() => setViewMode('grid')}
-                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold transition ${
+                className={`p-1.5 rounded-lg transition ${
                   viewMode === 'grid'
-                    ? 'bg-blue-600 text-white shadow-sm'
+                    ? 'bg-purple-600 text-white shadow-sm'
                     : isDark ? 'text-slate-400 hover:text-white' : 'text-slate-600 hover:text-slate-900'
                 }`}
                 title="Card Grid View"
               >
-                <LayoutGrid className="w-3.5 h-3.5" />
-                <span className="hidden md:inline">Grid</span>
+                <LayoutGrid className="w-4 h-4" />
               </button>
               <button
                 type="button"
                 onClick={() => setViewMode('list')}
-                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold transition ${
+                className={`p-1.5 rounded-lg transition ${
                   viewMode === 'list'
-                    ? 'bg-blue-600 text-white shadow-sm'
+                    ? 'bg-purple-600 text-white shadow-sm'
                     : isDark ? 'text-slate-400 hover:text-white' : 'text-slate-600 hover:text-slate-900'
                 }`}
                 title="Tabular List View"
               >
-                <List className="w-3.5 h-3.5" />
-                <span className="hidden md:inline">List</span>
+                <List className="w-4 h-4" />
               </button>
             </div>
 
             <button
               onClick={handleExportExcel}
               title="Export Course Catalogue to Excel"
-              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold border transition shadow-sm whitespace-nowrap shrink-0 ${
-                isDark 
-                  ? 'bg-slate-900 border-slate-700 text-emerald-400 hover:bg-slate-800' 
-                  : 'bg-white border-slate-300 text-emerald-700 hover:bg-emerald-50'
-              }`}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-500 shadow-md shadow-emerald-900/25 border border-emerald-500/30 transition whitespace-nowrap shrink-0"
             >
-              <FileSpreadsheet className="w-4 h-4 text-emerald-500" />
+              <FileSpreadsheet className="w-3.5 h-3.5 text-white" />
               <span className="hidden sm:inline">Export Excel</span>
             </button>
 
             <button
               onClick={handleExportPDF}
               title="Print or Save as PDF"
-              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold border transition shadow-sm whitespace-nowrap shrink-0 ${
-                isDark 
-                  ? 'bg-slate-900 border-slate-700 text-slate-300 hover:bg-slate-800' 
-                  : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-100'
-              }`}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-white bg-rose-600 hover:bg-rose-500 shadow-md shadow-rose-900/25 border border-rose-500/30 transition whitespace-nowrap shrink-0"
             >
-              <Printer className="w-4 h-4 text-blue-500" />
-              <span className="hidden sm:inline">Print / PDF</span>
+              <Printer className="w-3.5 h-3.5 text-white" />
+              <span className="hidden sm:inline">Export PDF</span>
             </button>
 
             {isAdmin && (

@@ -83,6 +83,7 @@ export default function Settings() {
       {/* Top Standardized Frozen 2-Line Header */}
       <PageHeader
         icon={SettingsIcon}
+        theme="indigo"
         title="System & Notification Settings"
         subtitle="Configure Microsoft 365 / Outlook credentials and automated weekly compliance schedules."
         actions={

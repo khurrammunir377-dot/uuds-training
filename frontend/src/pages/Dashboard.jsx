@@ -72,6 +72,7 @@ export default function Dashboard({ onNavigate, onSelectEmployee }) {
       {/* Top Standardized Frozen 2-Line Header */}
       <PageHeader
         icon={Sparkles}
+        theme="sky"
         title="Technical Manpower Compliance Overview"
         subtitle={`Tracking ${active_employees_count} active staff across 21 mandatory aviation safety, GCAA, and EASA Part 145 courses.`}
         actions={

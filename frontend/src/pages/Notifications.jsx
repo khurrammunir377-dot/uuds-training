@@ -180,6 +180,7 @@ export default function Notifications({ onSelectEmployee }) {
       {/* Top Standardized Frozen 2-Line Header */}
       <PageHeader
         icon={Mail}
+        theme="cyan"
         title="Email & WhatsApp Dispatch Operations"
         subtitle="Trigger automated weekly audit reports, dispatch direct WhatsApp reminders, and inspect communication logs."
       />

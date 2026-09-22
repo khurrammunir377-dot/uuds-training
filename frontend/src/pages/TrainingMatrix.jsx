@@ -435,32 +435,25 @@ export default function TrainingMatrix({ onSelectEmployee }) {
       {/* Top Standardized Frozen 2-Line Header */}
       <PageHeader
         icon={Table}
+        theme="emerald"
         title="Training Compliance Matrix"
         subtitle="Interactive certification matrix to inspect and quickly update course expiry dates across all staff."
         actions={
           <div className="flex items-center gap-2">
             <button
               onClick={handleExportCSV}
-              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold border transition ${
-                isDark 
-                  ? 'bg-slate-800 hover:bg-slate-700 border-slate-700 text-slate-200' 
-                  : 'bg-slate-100 hover:bg-slate-200 border-slate-300 text-slate-800'
-              }`}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-500 shadow-md shadow-emerald-900/25 border border-emerald-500/30 transition"
             >
-              <Download className="w-3.5 h-3.5" />
+              <Download className="w-3.5 h-3.5 text-white" />
               <span>Export CSV</span>
             </button>
 
             <button
               onClick={handlePrint}
-              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold border transition ${
-                isDark 
-                  ? 'bg-slate-800 hover:bg-slate-700 border-slate-700 text-slate-200' 
-                  : 'bg-slate-100 hover:bg-slate-200 border-slate-300 text-slate-800'
-              }`}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-white bg-rose-600 hover:bg-rose-500 shadow-md shadow-rose-900/25 border border-rose-500/30 transition"
             >
-              <Printer className="w-3.5 h-3.5" />
-              <span>Print Report</span>
+              <Printer className="w-3.5 h-3.5 text-white" />
+              <span>Export PDF</span>
             </button>
 
             <button

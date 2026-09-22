@@ -131,6 +131,7 @@ export default function Reminders({ onSelectEmployee }) {
       {/* Top Standardized Frozen 2-Line Header */}
       <PageHeader
         icon={AlertTriangle}
+        theme="amber"
         title="Urgent Compliance Reminders"
         subtitle="Proactive monitoring of overdue certifications and qualifications expiring within 30 days."
         actions={
@@ -138,27 +139,19 @@ export default function Reminders({ onSelectEmployee }) {
             <button
               onClick={handleExportExcel}
               title="Export Urgent Records to Excel"
-              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold border transition shadow-sm ${
-                isDark 
-                  ? 'bg-slate-900 border-slate-700 text-emerald-400 hover:bg-slate-800' 
-                  : 'bg-white border-slate-300 text-emerald-700 hover:bg-emerald-50'
-              }`}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-500 shadow-md shadow-emerald-900/25 border border-emerald-500/30 transition shadow-sm"
             >
-              <FileSpreadsheet className="w-4 h-4 text-emerald-500" />
+              <FileSpreadsheet className="w-3.5 h-3.5 text-white" />
               <span className="hidden sm:inline">Export Excel</span>
             </button>
 
             <button
               onClick={handleExportPDF}
               title="Print or Save as PDF"
-              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold border transition shadow-sm ${
-                isDark 
-                  ? 'bg-slate-900 border-slate-700 text-slate-300 hover:bg-slate-800' 
-                  : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-100'
-              }`}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-white bg-rose-600 hover:bg-rose-500 shadow-md shadow-rose-900/25 border border-rose-500/30 transition shadow-sm"
             >
-              <Printer className="w-4 h-4 text-blue-500" />
-              <span className="hidden sm:inline">Print / PDF</span>
+              <Printer className="w-3.5 h-3.5 text-white" />
+              <span className="hidden sm:inline">Export PDF</span>
             </button>
 
             <button
