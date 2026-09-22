@@ -225,7 +225,7 @@ export default function Employees({ onSelectEmployee }) {
   };
 
   return (
-    <div className="space-y-5 animate-fade-in flex flex-col h-[calc(100vh-100px)]">
+    <div className="h-full w-full flex flex-col min-h-0 overflow-hidden gap-2.5 animate-fade-in">
       {/* Top Standardized Frozen 2-Line Header */}
       <PageHeader
         icon={Users}
@@ -376,7 +376,7 @@ export default function Employees({ onSelectEmployee }) {
           <div className={`border rounded-2xl overflow-hidden flex-1 flex flex-col shadow-xl ${
             isDark ? 'border-slate-800 bg-slate-900/70' : 'border-slate-300 bg-white'
           }`}>
-            <div className="overflow-x-auto flex-1 overflow-y-auto">
+            <div className="overflow-x-auto flex-1 overflow-y-auto matrix-scroll-glow">
               <table className={`w-full text-left text-xs border-collapse ${isDark ? 'text-slate-200' : 'text-slate-900'}`}>
                 {/* Frozen Sticky Header */}
                 <thead className={`sticky top-0 z-20 shadow-sm ${
@@ -484,7 +484,7 @@ export default function Employees({ onSelectEmployee }) {
           </div>
         ) : (
           /* Grid View - Scrollable */
-          <div className="flex-1 overflow-y-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 pr-1">
+          <div className="flex-1 overflow-y-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 pr-1 matrix-scroll-glow">
             {employees.map((emp) => (
               <div 
                 key={emp.id}

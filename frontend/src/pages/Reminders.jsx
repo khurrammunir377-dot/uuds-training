@@ -127,7 +127,7 @@ export default function Reminders({ onSelectEmployee }) {
   };
 
   return (
-    <div className="space-y-5 animate-fade-in flex flex-col h-[calc(100vh-100px)]">
+    <div className="h-full w-full flex flex-col min-h-0 overflow-hidden gap-2.5 animate-fade-in">
       {/* Top Standardized Frozen 2-Line Header */}
       <PageHeader
         icon={AlertTriangle}
@@ -172,9 +172,9 @@ export default function Reminders({ onSelectEmployee }) {
       />
 
       {/* 4 Summary KPI Cards */}
-      <div className="shrink-0 grid grid-cols-2 lg:grid-cols-4 gap-3.5">
+      <div className="shrink-0 grid grid-cols-2 lg:grid-cols-4 gap-2.5">
         {/* Total Urgent */}
-        <div className={`p-4 rounded-2xl border shadow-sm ${
+        <div className={`p-3 rounded-2xl border shadow-sm ${
           isDark ? 'bg-slate-900/80 border-slate-800' : 'bg-white border-slate-200'
         }`}>
           <div className="flex items-center justify-between">
@@ -194,7 +194,7 @@ export default function Reminders({ onSelectEmployee }) {
         {/* Critical Overdue */}
         <div 
           onClick={() => setFilterType('Overdue')}
-          className={`cursor-pointer p-4 rounded-2xl border transition shadow-sm ${
+          className={`cursor-pointer p-3 rounded-2xl border transition shadow-sm ${
             filterType === 'Overdue'
               ? 'border-red-500 ring-2 ring-red-500/20'
               : isDark ? 'bg-slate-900/80 border-red-500/30' : 'bg-white border-red-200'
@@ -217,7 +217,7 @@ export default function Reminders({ onSelectEmployee }) {
         {/* Due in 30 Days */}
         <div 
           onClick={() => setFilterType('Due Soon')}
-          className={`cursor-pointer p-4 rounded-2xl border transition shadow-sm ${
+          className={`cursor-pointer p-3 rounded-2xl border transition shadow-sm ${
             filterType === 'Due Soon'
               ? 'border-amber-500 ring-2 ring-amber-500/20'
               : isDark ? 'bg-slate-900/80 border-amber-500/30' : 'bg-white border-amber-200'
@@ -238,7 +238,7 @@ export default function Reminders({ onSelectEmployee }) {
         </div>
 
         {/* Affected Personnel */}
-        <div className={`p-4 rounded-2xl border shadow-sm ${
+        <div className={`p-3 rounded-2xl border shadow-sm ${
           isDark ? 'bg-slate-900/80 border-slate-800' : 'bg-white border-slate-200'
         }`}>
           <div className="flex items-center justify-between">
@@ -321,7 +321,7 @@ export default function Reminders({ onSelectEmployee }) {
       <div className={`border rounded-2xl overflow-hidden flex-1 flex flex-col shadow-xl ${
         isDark ? 'border-slate-800 bg-slate-900/80' : 'border-slate-300 bg-white'
       }`}>
-        <div className="overflow-x-auto flex-1 overflow-y-auto">
+        <div className="overflow-x-auto flex-1 overflow-y-auto matrix-scroll-glow">
           <table className={`w-full text-left text-xs border-collapse ${isDark ? 'text-slate-200' : 'text-slate-900'}`}>
             {/* Frozen Sticky Header */}
             <thead className={`sticky top-0 z-20 shadow-sm ${

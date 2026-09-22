@@ -2,36 +2,36 @@ import React from 'react';
 import { useTheme } from '../context/ThemeContext';
 
 /**
- * Color theme mapping for matching colored borders, glow shadows, and icon badges.
+ * Color theme mapping for matching thick colored borders, glow shadows, and icon badges.
  */
 const THEME_STYLES = {
   sky: {
-    border: 'border-sky-500/50 shadow-[0_4px_20px_rgba(14,165,233,0.15)]',
-    iconBadge: 'bg-sky-500/15 text-sky-400 border border-sky-500/30'
+    border: 'border-[3px] border-sky-500 shadow-[0_0_22px_rgba(14,165,233,0.25)]',
+    iconBadge: 'bg-sky-500/15 text-sky-500 dark:text-sky-400 border-2 border-sky-500/50'
   },
   blue: {
-    border: 'border-blue-500/50 shadow-[0_4px_20px_rgba(59,130,246,0.15)]',
-    iconBadge: 'bg-blue-500/15 text-blue-400 border border-blue-500/30'
+    border: 'border-[3px] border-blue-500 shadow-[0_0_22px_rgba(59,130,246,0.25)]',
+    iconBadge: 'bg-blue-500/15 text-blue-500 dark:text-blue-400 border-2 border-blue-500/50'
   },
   emerald: {
-    border: 'border-emerald-500/50 shadow-[0_4px_20px_rgba(16,185,129,0.15)]',
-    iconBadge: 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30'
+    border: 'border-[3px] border-emerald-500 shadow-[0_0_22px_rgba(16,185,129,0.25)]',
+    iconBadge: 'bg-emerald-500/15 text-emerald-500 dark:text-emerald-400 border-2 border-emerald-500/50'
   },
   amber: {
-    border: 'border-amber-500/50 shadow-[0_4px_20px_rgba(245,158,11,0.15)]',
-    iconBadge: 'bg-amber-500/15 text-amber-400 border border-amber-500/30'
+    border: 'border-[3px] border-amber-500 shadow-[0_0_22px_rgba(245,158,11,0.25)]',
+    iconBadge: 'bg-amber-500/15 text-amber-500 dark:text-amber-400 border-2 border-amber-500/50'
   },
   purple: {
-    border: 'border-purple-500/50 shadow-[0_4px_20px_rgba(168,85,247,0.15)]',
-    iconBadge: 'bg-purple-500/15 text-purple-400 border border-purple-500/30'
+    border: 'border-[3px] border-purple-500 shadow-[0_0_22px_rgba(168,85,247,0.25)]',
+    iconBadge: 'bg-purple-500/15 text-purple-500 dark:text-purple-400 border-2 border-purple-500/50'
   },
   cyan: {
-    border: 'border-cyan-500/50 shadow-[0_4px_20px_rgba(6,182,212,0.15)]',
-    iconBadge: 'bg-cyan-500/15 text-cyan-400 border border-cyan-500/30'
+    border: 'border-[3px] border-cyan-500 shadow-[0_0_22px_rgba(6,182,212,0.25)]',
+    iconBadge: 'bg-cyan-500/15 text-cyan-500 dark:text-cyan-400 border-2 border-cyan-500/50'
   },
   indigo: {
-    border: 'border-indigo-500/50 shadow-[0_4px_20px_rgba(99,102,241,0.15)]',
-    iconBadge: 'bg-indigo-500/15 text-indigo-400 border border-indigo-500/30'
+    border: 'border-[3px] border-indigo-500 shadow-[0_0_22px_rgba(99,102,241,0.25)]',
+    iconBadge: 'bg-indigo-500/15 text-indigo-500 dark:text-indigo-400 border-2 border-indigo-500/50'
   }
 };
 
@@ -41,7 +41,7 @@ const THEME_STYLES = {
  * - Line 2: Subheading
  * - Fixed/Standardized height across all pages
  * - Freezes at the top of the content area
- * - Page-specific matching color border and badge styling
+ * - Page-specific thick matching color border and badge styling
  */
 export default function PageHeader({ 
   icon: Icon, 
@@ -55,9 +55,9 @@ export default function PageHeader({
   const themeStyle = THEME_STYLES[theme] || THEME_STYLES.blue;
 
   return (
-    <div className={`shrink-0 min-h-[76px] sm:h-[84px] px-4 sm:px-6 py-3 rounded-2xl border shadow-md flex items-center justify-between gap-4 backdrop-blur-md transition-all ${
+    <div className={`shrink-0 min-h-[76px] sm:h-[84px] px-4 sm:px-6 py-3 rounded-2xl shadow-lg flex items-center justify-between gap-4 backdrop-blur-md transition-all ${
       isDark 
-        ? `bg-slate-900/90 text-slate-100 ${themeStyle.border}` 
+        ? `bg-slate-900/95 text-slate-100 ${themeStyle.border}` 
         : `bg-white/95 text-slate-900 ${themeStyle.border}`
     } ${className}`}>
       {/* 2-line Heading Area */}

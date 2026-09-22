@@ -169,7 +169,7 @@ export default function Courses() {
   };
 
   return (
-    <div className="space-y-4 animate-fade-in flex flex-col h-[calc(100vh-100px)]">
+    <div className="h-full w-full flex flex-col min-h-0 overflow-hidden gap-2.5 animate-fade-in">
       {/* Top Standardized Frozen 2-Line Header */}
       <PageHeader
         icon={BookOpen}
