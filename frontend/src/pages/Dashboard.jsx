@@ -17,6 +17,7 @@ import { useToast } from '../components/Toast';
 import { useTheme } from '../context/ThemeContext';
 import { formatDate } from '../utils/dateUtils';
 import { openWhatsApp } from '../utils/whatsapp';
+import PageHeader from '../components/PageHeader';
 
 export default function Dashboard({ onNavigate, onSelectEmployee }) {
   const { isDark } = useTheme();
@@ -68,46 +69,32 @@ export default function Dashboard({ onNavigate, onSelectEmployee }) {
 
   return (
     <div className="space-y-6 animate-fade-in pb-8">
-      {/* Top Banner */}
-      <div className={`p-6 rounded-3xl border shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-4 relative overflow-hidden ${
-        isDark 
-          ? 'bg-gradient-to-r from-blue-950/60 via-slate-900 to-indigo-950/60 border-slate-800' 
-          : 'bg-gradient-to-r from-blue-50 via-white to-slate-100 border-slate-200'
-      }`}>
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <Sparkles className="w-4 h-4 text-amber-500" />
-            <span className="text-xs font-bold uppercase tracking-wider text-amber-500">
-              Live Aviation Compliance Engine
-            </span>
+      {/* Top Standardized Frozen 2-Line Header */}
+      <PageHeader
+        icon={Sparkles}
+        title="Technical Manpower Compliance Overview"
+        subtitle={`Tracking ${active_employees_count} active staff across 21 mandatory aviation safety, GCAA, and EASA Part 145 courses.`}
+        actions={
+          <div className="flex items-center gap-2 sm:gap-3">
+            <button
+              onClick={() => onNavigate('employees')}
+              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold border transition ${
+                isDark ? 'bg-slate-800 hover:bg-slate-700 border-slate-700 text-white' : 'bg-white hover:bg-slate-100 border-slate-300 text-slate-800 shadow-sm'
+              }`}
+            >
+              <Users className="w-4 h-4 text-blue-500" />
+              <span>Staff Roster</span>
+            </button>
+            <button
+              onClick={() => onNavigate('reminders')}
+              className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-xs font-semibold text-white shadow-lg transition"
+            >
+              <AlertTriangle className="w-4 h-4" />
+              <span>Urgent Matrix ({((records?.overdue_count || 0) + (records?.due_soon_count || 0)).toLocaleString()})</span>
+            </button>
           </div>
-          <h1 className="text-2xl font-black tracking-tight">
-            Technical Manpower Compliance Overview
-          </h1>
-          <p className={`text-sm mt-1 ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
-            Tracking <strong>{active_employees_count} active staff</strong> across 21 mandatory aviation safety, GCAA, and EASA Part 145 courses.
-          </p>
-        </div>
-
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => onNavigate('employees')}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold border transition ${
-              isDark ? 'bg-slate-800 hover:bg-slate-700 border-slate-700 text-white' : 'bg-white hover:bg-slate-100 border-slate-300 text-slate-800 shadow-sm'
-            }`}
-          >
-            <Users className="w-4 h-4 text-blue-500" />
-            <span>Staff Roster</span>
-          </button>
-          <button
-            onClick={() => onNavigate('reminders')}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-sm font-semibold text-white shadow-lg transition"
-          >
-            <AlertTriangle className="w-4 h-4" />
-            <span>Urgent Matrix ({((records?.overdue_count || 0) + (records?.due_soon_count || 0)).toLocaleString()})</span>
-          </button>
-        </div>
-      </div>
+        }
+      />
 
       {/* 4 Main KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">

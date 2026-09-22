@@ -7,7 +7,9 @@ import {
   Edit2, 
   Trash2,
   FileSpreadsheet,
-  Printer
+  Printer,
+  LayoutGrid,
+  List
 } from 'lucide-react';
 import { api } from '../api';
 import { useToast } from '../components/Toast';
@@ -15,6 +17,7 @@ import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import ConfirmationModal from '../components/ConfirmationModal';
 import { exportToCSV, printTableAsPDF } from '../utils/exportUtils';
+import PageHeader from '../components/PageHeader';
 
 export default function Courses() {
   const { isAdmin } = useAuth();
@@ -25,6 +28,7 @@ export default function Courses() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('All');
+  const [viewMode, setViewMode] = useState('grid');
 
   // Add course modal state
   const [showAddModal, setShowAddModal] = useState(false);
@@ -166,72 +170,96 @@ export default function Courses() {
 
   return (
     <div className="space-y-4 animate-fade-in flex flex-col h-[calc(100vh-100px)]">
-      {/* Frozen Top Header with Heading & Controls on one line */}
-      <div className="shrink-0 flex flex-col xl:flex-row xl:items-center justify-between gap-3 pb-1">
-        <div className="flex items-center gap-3">
-          <BookOpen className="w-6 h-6 text-blue-500 shrink-0" />
-          <div>
-            <h1 className="text-xl sm:text-2xl font-black tracking-tight whitespace-nowrap">
-              Emirates MLZ Training Catalogue <span className="text-blue-500 font-mono text-lg font-bold">({filteredCourses.length})</span>
-            </h1>
-            <p className={`text-xs whitespace-nowrap ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
-              Mandatory aviation maintenance courses, validity cycles, and compliance rates.
-            </p>
-          </div>
-        </div>
+      {/* Top Standardized Frozen 2-Line Header */}
+      <PageHeader
+        icon={BookOpen}
+        title={`Emirates MLZ Training Catalogue (${filteredCourses.length})`}
+        subtitle="Mandatory aviation maintenance courses, validity cycles, and compliance rates."
+        actions={
+          <div className="flex items-center gap-2 sm:gap-2.5 flex-nowrap overflow-x-auto pb-1 xl:pb-0">
+            <div className="relative w-44 sm:w-52 shrink-0">
+              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+              <input
+                type="text"
+                placeholder="Search course code or title..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className={`w-full pl-9 pr-3 py-2 rounded-xl text-xs border focus:outline-none focus:border-blue-500 ${
+                  isDark ? 'bg-slate-900 border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-900'
+                }`}
+              />
+            </div>
 
-        {/* Search, Export Excel, Print/PDF, and Add New Course ALL in same line */}
-        <div className="flex items-center gap-2 sm:gap-2.5 flex-nowrap overflow-x-auto pb-1 xl:pb-0">
-          <div className="relative w-48 sm:w-56 shrink-0">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
-            <input
-              type="text"
-              placeholder="Search course code or title..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className={`w-full pl-9 pr-3 py-2 rounded-xl text-xs border focus:outline-none focus:border-blue-500 ${
-                isDark ? 'bg-slate-900 border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-900'
-              }`}
-            />
-          </div>
+            {/* View Mode Toggle Buttons (List / Grid) */}
+            <div className={`flex items-center border rounded-xl p-0.5 shrink-0 ${
+              isDark ? 'bg-slate-900 border-slate-700/80' : 'bg-slate-100 border-slate-300'
+            }`}>
+              <button
+                type="button"
+                onClick={() => setViewMode('grid')}
+                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold transition ${
+                  viewMode === 'grid'
+                    ? 'bg-blue-600 text-white shadow-sm'
+                    : isDark ? 'text-slate-400 hover:text-white' : 'text-slate-600 hover:text-slate-900'
+                }`}
+                title="Card Grid View"
+              >
+                <LayoutGrid className="w-3.5 h-3.5" />
+                <span className="hidden md:inline">Grid</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode('list')}
+                className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-bold transition ${
+                  viewMode === 'list'
+                    ? 'bg-blue-600 text-white shadow-sm'
+                    : isDark ? 'text-slate-400 hover:text-white' : 'text-slate-600 hover:text-slate-900'
+                }`}
+                title="Tabular List View"
+              >
+                <List className="w-3.5 h-3.5" />
+                <span className="hidden md:inline">List</span>
+              </button>
+            </div>
 
-          <button
-            onClick={handleExportExcel}
-            title="Export Course Catalogue to Excel"
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold border transition shadow-sm whitespace-nowrap shrink-0 ${
-              isDark 
-                ? 'bg-slate-900 border-slate-700 text-emerald-400 hover:bg-slate-800' 
-                : 'bg-white border-slate-300 text-emerald-700 hover:bg-emerald-50'
-            }`}
-          >
-            <FileSpreadsheet className="w-4 h-4 text-emerald-500" />
-            <span className="hidden sm:inline">Export Excel</span>
-          </button>
-
-          <button
-            onClick={handleExportPDF}
-            title="Print or Save as PDF"
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold border transition shadow-sm whitespace-nowrap shrink-0 ${
-              isDark 
-                ? 'bg-slate-900 border-slate-700 text-slate-300 hover:bg-slate-800' 
-                : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-100'
-            }`}
-          >
-            <Printer className="w-4 h-4 text-blue-500" />
-            <span className="hidden sm:inline">Print / PDF</span>
-          </button>
-
-          {isAdmin && (
             <button
-              onClick={() => setShowAddModal(true)}
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-white bg-blue-600 hover:bg-blue-500 shadow-md transition whitespace-nowrap shrink-0"
+              onClick={handleExportExcel}
+              title="Export Course Catalogue to Excel"
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold border transition shadow-sm whitespace-nowrap shrink-0 ${
+                isDark 
+                  ? 'bg-slate-900 border-slate-700 text-emerald-400 hover:bg-slate-800' 
+                  : 'bg-white border-slate-300 text-emerald-700 hover:bg-emerald-50'
+              }`}
             >
-              <Plus className="w-4 h-4" />
-              <span>Add New Course</span>
+              <FileSpreadsheet className="w-4 h-4 text-emerald-500" />
+              <span className="hidden sm:inline">Export Excel</span>
             </button>
-          )}
-        </div>
-      </div>
+
+            <button
+              onClick={handleExportPDF}
+              title="Print or Save as PDF"
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold border transition shadow-sm whitespace-nowrap shrink-0 ${
+                isDark 
+                  ? 'bg-slate-900 border-slate-700 text-slate-300 hover:bg-slate-800' 
+                  : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-100'
+              }`}
+            >
+              <Printer className="w-4 h-4 text-blue-500" />
+              <span className="hidden sm:inline">Print / PDF</span>
+            </button>
+
+            {isAdmin && (
+              <button
+                onClick={() => setShowAddModal(true)}
+                className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-white bg-blue-600 hover:bg-blue-500 shadow-md transition whitespace-nowrap shrink-0"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Add Course</span>
+              </button>
+            )}
+          </div>
+        }
+      />
 
       {/* Frozen Category Filter Pills */}
       <div className={`shrink-0 flex items-center gap-1.5 overflow-x-auto pb-2 border-b text-xs ${
@@ -254,14 +282,119 @@ export default function Courses() {
         ))}
       </div>
 
-      {/* Scrollable Course Cards Grid */}
-      <div className="flex-1 overflow-y-auto pr-1">
+      {/* Scrollable Course Cards Grid OR Table List View */}
+      <div className="flex-1 min-h-0 overflow-y-auto pr-1 matrix-scroll-glow">
         {loading ? (
           <div className="p-16 flex flex-col items-center justify-center gap-3">
             <div className="w-8 h-8 border-3 border-blue-500 border-t-transparent rounded-full animate-spin" />
             <p className="text-xs text-slate-400">Loading course curriculum...</p>
           </div>
+        ) : filteredCourses.length === 0 ? (
+          <div className="p-16 text-center">
+            <p className="text-sm text-slate-400">No courses match your filter criteria.</p>
+          </div>
+        ) : viewMode === 'list' ? (
+          /* List / Table View */
+          <div className={`rounded-2xl border shadow-lg overflow-hidden ${
+            isDark ? 'bg-slate-900/80 border-slate-800' : 'bg-white border-slate-200'
+          }`}>
+            <table className="w-full text-left border-collapse text-xs">
+              <thead className={`sticky top-0 z-10 ${
+                isDark ? 'bg-slate-950 text-slate-300 border-b border-slate-800' : 'bg-slate-100 text-slate-800 border-b border-slate-300'
+              }`}>
+                <tr>
+                  <th className="py-3 px-4 font-bold">Code</th>
+                  <th className="py-3 px-4 font-bold">Course Title & Description</th>
+                  <th className="py-3 px-4 font-bold">Category</th>
+                  <th className="py-3 px-4 font-bold text-center">Validity Cycle</th>
+                  <th className="py-3 px-4 font-bold text-center">Assigned Staff</th>
+                  <th className="py-3 px-4 font-bold">Compliance Status</th>
+                  {isAdmin && <th className="py-3 px-4 font-bold text-right">Actions</th>}
+                </tr>
+              </thead>
+              <tbody className={`divide-y ${isDark ? 'divide-slate-800' : 'divide-slate-200'}`}>
+                {filteredCourses.map((course) => {
+                  const tot = course.total_active_assigned || 0;
+                  const valid = course.valid_count || 0;
+                  const rate = tot > 0 ? Math.round((valid / tot) * 100) : 0;
+
+                  return (
+                    <tr 
+                      key={course.id}
+                      className={`transition ${isDark ? 'hover:bg-slate-800/60' : 'hover:bg-slate-50'}`}
+                    >
+                      <td className="py-3 px-4 whitespace-nowrap">
+                        <span className="px-2 py-1 rounded-lg bg-blue-500/10 text-blue-500 border border-blue-500/20 font-mono font-bold text-xs">
+                          {course.code}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4 max-w-md">
+                        <div className={`font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>{course.name}</div>
+                        <div className={`text-[11px] truncate max-w-sm mt-0.5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                          {course.description || 'Standard recurrent aviation safety requirement.'}
+                        </div>
+                      </td>
+                      <td className="py-3 px-4 whitespace-nowrap">
+                        <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-semibold ${
+                          isDark ? 'bg-slate-800 text-slate-300' : 'bg-slate-100 text-slate-700'
+                        }`}>
+                          {course.category}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4 whitespace-nowrap text-center font-semibold">
+                        {course.validity_months || 24} Months
+                      </td>
+                      <td className="py-3 px-4 whitespace-nowrap text-center font-mono font-bold">
+                        {tot} staff
+                      </td>
+                      <td className="py-3 px-4 min-w-[180px]">
+                        <div className="flex items-center justify-between text-[11px] font-mono mb-1">
+                          <span className={isDark ? 'text-slate-400' : 'text-slate-600'}>Compliance</span>
+                          <span className={`font-bold ${rate >= 75 ? 'text-emerald-500' : rate >= 50 ? 'text-amber-500' : 'text-red-500'}`}>
+                            {rate}% ({valid}/{tot})
+                          </span>
+                        </div>
+                        <div className={`w-full h-1.5 rounded-full overflow-hidden flex ${isDark ? 'bg-slate-800' : 'bg-slate-200'}`}>
+                          <div className="bg-emerald-500 h-full" style={{ width: `${tot > 0 ? (valid / tot) * 100 : 0}%` }} />
+                          <div className="bg-amber-400 h-full" style={{ width: `${tot > 0 ? ((course.due_soon_count || 0) / tot) * 100 : 0}%` }} />
+                          <div className="bg-red-500 h-full" style={{ width: `${tot > 0 ? ((course.overdue_count || 0) / tot) * 100 : 0}%` }} />
+                        </div>
+                      </td>
+                      {isAdmin && (
+                        <td className="py-3 px-4 whitespace-nowrap text-right">
+                          <div className="flex items-center justify-end gap-1.5">
+                            <button
+                              onClick={() => {
+                                setEditingCourse(course);
+                                setEditCourseData({ ...course });
+                              }}
+                              className={`p-1.5 rounded-lg transition ${
+                                isDark ? 'text-slate-400 hover:text-blue-400 hover:bg-slate-800' : 'text-slate-600 hover:text-blue-600 hover:bg-slate-100'
+                              }`}
+                              title="Edit Course"
+                            >
+                              <Edit2 className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              onClick={() => setDeleteTarget(course)}
+                              className={`p-1.5 rounded-lg transition ${
+                                isDark ? 'text-slate-400 hover:text-red-400 hover:bg-slate-800' : 'text-slate-600 hover:text-red-600 hover:bg-slate-100'
+                              }`}
+                              title="Delete Course"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </td>
+                      )}
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         ) : (
+          /* Card Grid View */
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pb-6">
             {filteredCourses.map((course) => {
               const tot = course.total_active_assigned || 0;

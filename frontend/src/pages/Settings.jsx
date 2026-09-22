@@ -11,6 +11,7 @@ import { api } from '../api';
 import { useToast } from '../components/Toast';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+import PageHeader from '../components/PageHeader';
 
 export default function Settings() {
   const { isAdmin } = useAuth();
@@ -79,27 +80,22 @@ export default function Settings() {
 
   return (
     <div className="animate-fade-in flex flex-col h-[calc(100vh-100px)] justify-between space-y-4">
-      {/* Top Header with Save Button right-aligned for instant single-screen access */}
-      <div className="shrink-0 flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-800/40">
-        <div>
-          <h1 className="text-2xl font-black tracking-tight flex items-center gap-2.5">
-            <SettingsIcon className="w-7 h-7 text-blue-500" />
-            <span>System & Notification Settings</span>
-          </h1>
-          <p className={`text-xs mt-0.5 ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
-            Configure Microsoft 365 / Outlook credentials and automated weekly compliance schedules.
-          </p>
-        </div>
-
-        <button
-          onClick={handleSave}
-          disabled={saving}
-          className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-xs font-bold text-white bg-blue-600 hover:bg-blue-500 shadow-md transition disabled:opacity-50 shrink-0"
-        >
-          <Save className="w-4 h-4" />
-          <span>{saving ? 'Saving...' : 'Save Configuration'}</span>
-        </button>
-      </div>
+      {/* Top Standardized Frozen 2-Line Header */}
+      <PageHeader
+        icon={SettingsIcon}
+        title="System & Notification Settings"
+        subtitle="Configure Microsoft 365 / Outlook credentials and automated weekly compliance schedules."
+        actions={
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-blue-600 hover:bg-blue-500 shadow-md transition disabled:opacity-50 shrink-0"
+          >
+            <Save className="w-4 h-4" />
+            <span>{saving ? 'Saving...' : 'Save Configuration'}</span>
+          </button>
+        }
+      />
 
       {/* Main Content Area - Clean 2-Column Grid that fits on screen without scrolling */}
       <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch overflow-hidden">

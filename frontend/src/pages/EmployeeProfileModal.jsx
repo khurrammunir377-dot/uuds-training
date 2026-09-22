@@ -627,7 +627,6 @@ export default function EmployeeProfileModal({ employeeId, onClose, onRefresh })
                                       {/* Year: Auto-filled */}
                                       <span 
                                         className="px-2 py-1 rounded-lg bg-blue-500/15 border border-blue-500/30 text-blue-400 font-mono text-xs font-bold"
-                                        title="Year is Auto-Filled"
                                       >
                                         {editYear}
                                       </span>

@@ -9,20 +9,81 @@
   }
 }
 
-/* Custom modern scrollbar */
+/* Custom modern scrollbar with high visibility and glowing hover */
 ::-webkit-scrollbar {
-  width: 7px;
-  height: 7px;
+  width: 10px;
+  height: 10px;
 }
 ::-webkit-scrollbar-track {
-  background: #090d16;
+  background: rgba(15, 23, 42, 0.6);
+  border-radius: 8px;
 }
 ::-webkit-scrollbar-thumb {
-  background: #1e293b;
-  border-radius: 4px;
+  background: #334155;
+  border-radius: 8px;
+  border: 2px solid rgba(15, 23, 42, 0.7);
+  transition: all 0.2s ease-in-out;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #334155;
+  background: #38bdf8;
+  box-shadow: 0 0 12px 2px rgba(56, 189, 248, 0.85);
+}
+
+/* Light Mode Global Scrollbar */
+.light ::-webkit-scrollbar-track,
+html.light ::-webkit-scrollbar-track,
+body.light ::-webkit-scrollbar-track {
+  background: #e2e8f0;
+}
+.light ::-webkit-scrollbar-thumb,
+html.light ::-webkit-scrollbar-thumb,
+body.light ::-webkit-scrollbar-thumb {
+  background: #94a3b8;
+  border: 2px solid #e2e8f0;
+}
+.light ::-webkit-scrollbar-thumb:hover,
+html.light ::-webkit-scrollbar-thumb:hover,
+body.light ::-webkit-scrollbar-thumb:hover {
+  background: #2563eb;
+  box-shadow: 0 0 12px 2px rgba(37, 99, 235, 0.75);
+}
+
+/* Matrix-specific high-contrast glowing scrollbar */
+.matrix-scroll-glow::-webkit-scrollbar {
+  width: 11px;
+  height: 11px;
+}
+.dark .matrix-scroll-glow::-webkit-scrollbar-track,
+.matrix-scroll-glow::-webkit-scrollbar-track {
+  background: #090d16;
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  border-radius: 8px;
+}
+.dark .matrix-scroll-glow::-webkit-scrollbar-thumb,
+.matrix-scroll-glow::-webkit-scrollbar-thumb {
+  background: #475569;
+  border-radius: 8px;
+  border: 2px solid #090d16;
+}
+.dark .matrix-scroll-glow::-webkit-scrollbar-thumb:hover,
+.matrix-scroll-glow::-webkit-scrollbar-thumb:hover {
+  background: #38bdf8;
+  box-shadow: 0 0 15px 3px rgba(56, 189, 248, 0.9);
+}
+
+.light .matrix-scroll-glow::-webkit-scrollbar-track {
+  background: #e2e8f0;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+}
+.light .matrix-scroll-glow::-webkit-scrollbar-thumb {
+  background: #64748b;
+  border-radius: 8px;
+  border: 2px solid #e2e8f0;
+}
+.light .matrix-scroll-glow::-webkit-scrollbar-thumb:hover {
+  background: #2563eb;
+  box-shadow: 0 0 15px 3px rgba(37, 99, 235, 0.85);
 }
 
 /* Glassmorphism utility */

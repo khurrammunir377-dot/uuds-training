@@ -22,6 +22,7 @@ import ConfirmationModal from '../components/ConfirmationModal';
 import { formatDate } from '../utils/dateUtils';
 import { exportToCSV, printTableAsPDF } from '../utils/exportUtils';
 import { openWhatsApp as sendWhatsApp } from '../utils/whatsapp';
+import PageHeader from '../components/PageHeader';
 
 export default function Employees({ onSelectEmployee }) {
   const { isAdmin } = useAuth();
@@ -225,70 +226,69 @@ export default function Employees({ onSelectEmployee }) {
 
   return (
     <div className="space-y-5 animate-fade-in flex flex-col h-[calc(100vh-100px)]">
-      {/* Top Header - Frozen */}
-      <div className="shrink-0 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-black tracking-tight flex items-center gap-2.5">
-            <Users className="w-7 h-7 text-blue-500" />
-            <span>Technical Staff Database</span>
-          </h1>
-          <p className={`text-xs mt-1 ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
-            Managing <strong>{totalCount} technical employees</strong> with individual course records.
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
-          {/* Export Buttons */}
-          <button
-            onClick={handleExportExcel}
-            title="Export Current Roster to Excel / CSV"
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold border transition shadow-sm ${
-              isDark 
-                ? 'bg-slate-900 border-slate-700 text-emerald-400 hover:bg-slate-800' 
-                : 'bg-white border-slate-300 text-emerald-700 hover:bg-emerald-50'
-            }`}
-          >
-            <FileSpreadsheet className="w-4 h-4 text-emerald-500" />
-            <span className="hidden sm:inline">Export Excel</span>
-          </button>
-
-          <button
-            onClick={handleExportPDF}
-            title="Print Roster or Save as PDF"
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold border transition shadow-sm ${
-              isDark 
-                ? 'bg-slate-900 border-slate-700 text-slate-300 hover:bg-slate-800' 
-                : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-100'
-            }`}
-          >
-            <Printer className="w-4 h-4 text-blue-500" />
-            <span className="hidden sm:inline">Print / PDF</span>
-          </button>
-
-          <div className={`flex items-center border rounded-xl p-1 ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-300'}`}>
+      {/* Top Standardized Frozen 2-Line Header */}
+      <PageHeader
+        icon={Users}
+        title="Technical Staff Database"
+        subtitle={`Managing ${totalCount} technical employees with individual course certification records.`}
+        actions={
+          <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+            {/* Export Buttons */}
             <button
-              onClick={() => setViewMode('table')}
-              className={`p-1.5 rounded-lg text-xs transition ${viewMode === 'table' ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:text-white'}`}
+              onClick={handleExportExcel}
+              title="Export Current Roster to Excel / CSV"
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold border transition shadow-sm ${
+                isDark 
+                  ? 'bg-slate-900 border-slate-700 text-emerald-400 hover:bg-slate-800' 
+                  : 'bg-white border-slate-300 text-emerald-700 hover:bg-emerald-50'
+              }`}
             >
-              <List className="w-4 h-4" />
+              <FileSpreadsheet className="w-4 h-4 text-emerald-500" />
+              <span className="hidden sm:inline">Export Excel</span>
             </button>
+
             <button
-              onClick={() => setViewMode('grid')}
-              className={`p-1.5 rounded-lg text-xs transition ${viewMode === 'grid' ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:text-white'}`}
+              onClick={handleExportPDF}
+              title="Print Roster or Save as PDF"
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold border transition shadow-sm ${
+                isDark 
+                  ? 'bg-slate-900 border-slate-700 text-slate-300 hover:bg-slate-800' 
+                  : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-100'
+              }`}
             >
-              <Grid className="w-4 h-4" />
+              <Printer className="w-4 h-4 text-blue-500" />
+              <span className="hidden sm:inline">Print / PDF</span>
             </button>
+
+            <div className={`flex items-center border rounded-xl p-1 ${isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-300'}`}>
+              <button
+                onClick={() => setViewMode('table')}
+                className={`p-1.5 rounded-lg text-xs transition ${viewMode === 'table' ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:text-white'}`}
+                title="Table View"
+              >
+                <List className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => setViewMode('grid')}
+                className={`p-1.5 rounded-lg text-xs transition ${viewMode === 'grid' ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:text-white'}`}
+                title="Card Grid View"
+              >
+                <Grid className="w-4 h-4" />
+              </button>
+            </div>
+
+            {isAdmin && (
+              <button
+                onClick={() => setShowAddModal(true)}
+                className="flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold text-white bg-blue-600 hover:bg-blue-500 shadow-md transition whitespace-nowrap"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Add Staff</span>
+              </button>
+            )}
           </div>
-
-          <button
-            onClick={() => setShowAddModal(true)}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-white bg-blue-600 hover:bg-blue-500 shadow-md transition"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Add Employee</span>
-          </button>
-        </div>
-      </div>
+        }
+      />
 
       {/* Employment Status Tabs with live counts - Frozen */}
       <div className={`shrink-0 flex items-center gap-2 overflow-x-auto pb-1 border-b text-xs font-bold ${isDark ? 'border-slate-800' : 'border-slate-200'}`}>

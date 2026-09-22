@@ -22,6 +22,7 @@ import { useToast } from '../components/Toast';
 import { useTheme } from '../context/ThemeContext';
 import { formatDate, formatDateTime } from '../utils/dateUtils';
 import { openWhatsApp as sendWhatsApp } from '../utils/whatsapp';
+import PageHeader from '../components/PageHeader';
 
 export default function Notifications({ onSelectEmployee }) {
   const { isDark } = useTheme();
@@ -176,21 +177,12 @@ export default function Notifications({ onSelectEmployee }) {
 
   return (
     <div className="space-y-6 animate-fade-in pb-10">
-      {/* Header */}
-      <div>
-        <div className="flex items-center gap-2 mb-1">
-          <Mail className="w-5 h-5 text-blue-500" />
-          <span className="text-xs font-bold uppercase tracking-wider text-blue-500">
-            Communication & Notification Center
-          </span>
-        </div>
-        <h1 className="text-2xl font-black tracking-tight">
-          Email & WhatsApp Dispatch Operations
-        </h1>
-        <p className={`text-xs mt-1 ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
-          Trigger automated weekly audit reports, dispatch direct WhatsApp reminders, and inspect communication logs.
-        </p>
-      </div>
+      {/* Top Standardized Frozen 2-Line Header */}
+      <PageHeader
+        icon={Mail}
+        title="Email & WhatsApp Dispatch Operations"
+        subtitle="Trigger automated weekly audit reports, dispatch direct WhatsApp reminders, and inspect communication logs."
+      />
 
       {/* Top 2 Action Cards: Email Dispatcher + WhatsApp Quick Dispatcher */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">

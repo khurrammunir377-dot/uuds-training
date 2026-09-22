@@ -26,6 +26,7 @@ import { useTheme } from '../context/ThemeContext';
 import { api } from '../api';
 import { useToast } from '../components/Toast';
 import { exportToCSV, printTableAsPDF } from '../utils/exportUtils';
+import PageHeader from '../components/PageHeader';
 
 export default function TrainingMatrix({ onSelectEmployee }) {
   const { isDark } = useTheme();
@@ -431,34 +432,13 @@ export default function TrainingMatrix({ onSelectEmployee }) {
 
   return (
     <div className="h-full w-full flex flex-col overflow-hidden gap-2.5 animate-fade-in">
-      {/* Top Banner & Control Area (Fixed Header) */}
-      <div className={`shrink-0 p-3 sm:p-4 rounded-xl border transition-all duration-200 ${
-        isDark 
-          ? 'bg-slate-900/90 border-slate-800 backdrop-blur-md text-slate-100' 
-          : 'bg-white border-slate-200 text-slate-900 shadow-sm'
-      }`}>
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
-          <div>
-            <div className="flex items-center gap-2.5">
-              <div className="p-2 rounded-xl bg-blue-600/20 text-blue-500 border border-blue-500/30">
-                <Table className="w-6 h-6" />
-              </div>
-              <div>
-                <h1 className="text-xl sm:text-2xl font-black tracking-tight flex items-center gap-2">
-                  Training Compliance Matrix
-                  <span className="text-xs px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider bg-blue-500/15 text-blue-400 border border-blue-500/30">
-                    Fast Date Editor
-                  </span>
-                </h1>
-                <p className={`text-xs sm:text-sm ${isDark ? 'text-slate-400' : 'text-slate-600'} mt-0.5`}>
-                  Interactive certification matrix to inspect and quickly update course expiry dates across all staff
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Action Buttons */}
-          <div className="flex flex-wrap items-center gap-2">
+      {/* Top Standardized Frozen 2-Line Header */}
+      <PageHeader
+        icon={Table}
+        title="Training Compliance Matrix"
+        subtitle="Interactive certification matrix to inspect and quickly update course expiry dates across all staff."
+        actions={
+          <div className="flex items-center gap-2">
             <button
               onClick={handleExportCSV}
               className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold border transition ${
@@ -495,10 +475,14 @@ export default function TrainingMatrix({ onSelectEmployee }) {
               <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin text-blue-500' : ''}`} />
             </button>
           </div>
-        </div>
+        }
+      />
 
-        {/* Filter Controls Row */}
-        <div className="mt-2.5 pt-2.5 border-t border-slate-700/50 flex flex-col md:flex-row md:items-center justify-between gap-2.5">
+      {/* Filter Controls Row */}
+      <div className={`shrink-0 px-4 py-2.5 rounded-xl border transition-all duration-200 ${
+        isDark ? 'bg-slate-900/90 border-slate-800 text-slate-100' : 'bg-white border-slate-200 text-slate-900 shadow-sm'
+      }`}>
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-2.5">
           {/* Status Tabs */}
           <div className="flex flex-wrap items-center gap-1.5">
             {['Active', 'All', 'Unpaid Leave', 'DWC TX', 'Non-Technical', 'RESIGN'].map(tab => (
@@ -656,7 +640,7 @@ export default function TrainingMatrix({ onSelectEmployee }) {
             </p>
           </div>
         ) : (
-          <div className="flex-1 min-h-0 w-full overflow-auto scrollbar-thin">
+          <div className="flex-1 min-h-0 w-full overflow-auto matrix-scroll-glow">
             <table className="w-full text-left border-collapse text-xs">
               {/* Sticky Table Header */}
               <thead className={`sticky top-0 z-20 ${
@@ -889,9 +873,8 @@ export default function TrainingMatrix({ onSelectEmployee }) {
             {/* Completion Date Picker with Auto-Filled Year */}
             <div className="space-y-4">
               <div>
-                <label className="text-xs font-bold flex items-center justify-between mb-1.5">
-                  <span>Training Completion Date:</span>
-                  <span className="text-[11px] text-blue-400 font-normal">Year auto-filled</span>
+                <label className="text-xs font-bold block mb-1.5">
+                  Training Completion Date:
                 </label>
                 <div className="grid grid-cols-3 gap-2">
                   {/* Day */}

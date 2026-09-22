@@ -99,22 +99,24 @@ export default function Navbar() {
         </button>
 
         {/* High-Visibility Day, Date & Live Clock Badge */}
-        <div className={`flex items-center gap-3 px-4 py-2 rounded-2xl border shadow-inner font-mono transition-colors ${
+        <div className={`flex items-center gap-3 sm:gap-4 px-4 sm:px-5 py-2 sm:py-2.5 rounded-2xl border shadow-inner font-mono transition-colors ${
           isDark 
-            ? 'bg-slate-950/80 border-slate-800 text-slate-100' 
-            : 'bg-slate-100 border-slate-300 text-slate-900'
+            ? 'bg-slate-950/90 border-slate-700/80 text-slate-100 shadow-[0_0_15px_rgba(0,0,0,0.5)]' 
+            : 'bg-slate-100 border-slate-300 text-slate-900 shadow-sm'
         }`}>
-          <div className="flex items-center gap-1.5 text-xs font-semibold">
-            <Calendar className="w-3.5 h-3.5 text-blue-500" />
-            <span className="hidden md:inline font-bold text-blue-500">{currentDateTime.day},</span>
-            <span className="font-bold text-sm tracking-tight">{currentDateTime.dateStr}</span>
+          {/* Day & Date */}
+          <div className="flex items-center gap-2">
+            <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-blue-500 shrink-0" />
+            <span className="font-extrabold text-xs sm:text-sm text-blue-500 uppercase tracking-wider">{currentDateTime.day},</span>
+            <span className="font-black text-sm sm:text-base tracking-tight">{currentDateTime.dateStr}</span>
           </div>
 
-          <span className={`hidden sm:inline ${isDark ? 'text-slate-700' : 'text-slate-300'}`}>|</span>
+          <span className={`h-5 w-px ${isDark ? 'bg-slate-700' : 'bg-slate-300'}`} />
 
-          <div className="flex items-center gap-1.5 text-xs font-extrabold text-blue-400">
-            <Clock className="w-3.5 h-3.5 text-amber-500 animate-pulse" />
-            <span className="text-sm tracking-wider text-amber-500">{currentDateTime.timeStr}</span>
+          {/* Time Clock */}
+          <div className="flex items-center gap-2 text-amber-500">
+            <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-amber-500 animate-pulse shrink-0" />
+            <span className="text-base sm:text-lg font-black tracking-wider font-mono drop-shadow-[0_0_8px_rgba(245,158,11,0.3)]">{currentDateTime.timeStr}</span>
           </div>
         </div>
       </div>
