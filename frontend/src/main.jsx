@@ -20,3 +20,5 @@ ReactDOM.createRoot(document.getElementById('root')).render(
     </ErrorBoundary>
   </React.StrictMode>,
 )
+window.__uuds_react_mounted = true;
+
