@@ -104,7 +104,7 @@ export default function Dashboard({ onNavigate, onSelectEmployee }) {
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-sm font-semibold text-white shadow-lg transition"
           >
             <AlertTriangle className="w-4 h-4" />
-            <span>Urgent Matrix ({records.overdue_count + records.due_soon_count})</span>
+            <span>Urgent Matrix ({((records?.overdue_count || 0) + (records?.due_soon_count || 0)).toLocaleString()})</span>
           </button>
         </div>
       </div>
@@ -125,7 +125,7 @@ export default function Dashboard({ onNavigate, onSelectEmployee }) {
           </div>
           <div className="mt-4">
             <span className="text-3xl font-extrabold text-emerald-500 font-mono">
-              {records.valid_count.toLocaleString()}
+              {(records?.valid_count ?? 0).toLocaleString()}
             </span>
             <span className={`text-xs ml-2 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>records</span>
           </div>
@@ -157,7 +157,7 @@ export default function Dashboard({ onNavigate, onSelectEmployee }) {
           </div>
           <div className="mt-4">
             <span className="text-3xl font-extrabold text-amber-500 font-mono">
-              {records.due_soon_count.toLocaleString()}
+              {(records?.due_soon_count ?? 0).toLocaleString()}
             </span>
             <span className={`text-xs ml-2 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>courses expiring</span>
           </div>
@@ -184,7 +184,7 @@ export default function Dashboard({ onNavigate, onSelectEmployee }) {
           </div>
           <div className="mt-4">
             <span className="text-3xl font-extrabold text-red-500 font-mono">
-              {records.overdue_count.toLocaleString()}
+              {(records?.overdue_count ?? 0).toLocaleString()}
             </span>
             <span className={`text-xs ml-2 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>courses expired</span>
           </div>
@@ -208,7 +208,7 @@ export default function Dashboard({ onNavigate, onSelectEmployee }) {
           </div>
           <div className="mt-4">
             <span className={`text-3xl font-extrabold font-mono ${isDark ? 'text-slate-100' : 'text-slate-900'}`}>
-              {records.not_recorded_count.toLocaleString()}
+              {(records?.not_recorded_count ?? 0).toLocaleString()}
             </span>
             <span className={`text-xs ml-2 ${isDark ? 'text-slate-400' : 'text-slate-600 font-medium'}`}>pending record</span>
           </div>
