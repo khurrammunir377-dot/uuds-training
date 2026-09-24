@@ -127,6 +127,20 @@ class BatchMatrixUpdateRequest(BaseModel):
     expiry_date: Optional[str] = None
     notes: Optional[str] = None
 
+class UserCreateRequest(BaseModel):
+    username: str
+    password: str
+    role: Optional[str] = "user"
+    full_name: Optional[str] = ""
+    email: Optional[str] = ""
+
+class UserUpdateRequest(BaseModel):
+    username: Optional[str] = None
+    role: Optional[str] = None
+    full_name: Optional[str] = None
+    email: Optional[str] = None
+    password: Optional[str] = None
+
 # ----------------- Auth Routes -----------------
 @app.post("/api/auth/login")
 def login(req: LoginRequest):
@@ -153,6 +167,133 @@ def login(req: LoginRequest):
 @app.get("/api/auth/me")
 def get_me(user: dict = Depends(get_current_user)):
     return {"user": user}
+
+# ----------------- User Management Routes (Admin Only) -----------------
+@app.get("/api/users")
+def get_users(admin: dict = Depends(require_admin)):
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT id, username, role, full_name, email, created_at FROM users ORDER BY id ASC")
+    users = [dict(r) for r in cursor.fetchall()]
+    conn.close()
+    return users
+
+@app.post("/api/users")
+def create_user(req: UserCreateRequest, admin: dict = Depends(require_admin)):
+    username = req.username.strip()
+    if not username:
+        raise HTTPException(status_code=400, detail="User ID / Username is required.")
+    if not req.password or not req.password.strip():
+        raise HTTPException(status_code=400, detail="Password is required.")
+        
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT id FROM users WHERE username = ?", (username,))
+    if cursor.fetchone():
+        conn.close()
+        raise HTTPException(status_code=400, detail=f"User ID '{username}' already exists.")
+        
+    role = req.role if req.role in ["admin", "user"] else "user"
+    pwd_hash = hash_password(req.password.strip())
+    cursor.execute("""
+    INSERT INTO users (username, password_hash, role, full_name, email)
+    VALUES (?, ?, ?, ?, ?)
+    """, (username, pwd_hash, role, req.full_name.strip() if req.full_name else username, req.email.strip() if req.email else ""))
+    new_id = cursor.lastrowid
+    conn.commit()
+    conn.close()
+    log_audit(admin.get("username", "admin"), f"Created user '{username}' ({role})", "user", new_id)
+    return {
+        "id": new_id, 
+        "username": username, 
+        "role": role, 
+        "full_name": req.full_name.strip() if req.full_name else username, 
+        "email": req.email.strip() if req.email else ""
+    }
+
+@app.put("/api/users/{user_id}")
+def update_user(user_id: int, req: UserUpdateRequest, admin: dict = Depends(require_admin)):
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM users WHERE id = ?", (user_id,))
+    target = cursor.fetchone()
+    if not target:
+        conn.close()
+        raise HTTPException(status_code=404, detail="User not found.")
+        
+    updates = []
+    params = []
+    
+    # Update username (User ID) if provided
+    if req.username is not None and req.username.strip():
+        new_username = req.username.strip()
+        if new_username != target["username"]:
+            cursor.execute("SELECT id FROM users WHERE username = ? AND id != ?", (new_username, user_id))
+            if cursor.fetchone():
+                conn.close()
+                raise HTTPException(status_code=400, detail=f"User ID '{new_username}' is already in use.")
+            updates.append("username = ?")
+            params.append(new_username)
+            
+    if req.full_name is not None:
+        updates.append("full_name = ?")
+        params.append(req.full_name.strip())
+        
+    if req.email is not None:
+        updates.append("email = ?")
+        params.append(req.email.strip())
+        
+    if req.role is not None and req.role in ["admin", "user"]:
+        if target["role"] == "admin" and req.role != "admin":
+            cursor.execute("SELECT COUNT(*) as count FROM users WHERE role = 'admin'")
+            admin_count = cursor.fetchone()["count"]
+            if admin_count <= 1:
+                conn.close()
+                raise HTTPException(status_code=400, detail="Cannot demote the only remaining administrator.")
+        updates.append("role = ?")
+        params.append(req.role)
+        
+    if req.password is not None and req.password.strip():
+        updates.append("password_hash = ?")
+        params.append(hash_password(req.password.strip()))
+        
+    if updates:
+        params.append(user_id)
+        cursor.execute(f"UPDATE users SET {', '.join(updates)} WHERE id = ?", tuple(params))
+        conn.commit()
+        
+    cursor.execute("SELECT id, username, role, full_name, email, created_at FROM users WHERE id = ?", (user_id,))
+    updated = dict(cursor.fetchone())
+    conn.close()
+    log_audit(admin.get("username", "admin"), f"Updated user '{target['username']}'", "user", user_id)
+    return updated
+
+@app.delete("/api/users/{user_id}")
+def delete_user(user_id: int, admin: dict = Depends(require_admin)):
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM users WHERE id = ?", (user_id,))
+    target = cursor.fetchone()
+    if not target:
+        conn.close()
+        raise HTTPException(status_code=404, detail="User not found.")
+        
+    if target["username"] == admin.get("username"):
+        conn.close()
+        raise HTTPException(status_code=400, detail="You cannot delete your own currently active account.")
+        
+    if target["role"] == "admin":
+        cursor.execute("SELECT COUNT(*) as count FROM users WHERE role = 'admin'")
+        admin_count = cursor.fetchone()["count"]
+        if admin_count <= 1:
+            conn.close()
+            raise HTTPException(status_code=400, detail="Cannot delete the only remaining administrator.")
+            
+    cursor.execute("DELETE FROM users WHERE id = ?", (user_id,))
+    conn.commit()
+    conn.close()
+    log_audit(admin.get("username", "admin"), f"Deleted user '{target['username']}'", "user", user_id)
+    return {"success": True, "message": f"User '{target['username']}' deleted successfully."}
 
 # ----------------- Dashboard Routes -----------------
 @app.get("/api/dashboard/stats")

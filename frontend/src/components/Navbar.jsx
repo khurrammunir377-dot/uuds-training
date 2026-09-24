@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Clock, Sun, Moon, Calendar } from 'lucide-react';
+import { Clock, Sun, Moon, Calendar, Plane } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { formatDate } from '../utils/dateUtils';
 import A380Icon from './A380Icon';
@@ -67,34 +67,40 @@ export default function Navbar() {
               DXB
             </span>
           </div>
-          <p className={`text-xs font-medium ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-            Aviation Training Compliance & Manpower Tracker
-          </p>
+
+          {/* Animated Subheading with Moving Aircraft Icon written right behind logo */}
+          <div className="flex items-center gap-1.5 mt-0.5 overflow-hidden">
+            <div className="animate-plane-patrol inline-flex items-center">
+              <Plane className="w-3.5 h-3.5 text-sky-400 drop-shadow-[0_0_8px_rgba(56,189,248,0.9)]" />
+            </div>
+            <p className={`text-xs font-semibold tracking-wide select-none ${
+              isDark 
+                ? 'bg-gradient-to-r from-slate-300 via-sky-300 to-blue-400 bg-clip-text text-transparent animate-subheading-shimmer' 
+                : 'bg-gradient-to-r from-slate-700 via-blue-600 to-indigo-700 bg-clip-text text-transparent animate-subheading-shimmer'
+            }`}>
+              Aviation Training Compliance & Manpower Tracker
+            </p>
+          </div>
         </div>
       </div>
 
       {/* Right Controls: Theme Switcher & High-Visibility Date / Time Badge */}
       <div className="flex items-center gap-3 sm:gap-4">
-        {/* Theme Toggle Button */}
+        {/* Theme Toggle Button (Icon-only, no light/dark text) */}
         <button
           onClick={toggleTheme}
           title={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-          className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-bold border transition-all duration-200 ${
+          aria-label={isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+          className={`p-2.5 rounded-xl border transition-all duration-200 flex items-center justify-center ${
             isDark
-              ? 'bg-slate-800/90 border-slate-700 text-amber-400 hover:bg-slate-700 hover:text-amber-300'
-              : 'bg-slate-100 border-slate-300 text-slate-700 hover:bg-slate-200 hover:text-slate-900'
+              ? 'bg-slate-800/90 border-slate-700 text-amber-400 hover:bg-slate-700 hover:text-amber-300 shadow-[0_0_12px_rgba(251,191,36,0.2)]'
+              : 'bg-slate-100 border-slate-300 text-indigo-600 hover:bg-slate-200 hover:text-indigo-700 shadow-sm'
           }`}
         >
           {isDark ? (
-            <>
-              <Sun className="w-4 h-4 text-amber-400" />
-              <span className="hidden sm:inline">Light</span>
-            </>
+            <Sun className="w-4 h-4 text-amber-400" />
           ) : (
-            <>
-              <Moon className="w-4 h-4 text-indigo-600" />
-              <span className="hidden sm:inline">Dark</span>
-            </>
+            <Moon className="w-4 h-4 text-indigo-600" />
           )}
         </button>
 

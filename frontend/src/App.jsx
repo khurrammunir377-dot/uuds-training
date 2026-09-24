@@ -72,7 +72,7 @@ export default function App() {
 
         {/* Dynamic Page Content Area */}
         <main className={`flex-1 w-full min-h-0 ${
-          ['matrix', 'employees', 'reminders', 'courses'].includes(activeTab)
+          ['matrix', 'employees', 'reminders', 'courses', 'settings'].includes(activeTab)
             ? 'h-full overflow-hidden p-2 sm:p-3 flex flex-col' 
             : 'overflow-y-auto p-3 sm:p-6'
         }`}>

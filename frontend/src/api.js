@@ -103,5 +103,11 @@ export const api = {
     return apiRequest(`/matrix?${query}`);
   },
   batchUpdateMatrix: (data) => apiRequest('/matrix/batch-update', { method: 'POST', body: JSON.stringify(data) }),
+
+  // User Management (Admin Only)
+  getUsers: () => apiRequest('/users'),
+  createUser: (data) => apiRequest('/users', { method: 'POST', body: JSON.stringify(data) }),
+  updateUser: (userId, data) => apiRequest(`/users/${userId}`, { method: 'PUT', body: JSON.stringify(data) }),
+  deleteUser: (userId) => apiRequest(`/users/${userId}`, { method: 'DELETE' }),
 };
 
