@@ -4,6 +4,8 @@ import { useTheme } from '../context/ThemeContext';
 import { formatDate } from '../utils/dateUtils';
 import A380Icon from './A380Icon';
 
+const SUBHEADER_TEXT = "Aviation Training Compliance & Manpower Tracker";
+
 export default function Navbar() {
   const { theme, toggleTheme, isDark } = useTheme();
   const [currentDateTime, setCurrentDateTime] = useState({
@@ -11,6 +13,32 @@ export default function Navbar() {
     dateStr: '',
     timeStr: ''
   });
+
+  // Typewriter state: text types forward, pauses, erases backward, and loops
+  const [typedText, setTypedText] = useState('');
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  useEffect(() => {
+    let timer;
+    if (!isDeleting && typedText === SUBHEADER_TEXT) {
+      // Completed typing forward, pause at full text for 3.5s
+      timer = setTimeout(() => setIsDeleting(true), 3500);
+    } else if (isDeleting && typedText === '') {
+      // Completed deleting backward, brief pause then type forward
+      timer = setTimeout(() => setIsDeleting(false), 500);
+    } else {
+      // 55ms forward typing, 25ms backward deleting
+      const speed = isDeleting ? 25 : 55;
+      timer = setTimeout(() => {
+        setTypedText(prev => 
+          isDeleting 
+            ? SUBHEADER_TEXT.substring(0, prev.length - 1)
+            : SUBHEADER_TEXT.substring(0, prev.length + 1)
+        );
+      }, speed);
+    }
+    return () => clearTimeout(timer);
+  }, [typedText, isDeleting]);
 
   useEffect(() => {
     const updateTime = () => {
@@ -68,20 +96,27 @@ export default function Navbar() {
             </span>
           </div>
 
-          {/* Animated Subheading with floating plane icon, typewriter text effect & blinking border cursor */}
-          <div className="flex items-center gap-2 mt-0.5 overflow-hidden">
-            <div className="animate-plane-float shrink-0">
-              <Plane className="w-3.5 h-3.5 text-sky-400 drop-shadow-[0_0_8px_rgba(56,189,248,0.9)]" />
-            </div>
-            <div className="overflow-hidden flex items-center">
-              <span className={`typewriter-subheading text-xs font-semibold tracking-wide select-none ${
-                isDark 
-                  ? 'text-slate-300' 
-                  : 'text-slate-700'
-              }`}>
-                Aviation Training Compliance & Manpower Tracker
+          {/* Subheading: Typewriter text -> Blinking Cursor -> Floating Airplane Logo (moves forward & back with text) */}
+          <div className="flex items-center mt-0.5 h-5 overflow-hidden select-none">
+            <span className={`text-xs font-semibold tracking-wide ${
+              isDark ? 'text-slate-300' : 'text-slate-700'
+            }`}>
+              {typedText}
+            </span>
+
+            {/* Blinking Border Cursor */}
+            <span className={`inline-block w-[2px] h-3.5 mx-0.5 animate-blink-cursor shrink-0 ${
+              isDark ? 'bg-sky-400' : 'bg-blue-600'
+            }`} />
+
+            {/* Aeroplane Logo right after cursor, moves forward & back with text */}
+            <span className={`inline-flex items-center shrink-0 ml-1 transition-transform duration-300 ${
+              isDeleting ? 'scale-x-[-1]' : 'scale-x-100'
+            }`}>
+              <span className="animate-plane-float inline-flex items-center">
+                <Plane className="w-3.5 h-3.5 text-sky-400 drop-shadow-[0_0_8px_rgba(56,189,248,0.95)]" />
               </span>
-            </div>
+            </span>
           </div>
         </div>
       </div>

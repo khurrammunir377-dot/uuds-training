@@ -285,28 +285,44 @@ body.light ::-webkit-scrollbar-thumb:hover {
 /* Smoothly Floating Plane Icon */
 @keyframes planeFloatSmooth {
   0%, 100% {
-    transform: translateY(0px) translateX(0px) rotate(-45deg);
-    filter: drop-shadow(0 0 6px rgba(56, 189, 248, 0.8));
+    transform: translateY(0px) rotate(-45deg);
+    filter: drop-shadow(0 0 6px rgba(56, 189, 248, 0.85));
   }
   25% {
-    transform: translateY(-3.5px) translateX(1.5px) rotate(-41deg);
-    filter: drop-shadow(0 0 12px rgba(56, 189, 248, 0.95));
+    transform: translateY(-3px) rotate(-40deg);
+    filter: drop-shadow(0 0 12px rgba(56, 189, 248, 1));
   }
   50% {
-    transform: translateY(0px) translateX(3px) rotate(-45deg);
-    filter: drop-shadow(0 0 8px rgba(56, 189, 248, 0.8));
+    transform: translateY(0px) rotate(-45deg);
+    filter: drop-shadow(0 0 8px rgba(56, 189, 248, 0.85));
   }
   75% {
-    transform: translateY(2.5px) translateX(1px) rotate(-49deg);
+    transform: translateY(2.5px) rotate(-50deg);
     filter: drop-shadow(0 0 5px rgba(56, 189, 248, 0.65));
   }
 }
 
 .animate-plane-float {
-  animation: planeFloatSmooth 3.6s ease-in-out infinite;
+  animation: planeFloatSmooth 3.2s ease-in-out infinite;
   display: inline-flex;
   align-items: center;
   will-change: transform, filter;
+}
+
+/* Blinking Cursor Keyframes */
+@keyframes blinkCursorAnim {
+  0%, 100% {
+    opacity: 1;
+    box-shadow: 0 0 6px rgba(56, 189, 248, 0.9);
+  }
+  50% {
+    opacity: 0;
+    box-shadow: none;
+  }
+}
+
+.animate-blink-cursor {
+  animation: blinkCursorAnim 0.75s step-end infinite;
 }
 
 /* Sub-header Typewriter Text Effect & Blinking Border Cursor */
