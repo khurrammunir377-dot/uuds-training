@@ -21,7 +21,7 @@ import { useToast } from '../components/Toast';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { formatDate, formatDateTime } from '../utils/dateUtils';
-import { openWhatsApp as sendWhatsAppAlert } from '../utils/whatsapp';
+import { openWhatsApp as sendWhatsAppAlert, formatWhatsAppComplianceMessage } from '../utils/whatsapp';
 
 const DAYS = Array.from({ length: 31 }, (_, i) => String(i + 1).padStart(2, '0'));
 const MONTHS = [
@@ -193,20 +193,21 @@ export default function EmployeeProfileModal({ employeeId, onClose, onRefresh })
       return;
     }
     const pendingCourses = (profile.courses || [])
-      .filter(c => c.status === 'Overdue' || c.status === 'Due Within 30 Days')
-      .map(c => `- ${c.course_code}: ${c.course_name} (Expiry: ${formatDate(c.expiry_date)} - ${c.status})`)
-      .join('\n');
+      .filter(c => c.status === 'Overdue' || c.status === 'Due Within 30 Days');
 
-    let text = `Dear ${profile.full_name},\n\nThis is an official compliance notification regarding your aviation training records.\n`;
-    if (pendingCourses) {
-      text += `The following certifications require immediate renewal:\n${pendingCourses}\n\n`;
-    } else {
-      text += `All your current aviation safety certifications are valid and compliant. Thank you.\n\n`;
-    }
-    text += `Best regards,\nManager Training, UUDS Aero (DXB)`;
+    const coursesToReport = pendingCourses.length > 0 ? pendingCourses : (profile.courses || []).slice(0, 1);
+    const text = formatWhatsAppComplianceMessage({
+      fullName: profile.full_name,
+      courses: coursesToReport.map(c => ({
+        code: c.course_code,
+        name: c.course_name,
+        expiry_date: c.expiry_date,
+        status: c.status
+      }))
+    });
 
     sendWhatsAppAlert(rawMobile, text);
-    toast.success('Opening WhatsApp in your single WhatsApp tab...');
+    toast.success('Opening WhatsApp with official compliance notification...');
   };
 
   const printRecord = () => {

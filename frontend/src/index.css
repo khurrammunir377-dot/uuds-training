@@ -282,50 +282,81 @@ body.light ::-webkit-scrollbar-thumb:hover {
   pointer-events: none;
 }
 
-/* Aircraft Forward and Back Flight Patrol Animation */
-@keyframes planePatrolSmooth {
-  0% {
-    transform: translateX(0px) translateY(0px) rotate(-45deg) scaleX(1);
+/* Smoothly Floating Plane Icon */
+@keyframes planeFloatSmooth {
+  0%, 100% {
+    transform: translateY(0px) translateX(0px) rotate(-45deg);
+    filter: drop-shadow(0 0 6px rgba(56, 189, 248, 0.8));
   }
-  24% {
-    transform: translateX(20px) translateY(-1.5px) rotate(-40deg) scaleX(1);
-  }
-  48% {
-    transform: translateX(38px) translateY(0px) rotate(-45deg) scaleX(1);
+  25% {
+    transform: translateY(-3.5px) translateX(1.5px) rotate(-41deg);
+    filter: drop-shadow(0 0 12px rgba(56, 189, 248, 0.95));
   }
   50% {
-    transform: translateX(38px) translateY(0px) rotate(-45deg) scaleX(-1);
+    transform: translateY(0px) translateX(3px) rotate(-45deg);
+    filter: drop-shadow(0 0 8px rgba(56, 189, 248, 0.8));
   }
-  74% {
-    transform: translateX(18px) translateY(1.5px) rotate(-40deg) scaleX(-1);
-  }
-  98% {
-    transform: translateX(0px) translateY(0px) rotate(-45deg) scaleX(-1);
-  }
-  100% {
-    transform: translateX(0px) translateY(0px) rotate(-45deg) scaleX(1);
+  75% {
+    transform: translateY(2.5px) translateX(1px) rotate(-49deg);
+    filter: drop-shadow(0 0 5px rgba(56, 189, 248, 0.65));
   }
 }
 
-.animate-plane-patrol {
-  animation: planePatrolSmooth 7s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
+.animate-plane-float {
+  animation: planeFloatSmooth 3.6s ease-in-out infinite;
   display: inline-flex;
   align-items: center;
+  will-change: transform, filter;
 }
 
-/* Subheading Animated Shimmer Light */
-@keyframes textAviationShimmer {
+/* Sub-header Typewriter Text Effect & Blinking Border Cursor */
+@keyframes subheaderTypewriter {
   0% {
-    background-position: -200% center;
+    width: 0;
   }
-  100% {
-    background-position: 200% center;
+  38%, 80% {
+    width: 100%;
+  }
+  94%, 100% {
+    width: 0;
   }
 }
 
-.animate-subheading-shimmer {
-  background-size: 200% auto;
-  animation: textAviationShimmer 6s linear infinite;
+@keyframes blinkBorderCursor {
+  0%, 100% {
+    border-right-color: #38bdf8;
+  }
+  50% {
+    border-right-color: transparent;
+  }
+}
+
+@keyframes blinkBorderCursorLight {
+  0%, 100% {
+    border-right-color: #2563eb;
+  }
+  50% {
+    border-right-color: transparent;
+  }
+}
+
+.typewriter-subheading {
+  display: inline-block;
+  white-space: nowrap;
+  overflow: hidden;
+  border-right: 2.5px solid #38bdf8;
+  padding-right: 4px;
+  animation: 
+    subheaderTypewriter 9s steps(47, end) infinite,
+    blinkBorderCursor 0.75s step-end infinite;
+  will-change: width, border-color;
+}
+
+.light .typewriter-subheading {
+  border-right-color: #2563eb;
+  animation: 
+    subheaderTypewriter 9s steps(47, end) infinite,
+    blinkBorderCursorLight 0.75s step-end infinite;
 }
 
 /* Print styles for employee training records */

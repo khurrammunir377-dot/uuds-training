@@ -16,7 +16,7 @@ import StatusBadge from '../components/StatusBadge';
 import { useToast } from '../components/Toast';
 import { useTheme } from '../context/ThemeContext';
 import { formatDate } from '../utils/dateUtils';
-import { openWhatsApp } from '../utils/whatsapp';
+import { openWhatsApp, formatWhatsAppComplianceMessage } from '../utils/whatsapp';
 import PageHeader from '../components/PageHeader';
 
 export default function Dashboard({ onNavigate, onSelectEmployee }) {
@@ -47,10 +47,15 @@ export default function Dashboard({ onNavigate, onSelectEmployee }) {
       toast.warning(`No mobile number recorded for ${emp.full_name}. Please update in profile.`);
       return;
     }
-    const formattedExpiry = formatDate(expiryDate);
-    const message = `Dear ${emp.full_name},\n\nThis is a compliance reminder regarding your aviation training records.\n` +
-      `Your certification for "${courseName}" requires attention (Expiry: ${formattedExpiry || 'Immediate'}).\n\n` +
-      `Please contact the training coordinator to schedule your recurrent session.\n\nThank you,\nManager Training, UUDS Aero (DXB)`;
+    const message = formatWhatsAppComplianceMessage({
+      fullName: emp.full_name,
+      courses: [{
+        code: emp.course_code || 'TRAIN',
+        name: courseName || emp.course_name,
+        expiry_date: expiryDate || emp.expiry_date,
+        status: emp.status || 'Due Within 30 Days'
+      }]
+    });
     openWhatsApp(rawMobile, message);
   };
 

@@ -21,7 +21,7 @@ import { api } from '../api';
 import { useToast } from '../components/Toast';
 import { useTheme } from '../context/ThemeContext';
 import { formatDate, formatDateTime } from '../utils/dateUtils';
-import { openWhatsApp as sendWhatsApp } from '../utils/whatsapp';
+import { openWhatsApp as sendWhatsApp, formatWhatsAppComplianceMessage } from '../utils/whatsapp';
 import PageHeader from '../components/PageHeader';
 
 export default function Notifications({ onSelectEmployee }) {
@@ -155,11 +155,15 @@ export default function Notifications({ onSelectEmployee }) {
       toast.warning(`No mobile number on file for ${item.full_name}. Please update in profile.`);
       return;
     }
-    const msg = `Dear ${item.full_name},\n\n` +
-      `This is an official training compliance reminder from UUDS Aero (DXB).\n` +
-      `Your mandatory qualification for "${item.course_code} - ${item.course_name}" is ${urgency} (${daysNotice}).\n\n` +
-      `Please report to the Training Department to schedule your recurrent training session.\n\n` +
-      `Best regards,\nManager Training, UUDS Aero (DXB)`;
+    const msg = formatWhatsAppComplianceMessage({
+      fullName: item.full_name,
+      courses: [{
+        code: item.course_code,
+        name: item.course_name,
+        expiry_date: item.expiry_date,
+        status: item.status
+      }]
+    });
 
     sendWhatsApp(rawMobile, msg);
   };

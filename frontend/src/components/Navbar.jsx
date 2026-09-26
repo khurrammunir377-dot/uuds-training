@@ -68,18 +68,20 @@ export default function Navbar() {
             </span>
           </div>
 
-          {/* Animated Subheading with Moving Aircraft Icon written right behind logo */}
-          <div className="flex items-center gap-1.5 mt-0.5 overflow-hidden">
-            <div className="animate-plane-patrol inline-flex items-center">
+          {/* Animated Subheading with floating plane icon, typewriter text effect & blinking border cursor */}
+          <div className="flex items-center gap-2 mt-0.5 overflow-hidden">
+            <div className="animate-plane-float shrink-0">
               <Plane className="w-3.5 h-3.5 text-sky-400 drop-shadow-[0_0_8px_rgba(56,189,248,0.9)]" />
             </div>
-            <p className={`text-xs font-semibold tracking-wide select-none ${
-              isDark 
-                ? 'bg-gradient-to-r from-slate-300 via-sky-300 to-blue-400 bg-clip-text text-transparent animate-subheading-shimmer' 
-                : 'bg-gradient-to-r from-slate-700 via-blue-600 to-indigo-700 bg-clip-text text-transparent animate-subheading-shimmer'
-            }`}>
-              Aviation Training Compliance & Manpower Tracker
-            </p>
+            <div className="overflow-hidden flex items-center">
+              <span className={`typewriter-subheading text-xs font-semibold tracking-wide select-none ${
+                isDark 
+                  ? 'text-slate-300' 
+                  : 'text-slate-700'
+              }`}>
+                Aviation Training Compliance & Manpower Tracker
+              </span>
+            </div>
           </div>
         </div>
       </div>

@@ -21,7 +21,7 @@ import { useTheme } from '../context/ThemeContext';
 import ConfirmationModal from '../components/ConfirmationModal';
 import { formatDate } from '../utils/dateUtils';
 import { exportToCSV, printTableAsPDF } from '../utils/exportUtils';
-import { openWhatsApp as sendWhatsApp } from '../utils/whatsapp';
+import { openWhatsApp as sendWhatsApp, formatWhatsAppComplianceMessage } from '../utils/whatsapp';
 import PageHeader from '../components/PageHeader';
 
 export default function Employees({ onSelectEmployee }) {
@@ -139,8 +139,15 @@ export default function Employees({ onSelectEmployee }) {
       toast.warning(`No mobile number saved for ${emp.full_name}.`);
       return;
     }
-    const msg = `Hello ${emp.full_name},\n\nThis is an official notification regarding your aviation training compliance status.\n` +
-      `Please contact training coordinator to check your certification timeline.\n\nThank you,\nManager Training, UUDS Aero (DXB)`;
+    const msg = formatWhatsAppComplianceMessage({
+      fullName: emp.full_name,
+      courses: [{
+        code: 'COMPLIANCE',
+        name: 'Mandatory Aviation Safety & Technical Training',
+        expiry_date: emp.dxb_start_date || null,
+        status: emp.badge_status === 'Overdue' ? 'Overdue' : 'Due Within 30 Days'
+      }]
+    });
     sendWhatsApp(rawMobile, msg);
   };
 
