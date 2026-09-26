@@ -282,31 +282,27 @@ body.light ::-webkit-scrollbar-thumb:hover {
   pointer-events: none;
 }
 
-/* Smoothly Floating Plane Icon */
-@keyframes planeFloatSmooth {
+/* Ground Taxiing / Running Plane Animation (rotated right, level on ground, crisp, zero glow) */
+@keyframes planeGroundRoll {
   0%, 100% {
-    transform: translateY(0px) rotate(-45deg);
-    filter: drop-shadow(0 0 6px rgba(56, 189, 248, 0.85));
+    transform: translateY(0px) rotate(45deg);
   }
   25% {
-    transform: translateY(-3px) rotate(-40deg);
-    filter: drop-shadow(0 0 12px rgba(56, 189, 248, 1));
+    transform: translateY(-0.8px) rotate(45deg);
   }
   50% {
-    transform: translateY(0px) rotate(-45deg);
-    filter: drop-shadow(0 0 8px rgba(56, 189, 248, 0.85));
+    transform: translateY(0.3px) rotate(45deg);
   }
   75% {
-    transform: translateY(2.5px) rotate(-50deg);
-    filter: drop-shadow(0 0 5px rgba(56, 189, 248, 0.65));
+    transform: translateY(-0.5px) rotate(45deg);
   }
 }
 
-.animate-plane-float {
-  animation: planeFloatSmooth 3.2s ease-in-out infinite;
+.animate-plane-ground {
+  animation: planeGroundRoll 0.85s ease-in-out infinite;
   display: inline-flex;
   align-items: center;
-  will-change: transform, filter;
+  will-change: transform;
 }
 
 /* Blinking Cursor Keyframes */

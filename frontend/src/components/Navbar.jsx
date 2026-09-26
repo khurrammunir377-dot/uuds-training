@@ -96,8 +96,8 @@ export default function Navbar() {
             </span>
           </div>
 
-          {/* Subheading: Typewriter text -> Blinking Cursor -> Floating Airplane Logo (moves forward & back with text) */}
-          <div className="flex items-center mt-0.5 h-5 overflow-hidden select-none">
+          {/* Subheading: Typewriter text -> Blinking Cursor -> Ground-Running Airplane Logo */}
+          <div className="flex items-center mt-0.5 h-6 overflow-visible select-none">
             <span className={`text-xs font-semibold tracking-wide ${
               isDark ? 'text-slate-300' : 'text-slate-700'
             }`}>
@@ -109,13 +109,9 @@ export default function Navbar() {
               isDark ? 'bg-sky-400' : 'bg-blue-600'
             }`} />
 
-            {/* Aeroplane Logo right after cursor, moves forward & back with text */}
-            <span className={`inline-flex items-center shrink-0 ml-1 transition-transform duration-300 ${
-              isDeleting ? 'scale-x-[-1]' : 'scale-x-100'
-            }`}>
-              <span className="animate-plane-float inline-flex items-center">
-                <Plane className="w-3.5 h-3.5 text-sky-400 drop-shadow-[0_0_8px_rgba(56,189,248,0.95)]" />
-              </span>
+            {/* Aeroplane Logo right after cursor, rotated right side, level on ground, clear vector, zero glow */}
+            <span className="inline-flex items-center shrink-0 ml-1.5 animate-plane-ground">
+              <Plane className={`w-5 h-5 ${isDark ? 'text-sky-400' : 'text-blue-600'}`} />
             </span>
           </div>
         </div>
