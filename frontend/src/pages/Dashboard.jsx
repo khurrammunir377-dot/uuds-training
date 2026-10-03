@@ -102,110 +102,110 @@ export default function Dashboard({ onNavigate, onSelectEmployee }) {
         }
       />
 
-      {/* 4 Main KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+      {/* 4 Main KPI Cards - Compact Height */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
         {/* Valid / Compliant */}
-        <div className={`card-hover-3d p-6 rounded-3xl border shadow-lg ${
+        <div className={`card-hover-3d p-3.5 sm:p-4 rounded-2xl border shadow-sm ${
           isDark ? 'bg-slate-900/80 border-emerald-500/30' : 'bg-white border-emerald-200'
         }`}>
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-emerald-500">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-500">
               Valid & Compliant
             </span>
-            <div className="w-9 h-9 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-500">
-              <CheckCircle2 className="w-5 h-5" />
+            <div className="w-7 h-7 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-500">
+              <CheckCircle2 className="w-4 h-4" />
             </div>
           </div>
-          <div className="mt-4">
-            <span className="text-3xl font-extrabold text-emerald-500 font-mono">
+          <div className="mt-1 flex items-baseline gap-1.5">
+            <span className="text-2xl font-black text-emerald-500 font-mono">
               {(records?.valid_count ?? 0).toLocaleString()}
             </span>
-            <span className={`text-xs ml-2 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>records</span>
+            <span className={`text-[11px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>records</span>
           </div>
-          <div className="mt-3 flex items-center gap-2">
-            <div className={`w-full h-2 rounded-full overflow-hidden ${isDark ? 'bg-slate-800' : 'bg-slate-200'}`}>
+          <div className="mt-1.5 flex items-center gap-2">
+            <div className={`w-full h-1.5 rounded-full overflow-hidden ${isDark ? 'bg-slate-800' : 'bg-slate-200'}`}>
               <div 
                 className="bg-emerald-500 h-full rounded-full transition-all duration-1000"
                 style={{ width: `${compliance_rate}%` }}
               />
             </div>
-            <span className="text-xs font-bold text-emerald-500 font-mono">{compliance_rate}%</span>
+            <span className="text-[11px] font-bold text-emerald-500 font-mono">{compliance_rate}%</span>
           </div>
         </div>
 
         {/* Due Within 30 Days */}
         <div 
           onClick={() => onNavigate('reminders')}
-          className={`card-hover-3d cursor-pointer p-6 rounded-3xl border shadow-lg ${
+          className={`card-hover-3d cursor-pointer p-3.5 sm:p-4 rounded-2xl border shadow-sm ${
             isDark ? 'bg-slate-900/80 border-amber-500/30' : 'bg-white border-amber-200'
           }`}
         >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-amber-500">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-amber-500">
               Due Within 30 Days
             </span>
-            <div className="w-9 h-9 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-500">
-              <AlertTriangle className="w-5 h-5 animate-pulse" />
+            <div className="w-7 h-7 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-500">
+              <AlertTriangle className="w-4 h-4 animate-pulse" />
             </div>
           </div>
-          <div className="mt-4">
-            <span className="text-3xl font-extrabold text-amber-500 font-mono">
+          <div className="mt-1 flex items-baseline gap-1.5">
+            <span className="text-2xl font-black text-amber-500 font-mono">
               {(records?.due_soon_count ?? 0).toLocaleString()}
             </span>
-            <span className={`text-xs ml-2 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>courses expiring</span>
+            <span className={`text-[11px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>expiring</span>
           </div>
-          <p className="mt-3 text-xs text-amber-500 font-semibold flex items-center gap-1">
+          <p className="mt-1.5 text-[11px] text-amber-500 font-semibold flex items-center gap-1">
             <span>Requires recurrent booking</span>
-            <ArrowUpRight className="w-3.5 h-3.5" />
+            <ArrowUpRight className="w-3 h-3" />
           </p>
         </div>
 
         {/* Overdue */}
         <div 
           onClick={() => onNavigate('reminders')}
-          className={`card-hover-3d cursor-pointer p-6 rounded-3xl border shadow-lg ${
+          className={`card-hover-3d cursor-pointer p-3.5 sm:p-4 rounded-2xl border shadow-sm ${
             isDark ? 'bg-slate-900/80 border-red-500/40' : 'bg-white border-red-200'
           }`}
         >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-red-500">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-red-500">
               Overdue Training
             </span>
-            <div className="w-9 h-9 rounded-xl bg-red-500/10 flex items-center justify-center text-red-400">
-              <XCircle className="w-5 h-5 animate-pulse" />
+            <div className="w-7 h-7 rounded-lg bg-red-500/10 flex items-center justify-center text-red-400">
+              <XCircle className="w-4 h-4 animate-pulse" />
             </div>
           </div>
-          <div className="mt-4">
-            <span className="text-3xl font-extrabold text-red-500 font-mono">
+          <div className="mt-1 flex items-baseline gap-1.5">
+            <span className="text-2xl font-black text-red-500 font-mono">
               {(records?.overdue_count ?? 0).toLocaleString()}
             </span>
-            <span className={`text-xs ml-2 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>courses expired</span>
+            <span className={`text-[11px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>expired</span>
           </div>
-          <p className="mt-3 text-xs text-red-500 font-bold flex items-center gap-1">
+          <p className="mt-1.5 text-[11px] text-red-500 font-bold flex items-center gap-1">
             <span>High priority audit risk</span>
-            <ArrowUpRight className="w-3.5 h-3.5" />
+            <ArrowUpRight className="w-3 h-3" />
           </p>
         </div>
 
         {/* Not Recorded */}
-        <div className={`card-hover-3d p-6 rounded-3xl border shadow-lg ${
+        <div className={`card-hover-3d p-3.5 sm:p-4 rounded-2xl border shadow-sm ${
           isDark ? 'bg-slate-900/80 border-slate-800' : 'bg-white border-slate-200'
         }`}>
           <div className="flex items-center justify-between">
-            <span className={`text-xs font-bold uppercase tracking-wider ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+            <span className={`text-[11px] font-bold uppercase tracking-wider ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
               Not Recorded / Pending
             </span>
-            <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${isDark ? 'bg-slate-800 text-slate-400' : 'bg-slate-100 text-slate-600'}`}>
-              <HelpCircle className="w-5 h-5" />
+            <div className={`w-7 h-7 rounded-lg flex items-center justify-center ${isDark ? 'bg-slate-800 text-slate-400' : 'bg-slate-100 text-slate-600'}`}>
+              <HelpCircle className="w-4 h-4" />
             </div>
           </div>
-          <div className="mt-4">
-            <span className={`text-3xl font-extrabold font-mono ${isDark ? 'text-slate-100' : 'text-slate-900'}`}>
+          <div className="mt-1 flex items-baseline gap-1.5">
+            <span className={`text-2xl font-black font-mono ${isDark ? 'text-slate-100' : 'text-slate-900'}`}>
               {(records?.not_recorded_count ?? 0).toLocaleString()}
             </span>
-            <span className={`text-xs ml-2 ${isDark ? 'text-slate-400' : 'text-slate-600 font-medium'}`}>pending record</span>
+            <span className={`text-[11px] ${isDark ? 'text-slate-400' : 'text-slate-600 font-medium'}`}>pending</span>
           </div>
-          <p className={`mt-3 text-xs font-medium ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+          <p className={`mt-1.5 text-[11px] font-medium ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
             Newly assigned staff
           </p>
         </div>

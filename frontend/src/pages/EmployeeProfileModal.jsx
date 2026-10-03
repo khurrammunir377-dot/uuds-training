@@ -552,17 +552,17 @@ export default function EmployeeProfileModal({ employeeId, onClose, onRefresh })
                       <table className={`w-full text-left border-collapse text-xs ${isDark ? 'text-slate-200' : 'text-slate-900'}`}>
                         {/* Frozen Sticky Header */}
                         <thead className={`sticky top-0 z-20 shadow-sm ${
-                          isDark ? 'bg-slate-900 border-b border-slate-800 text-slate-300' : 'bg-slate-100 border-b border-slate-300 text-slate-900 font-extrabold'
+                          isDark ? 'bg-sky-950/90 text-sky-200 border-b border-sky-500/40' : 'bg-sky-100 text-sky-950 border-b border-sky-300'
                         }`}>
                           <tr className="text-[11px] font-bold uppercase tracking-wider">
-                            <th className="py-3.5 px-4">Code</th>
-                            <th className="py-3.5 px-4">Course Title</th>
-                            <th className="py-3.5 px-3">Validity</th>
-                            <th className="py-3.5 px-3">Completion Date</th>
-                            <th className="py-3.5 px-3">Expiry Date</th>
-                            <th className="py-3.5 px-3">Status</th>
-                            <th className="py-3.5 px-4">Notes / Cert #</th>
-                            <th className="py-3.5 px-4 text-right no-print">Action</th>
+                            <th className={`py-3.5 px-4 ${isDark ? 'text-sky-200' : 'text-sky-950'}`}>Code</th>
+                            <th className={`py-3.5 px-4 ${isDark ? 'text-sky-200' : 'text-sky-950'}`}>Course Title</th>
+                            <th className={`py-3.5 px-3 ${isDark ? 'text-sky-200' : 'text-sky-950'}`}>Validity</th>
+                            <th className={`py-3.5 px-3 ${isDark ? 'text-sky-200' : 'text-sky-950'}`}>Completion Date</th>
+                            <th className={`py-3.5 px-3 ${isDark ? 'text-sky-200' : 'text-sky-950'}`}>Expiry Date</th>
+                            <th className={`py-3.5 px-3 ${isDark ? 'text-sky-200' : 'text-sky-950'}`}>Status</th>
+                            <th className={`py-3.5 px-4 ${isDark ? 'text-sky-200' : 'text-sky-950'}`}>Notes / Cert #</th>
+                            <th className={`py-3.5 px-4 text-right no-print ${isDark ? 'text-sky-200' : 'text-sky-950'}`}>Action</th>
                           </tr>
                         </thead>
                         <tbody className={`divide-y ${isDark ? 'divide-slate-800/60' : 'divide-slate-200'}`}>
@@ -784,12 +784,14 @@ export default function EmployeeProfileModal({ employeeId, onClose, onRefresh })
                     }`}>
                       <div className="overflow-x-auto flex-1 overflow-y-auto">
                         <table className="w-full text-left text-xs border-collapse">
-                          <thead className={`sticky top-0 z-20 shadow-sm ${isDark ? 'bg-slate-900 border-b border-slate-800 text-slate-300' : 'bg-slate-100 border-b border-slate-300 text-slate-900 font-extrabold'}`}>
-                            <tr className="border-b uppercase font-bold text-[11px]">
-                              <th className="py-2.5 px-4">Date & Time</th>
-                              <th className="py-2.5 px-4">User</th>
-                              <th className="py-2.5 px-4">Action</th>
-                              <th className="py-2.5 px-4">Details</th>
+                          <thead className={`sticky top-0 z-20 shadow-sm ${
+                            isDark ? 'bg-sky-950/90 text-sky-200 border-b border-sky-500/40' : 'bg-sky-100 text-sky-950 border-b border-sky-300'
+                          }`}>
+                            <tr className="uppercase font-bold text-[11px]">
+                              <th className={`py-2.5 px-4 ${isDark ? 'text-sky-200' : 'text-sky-950'}`}>Date & Time</th>
+                              <th className={`py-2.5 px-4 ${isDark ? 'text-sky-200' : 'text-sky-950'}`}>User</th>
+                              <th className={`py-2.5 px-4 ${isDark ? 'text-sky-200' : 'text-sky-950'}`}>Action</th>
+                              <th className={`py-2.5 px-4 ${isDark ? 'text-sky-200' : 'text-sky-950'}`}>Details</th>
                             </tr>
                           </thead>
                           <tbody className={`divide-y ${isDark ? 'divide-slate-800/60' : 'divide-slate-200'}`}>

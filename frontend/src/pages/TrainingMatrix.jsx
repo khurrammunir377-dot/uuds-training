@@ -637,40 +637,41 @@ export default function TrainingMatrix({ onSelectEmployee }) {
             <table className="w-full text-left border-collapse text-xs">
               {/* Sticky Table Header */}
               <thead className={`sticky top-0 z-20 ${
-                isDark ? 'bg-slate-950 text-slate-200 border-b border-slate-800' : 'bg-slate-100 text-slate-800 border-b border-slate-300'
+                isDark ? 'bg-sky-950/90 text-sky-200 border-b border-sky-500/40' : 'bg-sky-100 text-sky-950 border-b border-sky-300'
               }`}>
                 <tr>
                   {/* Frozen Employee Column */}
-                  <th className={`p-3 sticky left-0 z-30 min-w-[210px] max-w-[210px] font-black uppercase tracking-wider text-[11px] ${
-                    isDark ? 'bg-slate-950 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.5)]' : 'bg-slate-100 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]'
+                  <th className={`py-2 px-3 sticky left-0 z-30 min-w-[200px] max-w-[200px] font-black uppercase tracking-wider text-[11px] ${
+                    isDark ? 'bg-sky-950 text-sky-200 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.5)]' : 'bg-sky-100 text-sky-950 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]'
                   }`}>
                     Staff Member
                   </th>
 
                   {/* Frozen UUDS No Column */}
-                  <th className={`p-3 sticky left-[210px] z-30 min-w-[110px] max-w-[110px] font-black uppercase tracking-wider text-[11px] ${
-                    isDark ? 'bg-slate-950 shadow-[4px_0_8px_-2px_rgba(0,0,0,0.7)]' : 'bg-slate-100 shadow-[4px_0_8px_-2px_rgba(0,0,0,0.15)]'
+                  <th className={`py-2 px-3 sticky left-[200px] z-30 min-w-[105px] max-w-[105px] font-black uppercase tracking-wider text-[11px] ${
+                    isDark ? 'bg-sky-950 text-sky-200 shadow-[4px_0_8px_-2px_rgba(0,0,0,0.7)]' : 'bg-sky-100 text-sky-950 shadow-[4px_0_8px_-2px_rgba(0,0,0,0.15)]'
                   }`}>
                     UUDS ID
                   </th>
 
-                  {/* Course Columns */}
+                  {/* Course Columns: 1st line "GEN-101 (36M)", reduced row height */}
                   {courses.map(course => (
                     <th 
                       key={course.id}
-                      className="p-3 min-w-[140px] max-w-[150px] font-bold text-center border-l border-slate-700/30 group"
+                      className={`py-2 px-2.5 min-w-[130px] max-w-[145px] font-bold text-center border-l group ${
+                        isDark ? 'border-sky-500/20 text-sky-200' : 'border-sky-200 text-sky-950'
+                      }`}
                     >
-                      <div className="flex flex-col items-center gap-1">
-                        <span className="font-mono text-blue-400 font-extrabold text-[11px]">
-                          {course.code}
-                        </span>
-                        <span className="truncate w-full text-center text-[11px] font-semibold" title={course.name}>
-                          {course.name}
-                        </span>
-                        <span className={`text-[10px] px-1.5 py-0.2 rounded font-mono mt-0.5 ${
-                          isDark ? 'bg-slate-800 text-slate-400' : 'bg-slate-200 text-slate-700'
+                      <div className="flex flex-col items-center leading-tight">
+                        <span className={`font-mono font-black text-[11px] tracking-wide ${
+                          isDark ? 'text-sky-300' : 'text-sky-900'
                         }`}>
-                          {course.validity_months || 24}m
+                          {course.code} ({course.validity_months || 24}M)
+                        </span>
+                        <span className={`truncate w-full text-center text-[10px] font-semibold mt-0.5 ${
+                          isDark ? 'text-slate-300' : 'text-slate-700'
+                        }`} title={course.name}>
+                          {course.name}
                         </span>
                       </div>
                     </th>
@@ -678,7 +679,7 @@ export default function TrainingMatrix({ onSelectEmployee }) {
                 </tr>
               </thead>
 
-              {/* Table Body Rows */}
+              {/* Table Body Rows - Reduced Row Height */}
               <tbody className="divide-y divide-slate-800/40">
                 {filteredEmployees.map((emp, idx) => {
                   return (
@@ -691,10 +692,10 @@ export default function TrainingMatrix({ onSelectEmployee }) {
                       } ${isDark ? 'hover:bg-slate-800/60' : 'hover:bg-blue-50/50'}`}
                     >
                       {/* Frozen Staff Name Column */}
-                      <td className={`p-3 sticky left-0 z-10 min-w-[210px] max-w-[210px] ${
+                      <td className={`py-1.5 px-3 sticky left-0 z-10 min-w-[200px] max-w-[200px] ${
                         isDark ? 'bg-slate-950 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.5)]' : 'bg-white shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)]'
                       }`}>
-                        <div className="flex flex-col">
+                        <div className="flex flex-col leading-tight">
                           <button
                             onClick={() => onSelectEmployee && onSelectEmployee(emp.id)}
                             className="font-bold text-left hover:text-blue-400 transition truncate text-xs"
@@ -716,15 +717,15 @@ export default function TrainingMatrix({ onSelectEmployee }) {
                       </td>
 
                       {/* Frozen UUDS ID Column */}
-                      <td className={`p-3 sticky left-[210px] z-10 min-w-[110px] max-w-[110px] ${
+                      <td className={`py-1.5 px-3 sticky left-[200px] z-10 min-w-[105px] max-w-[105px] ${
                         isDark ? 'bg-slate-950 shadow-[4px_0_8px_-2px_rgba(0,0,0,0.7)]' : 'bg-white shadow-[4px_0_8px_-2px_rgba(0,0,0,0.15)]'
                       }`}>
-                        <span className="font-mono text-xs font-bold px-2 py-0.5 rounded-lg bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                        <span className="font-mono text-[11px] font-bold px-2 py-0.5 rounded-md bg-blue-500/10 text-blue-400 border border-blue-500/20">
                           {emp.uuds_no}
                         </span>
                       </td>
 
-                      {/* Matrix Course Cells */}
+                      {/* Matrix Course Cells - Compact Height */}
                       {courses.map(course => {
                         const key = `${emp.id}_${course.id}`;
                         const record = records[key];
@@ -738,20 +739,20 @@ export default function TrainingMatrix({ onSelectEmployee }) {
                         return (
                           <td 
                             key={course.id}
-                            className={`p-2 text-center border-l border-slate-800/30 transition-opacity ${
+                            className={`py-1 px-1.5 text-center border-l border-slate-800/30 transition-opacity ${
                               isMatchFilter ? 'opacity-100' : 'opacity-25'
                             }`}
                           >
                             <button
                               onClick={() => handleCellClick(emp, course)}
                               title={`Click to edit: ${emp.full_name} • ${course.code}\nStatus: ${status}\nExpiry: ${record?.expiry_date || 'None'}\nNotes: ${record?.notes || 'None'}`}
-                              className={`w-full py-1.5 px-2 rounded-xl border text-[11px] font-semibold transition-all duration-150 flex items-center justify-between gap-1 group/cell hover:scale-[1.03] hover:shadow-md cursor-pointer ${getCellBadgeClass(status)}`}
+                              className={`w-full py-1 px-1.5 rounded-lg border text-[10.5px] font-semibold transition-all duration-150 flex items-center justify-between gap-1 group/cell hover:scale-[1.03] hover:shadow-md cursor-pointer ${getCellBadgeClass(status)}`}
                             >
                               <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${getCellDotColor(status)}`} />
                               <span className="truncate font-mono font-bold text-center flex-1">
                                 {formatDateDisplay(record?.expiry_date, record?.notes)}
                               </span>
-                              <Edit3 className="w-3 h-3 opacity-0 group-hover/cell:opacity-100 transition shrink-0 text-blue-400" />
+                              <Edit3 className="w-2.5 h-2.5 opacity-0 group-hover/cell:opacity-100 transition shrink-0 text-blue-400" />
                             </button>
                           </td>
                         );

@@ -291,16 +291,16 @@ export default function Courses() {
           }`}>
             <table className="w-full text-left border-collapse text-xs">
               <thead className={`sticky top-0 z-10 ${
-                isDark ? 'bg-slate-950 text-slate-300 border-b border-slate-800' : 'bg-slate-100 text-slate-800 border-b border-slate-300'
+                isDark ? 'bg-sky-950/90 text-sky-200 border-b border-sky-500/40' : 'bg-sky-100 text-sky-950 border-b border-sky-300'
               }`}>
                 <tr>
-                  <th className="py-3 px-4 font-bold">Code</th>
-                  <th className="py-3 px-4 font-bold">Course Title & Description</th>
-                  <th className="py-3 px-4 font-bold">Category</th>
-                  <th className="py-3 px-4 font-bold text-center">Validity Cycle</th>
-                  <th className="py-3 px-4 font-bold text-center">Assigned Staff</th>
-                  <th className="py-3 px-4 font-bold">Compliance Status</th>
-                  {isAdmin && <th className="py-3 px-4 font-bold text-right">Actions</th>}
+                  <th className={`py-3 px-4 font-bold ${isDark ? 'text-sky-200' : 'text-sky-950'}`}>Code</th>
+                  <th className={`py-3 px-4 font-bold ${isDark ? 'text-sky-200' : 'text-sky-950'}`}>Course Title & Description</th>
+                  <th className={`py-3 px-4 font-bold ${isDark ? 'text-sky-200' : 'text-sky-950'}`}>Category</th>
+                  <th className={`py-3 px-4 font-bold text-center ${isDark ? 'text-sky-200' : 'text-sky-950'}`}>Validity Cycle</th>
+                  <th className={`py-3 px-4 font-bold text-center ${isDark ? 'text-sky-200' : 'text-sky-950'}`}>Assigned Staff</th>
+                  <th className={`py-3 px-4 font-bold ${isDark ? 'text-sky-200' : 'text-sky-950'}`}>Compliance Status</th>
+                  {isAdmin && <th className={`py-3 px-4 font-bold text-right ${isDark ? 'text-sky-200' : 'text-sky-950'}`}>Actions</th>}
                 </tr>
               </thead>
               <tbody className={`divide-y ${isDark ? 'divide-slate-800' : 'divide-slate-200'}`}>

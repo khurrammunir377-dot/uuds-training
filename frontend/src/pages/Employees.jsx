@@ -387,17 +387,17 @@ export default function Employees({ onSelectEmployee }) {
               <table className={`w-full text-left text-xs border-collapse ${isDark ? 'text-slate-200' : 'text-slate-900'}`}>
                 {/* Frozen Sticky Header */}
                 <thead className={`sticky top-0 z-20 shadow-sm ${
-                  isDark ? 'bg-slate-950 border-b border-slate-800 text-slate-300' : 'bg-slate-100 border-b border-slate-300 text-slate-900 font-extrabold'
+                  isDark ? 'bg-sky-950/90 text-sky-200 border-b border-sky-500/40' : 'bg-sky-100 text-sky-950 border-b border-sky-300'
                 }`}>
                   <tr className="text-[11px] font-bold uppercase tracking-wider">
-                    <th className="py-3.5 px-4">Employee</th>
-                    <th className="py-3.5 px-4">Staff No</th>
-                    <th className="py-3.5 px-4">Department</th>
-                    <th className="py-3.5 px-4">Position</th>
-                    <th className="py-3.5 px-4">Mobile (WhatsApp)</th>
-                    <th className="py-3.5 px-4">Compliance Status</th>
-                    <th className="py-3.5 px-4">Rate</th>
-                    <th className="py-3.5 px-4 text-right">Actions</th>
+                    <th className={`py-3 px-4 ${isDark ? 'text-sky-200' : 'text-sky-950'}`}>Employee</th>
+                    <th className={`py-3 px-4 ${isDark ? 'text-sky-200' : 'text-sky-950'}`}>Staff No</th>
+                    <th className={`py-3 px-4 ${isDark ? 'text-sky-200' : 'text-sky-950'}`}>Department</th>
+                    <th className={`py-3 px-4 ${isDark ? 'text-sky-200' : 'text-sky-950'}`}>Position</th>
+                    <th className={`py-3 px-4 ${isDark ? 'text-sky-200' : 'text-sky-950'}`}>Mobile (WhatsApp)</th>
+                    <th className={`py-3 px-4 ${isDark ? 'text-sky-200' : 'text-sky-950'}`}>Compliance Status</th>
+                    <th className={`py-3 px-4 ${isDark ? 'text-sky-200' : 'text-sky-950'}`}>Rate</th>
+                    <th className={`py-3 px-4 text-right ${isDark ? 'text-sky-200' : 'text-sky-950'}`}>Actions</th>
                   </tr>
                 </thead>
                 <tbody className={`divide-y ${isDark ? 'divide-slate-800/60' : 'divide-slate-200'}`}>

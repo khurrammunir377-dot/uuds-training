@@ -425,14 +425,14 @@ export default function Notifications({ onSelectEmployee }) {
         }`}>
           <table className={`w-full text-left text-xs border-collapse ${isDark ? 'text-slate-200' : 'text-slate-900'}`}>
             <thead className={`sticky top-0 z-10 shadow-sm ${
-              isDark ? 'bg-slate-900 text-slate-300 border-b border-slate-800' : 'bg-slate-100 text-slate-900 font-extrabold border-b border-slate-300'
+              isDark ? 'bg-sky-950/90 text-sky-200 border-b border-sky-500/40' : 'bg-sky-100 text-sky-950 border-b border-sky-300'
             }`}>
               <tr className="text-[11px] font-bold uppercase tracking-wider">
-                <th className="py-3 px-3.5">Sent Timestamp</th>
-                <th className="py-3 px-3.5">Recipient</th>
-                <th className="py-3 px-3.5">Status</th>
-                <th className="py-3 px-3.5">Summary / Scope</th>
-                <th className="py-3 px-3.5 text-right">Interactive Preview</th>
+                <th className={`py-3 px-3.5 ${isDark ? 'text-sky-200' : 'text-sky-950'}`}>Sent Timestamp</th>
+                <th className={`py-3 px-3.5 ${isDark ? 'text-sky-200' : 'text-sky-950'}`}>Recipient</th>
+                <th className={`py-3 px-3.5 ${isDark ? 'text-sky-200' : 'text-sky-950'}`}>Status</th>
+                <th className={`py-3 px-3.5 ${isDark ? 'text-sky-200' : 'text-sky-950'}`}>Summary / Scope</th>
+                <th className={`py-3 px-3.5 text-right ${isDark ? 'text-sky-200' : 'text-sky-950'}`}>Interactive Preview</th>
               </tr>
             </thead>
             <tbody className={`divide-y ${isDark ? 'divide-slate-800/60' : 'divide-slate-200'}`}>
