@@ -102,18 +102,22 @@ export default function Dashboard({ onNavigate, onSelectEmployee }) {
         }
       />
 
-      {/* 4 Main KPI Cards - Compact Height with Thick Border & Prominent Icons */}
+      {/* 4 Main KPI Cards - Ultra-visible Thick 3px Borders & Large Prominent Icons */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
         {/* Valid / Compliant */}
-        <div className={`card-hover-3d p-3.5 sm:p-4 rounded-2xl border-2 shadow-sm ${
-          isDark ? 'bg-slate-900/80 border-emerald-500/50' : 'bg-white border-emerald-400'
+        <div className={`card-hover-3d p-4 rounded-2xl border-[3px] shadow-md transition-all ${
+          isDark 
+            ? 'bg-slate-900/95 border-emerald-500 shadow-emerald-950/40' 
+            : 'bg-white border-emerald-500 shadow-emerald-100'
         }`}>
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-500">
+            <span className="text-xs font-black uppercase tracking-wider text-emerald-500">
               Valid & Compliant
             </span>
-            <div className="w-10 h-10 rounded-xl bg-emerald-500/15 flex items-center justify-center text-emerald-500 shadow-sm">
-              <CheckCircle2 className="w-6 h-6" />
+            <div className={`w-12 h-12 rounded-xl flex items-center justify-center border-2 border-emerald-500/40 shadow-sm ${
+              isDark ? 'bg-emerald-500/20 text-emerald-400' : 'bg-emerald-50 text-emerald-600'
+            }`}>
+              <CheckCircle2 className="w-8 h-8 stroke-[2.5]" />
             </div>
           </div>
           <div className="mt-1 flex items-baseline gap-1.5">
@@ -122,30 +126,34 @@ export default function Dashboard({ onNavigate, onSelectEmployee }) {
             </span>
             <span className={`text-[11px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>records</span>
           </div>
-          <div className="mt-1.5 flex items-center gap-2">
-            <div className={`w-full h-1.5 rounded-full overflow-hidden ${isDark ? 'bg-slate-800' : 'bg-slate-200'}`}>
+          <div className="mt-2 flex items-center gap-2">
+            <div className={`w-full h-2 rounded-full overflow-hidden ${isDark ? 'bg-slate-800' : 'bg-slate-200'}`}>
               <div 
                 className="bg-emerald-500 h-full rounded-full transition-all duration-1000"
                 style={{ width: `${compliance_rate}%` }}
               />
             </div>
-            <span className="text-[11px] font-bold text-emerald-500 font-mono">{compliance_rate}%</span>
+            <span className="text-xs font-black text-emerald-500 font-mono">{compliance_rate}%</span>
           </div>
         </div>
 
         {/* Due Within 30 Days */}
         <div 
           onClick={() => onNavigate('reminders')}
-          className={`card-hover-3d cursor-pointer p-3.5 sm:p-4 rounded-2xl border-2 shadow-sm ${
-            isDark ? 'bg-slate-900/80 border-amber-500/50' : 'bg-white border-amber-400'
+          className={`card-hover-3d cursor-pointer p-4 rounded-2xl border-[3px] shadow-md transition-all ${
+            isDark 
+              ? 'bg-slate-900/95 border-amber-500 shadow-amber-950/40' 
+              : 'bg-white border-amber-500 shadow-amber-100'
           }`}
         >
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-amber-500">
+            <span className="text-xs font-black uppercase tracking-wider text-amber-500">
               Due Within 30 Days
             </span>
-            <div className="w-10 h-10 rounded-xl bg-amber-500/15 flex items-center justify-center text-amber-500 shadow-sm">
-              <AlertTriangle className="w-6 h-6 animate-pulse" />
+            <div className={`w-12 h-12 rounded-xl flex items-center justify-center border-2 border-amber-500/40 shadow-sm ${
+              isDark ? 'bg-amber-500/20 text-amber-400' : 'bg-amber-50 text-amber-600'
+            }`}>
+              <AlertTriangle className="w-8 h-8 stroke-[2.5] animate-pulse" />
             </div>
           </div>
           <div className="mt-1 flex items-baseline gap-1.5">
@@ -154,49 +162,57 @@ export default function Dashboard({ onNavigate, onSelectEmployee }) {
             </span>
             <span className={`text-[11px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>expiring</span>
           </div>
-          <p className="mt-1.5 text-[11px] text-amber-500 font-semibold flex items-center gap-1">
+          <p className="mt-2 text-[11px] text-amber-500 font-bold flex items-center gap-1">
             <span>Requires recurrent booking</span>
-            <ArrowUpRight className="w-3.5 h-3.5" />
+            <ArrowUpRight className="w-4 h-4 stroke-[2.5]" />
           </p>
         </div>
 
         {/* Overdue */}
         <div 
           onClick={() => onNavigate('reminders')}
-          className={`card-hover-3d cursor-pointer p-3.5 sm:p-4 rounded-2xl border-2 shadow-sm ${
-            isDark ? 'bg-slate-900/80 border-red-500/60' : 'bg-white border-red-400'
+          className={`card-hover-3d cursor-pointer p-4 rounded-2xl border-[3px] shadow-md transition-all ${
+            isDark 
+              ? 'bg-slate-900/95 border-rose-500 shadow-rose-950/40' 
+              : 'bg-white border-rose-500 shadow-rose-100'
           }`}
         >
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-red-500">
+            <span className="text-xs font-black uppercase tracking-wider text-rose-500">
               Overdue Training
             </span>
-            <div className="w-10 h-10 rounded-xl bg-red-500/15 flex items-center justify-center text-red-500 shadow-sm">
-              <XCircle className="w-6 h-6 animate-pulse" />
+            <div className={`w-12 h-12 rounded-xl flex items-center justify-center border-2 border-rose-500/40 shadow-sm ${
+              isDark ? 'bg-rose-500/20 text-rose-400' : 'bg-rose-50 text-rose-600'
+            }`}>
+              <XCircle className="w-8 h-8 stroke-[2.5] animate-pulse" />
             </div>
           </div>
           <div className="mt-1 flex items-baseline gap-1.5">
-            <span className="text-2xl font-black text-red-500 font-mono">
+            <span className="text-2xl font-black text-rose-500 font-mono">
               {(records?.overdue_count ?? 0).toLocaleString()}
             </span>
             <span className={`text-[11px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>expired</span>
           </div>
-          <p className="mt-1.5 text-[11px] text-red-500 font-bold flex items-center gap-1">
+          <p className="mt-2 text-[11px] text-rose-500 font-bold flex items-center gap-1">
             <span>High priority audit risk</span>
-            <ArrowUpRight className="w-3.5 h-3.5" />
+            <ArrowUpRight className="w-4 h-4 stroke-[2.5]" />
           </p>
         </div>
 
         {/* Not Recorded */}
-        <div className={`card-hover-3d p-3.5 sm:p-4 rounded-2xl border-2 shadow-sm ${
-          isDark ? 'bg-slate-900/80 border-slate-700' : 'bg-white border-slate-300'
+        <div className={`card-hover-3d p-4 rounded-2xl border-[3px] shadow-md transition-all ${
+          isDark 
+            ? 'bg-slate-900/95 border-sky-500 shadow-sky-950/40' 
+            : 'bg-white border-sky-500 shadow-sky-100'
         }`}>
           <div className="flex items-center justify-between">
-            <span className={`text-[11px] font-bold uppercase tracking-wider ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+            <span className={`text-xs font-black uppercase tracking-wider ${isDark ? 'text-sky-400' : 'text-sky-600'}`}>
               Not Recorded / Pending
             </span>
-            <div className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-sm ${isDark ? 'bg-slate-800 text-slate-300' : 'bg-slate-100 text-slate-700'}`}>
-              <HelpCircle className="w-6 h-6" />
+            <div className={`w-12 h-12 rounded-xl flex items-center justify-center border-2 border-sky-500/40 shadow-sm ${
+              isDark ? 'bg-sky-500/20 text-sky-400' : 'bg-sky-50 text-sky-600'
+            }`}>
+              <HelpCircle className="w-8 h-8 stroke-[2.5]" />
             </div>
           </div>
           <div className="mt-1 flex items-baseline gap-1.5">
@@ -205,7 +221,7 @@ export default function Dashboard({ onNavigate, onSelectEmployee }) {
             </span>
             <span className={`text-[11px] ${isDark ? 'text-slate-400' : 'text-slate-600 font-medium'}`}>pending</span>
           </div>
-          <p className={`mt-1.5 text-[11px] font-medium ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+          <p className={`mt-2 text-[11px] font-medium ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
             Newly assigned staff
           </p>
         </div>
