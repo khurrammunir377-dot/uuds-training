@@ -67,7 +67,7 @@ export default function Sidebar({ activeTab, setActiveTab, counts = {} }) {
     },
     { 
       id: 'history', 
-      label: 'Change History', 
+      label: 'History Logs', 
       icon: History, 
       iconColor: 'text-sky-500', 
       activeBg: isDark ? 'bg-sky-600/20 text-sky-400 border-sky-500/30' : 'bg-sky-50 text-sky-700 border-sky-200',

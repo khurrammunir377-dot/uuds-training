@@ -237,10 +237,10 @@ export default function Settings({ onNavigate }) {
                     ? 'bg-slate-800 hover:bg-slate-700 text-sky-400 border-slate-700' 
                     : 'bg-white hover:bg-slate-100 text-sky-700 border-slate-300'
                 }`}
-                title="View Training Records & System Change History"
+                title="View Training Records & History Logs"
               >
                 <History className="w-4 h-4 text-sky-500" />
-                <span>Change History</span>
+                <span>History Logs</span>
               </button>
             )}
 

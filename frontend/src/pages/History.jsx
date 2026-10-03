@@ -148,7 +148,7 @@ export default function History({ onSelectEmployee }) {
       l.action || '-'
     ]);
     printTableAsPDF({
-      title: 'UUDS Aviation Training Compliance - Change History Log',
+      title: 'UUDS Aviation Training Compliance - History Logs',
       subtitle: `Exported on ${new Date().toLocaleString('en-GB')} | Total Records: ${logs.length}`,
       headers,
       rows
@@ -241,7 +241,7 @@ export default function History({ onSelectEmployee }) {
       {/* Standardized 2-Line Header */}
       <PageHeader
         icon={HistoryIcon}
-        title="Training Records & Activity Change History"
+        title="Training Records & History Logs"
         subtitle="Real-time audit trail to monitor training changes, employee updates, course renewals, and system activity"
         theme="sky"
         actions={
@@ -249,7 +249,7 @@ export default function History({ onSelectEmployee }) {
             <button
               onClick={() => loadAuditLogs(true)}
               disabled={refreshing}
-              title="Refresh change history"
+              title="Refresh history logs"
               className={`p-2 sm:px-3 sm:py-2 rounded-xl text-xs font-bold border flex items-center gap-1.5 transition-all shadow-sm ${
                 isDark 
                   ? 'bg-slate-800 border-slate-700 text-sky-400 hover:bg-slate-700 hover:text-sky-300' 

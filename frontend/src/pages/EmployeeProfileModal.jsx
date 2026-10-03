@@ -531,7 +531,7 @@ export default function EmployeeProfileModal({ employeeId, onClose, onRefresh })
                 }`}
               >
                 <History className="w-4 h-4" />
-                <span>Audit Trail & Change History ({profile.audit_logs?.length || 0})</span>
+                <span>History Logs ({profile.audit_logs?.length || 0})</span>
               </button>
             </div>
 
