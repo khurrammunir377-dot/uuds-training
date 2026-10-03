@@ -9,7 +9,8 @@ import {
   Settings, 
   LogOut, 
   User, 
-  ShieldCheck 
+  ShieldCheck,
+  History
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
@@ -65,12 +66,21 @@ export default function Sidebar({ activeTab, setActiveTab, counts = {} }) {
       badgeColor: isDark ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30' : 'bg-emerald-100 text-emerald-800 font-bold' 
     },
     { 
+      id: 'history', 
+      label: 'History', 
+      icon: History, 
+      iconColor: 'text-sky-500', 
+      activeBg: isDark ? 'bg-sky-600/20 text-sky-400 border-sky-500/30' : 'bg-sky-50 text-sky-700 border-sky-200',
+      badge: counts.history || 'Live', 
+      badgeColor: isDark ? 'bg-sky-500/15 text-sky-400 border border-sky-500/30 font-bold' : 'bg-sky-100 text-sky-800 border border-sky-200 font-bold' 
+    },
+    { 
       id: 'notifications', 
       label: 'Email & WhatsApp', 
       icon: Mail, 
       iconColor: 'text-cyan-500', 
       activeBg: isDark ? 'bg-cyan-600/20 text-cyan-400 border-cyan-500/30' : 'bg-cyan-50 text-cyan-700 border-cyan-200',
-      badge: 'Audit', 
+      badge: 'Alerts', 
       badgeColor: isDark ? 'bg-cyan-500/15 text-cyan-400 border border-cyan-500/30' : 'bg-cyan-100 text-cyan-800 border border-cyan-200 font-bold' 
     },
     { 

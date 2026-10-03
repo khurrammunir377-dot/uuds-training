@@ -669,8 +669,24 @@ def update_training_record(record_id: int, req: RecordUpdateRequest, user: dict 
     conn.commit()
     conn.close()
     
-    audit_msg = f"Updated course {record['course_code']} for {record['uuds_no']}: Expiry={expiry_date_str}, Status={status_calc}"
-    log_audit(user["username"], audit_msg, "employee", record["employee_id"], notes_str)
+    emp_label = f"{record['uuds_no']} - {record['full_name']}"
+    old_exp = record['expiry_date'] if record['expiry_date'] else 'None'
+    new_exp = expiry_date_str if expiry_date_str else 'None'
+    audit_msg = f"Updated course {record['course_code']} ({record['course_name']}) for {emp_label}: Expiry {old_exp} -> {new_exp} ({status_calc})"
+    details_obj = {
+        "employee_id": record["employee_id"],
+        "uuds_no": record["uuds_no"],
+        "employee_name": record["full_name"],
+        "course_code": record["course_code"],
+        "course_name": record["course_name"],
+        "previous_expiry": record["expiry_date"],
+        "new_expiry": expiry_date_str,
+        "previous_status": record["status"],
+        "new_status": status_calc,
+        "completion_date": completion_date_str,
+        "notes": notes_str
+    }
+    log_audit(user["username"], audit_msg, "training_record", record["employee_id"], json.dumps(details_obj))
     
     return {
         "message": "Training record updated successfully",
@@ -683,6 +699,14 @@ def update_or_create_employee_course(emp_id: int, course_id: int, req: RecordUpd
     conn = get_db()
     cursor = conn.cursor()
     
+    # Fetch employee and course info and previous record for rich audit history
+    cursor.execute("SELECT uuds_no, full_name, team FROM employees WHERE id = ?", (emp_id,))
+    emp = cursor.fetchone()
+    cursor.execute("SELECT code, name FROM courses WHERE id = ?", (course_id,))
+    crs = cursor.fetchone()
+    cursor.execute("SELECT completion_date, expiry_date, status, notes FROM training_records WHERE employee_id = ? AND course_id = ?", (emp_id, course_id))
+    old_rec = cursor.fetchone()
+
     expiry_date_str = req.expiry_date.strip() if req.expiry_date else None
     completion_date_str = req.completion_date.strip() if req.completion_date else None
     notes_str = req.notes.strip() if req.notes else None
@@ -703,7 +727,28 @@ def update_or_create_employee_course(emp_id: int, course_id: int, req: RecordUpd
     conn.commit()
     conn.close()
     
-    log_audit(user["username"], f"Course {course_id} date updated for employee {emp_id}", "employee", emp_id)
+    emp_label = f"{emp['uuds_no']} - {emp['full_name']}" if emp else f"Staff #{emp_id}"
+    crs_code = crs['code'] if crs else f"Course #{course_id}"
+    crs_name = crs['name'] if crs else ""
+    old_exp = old_rec['expiry_date'] if old_rec and old_rec['expiry_date'] else 'None'
+    new_exp = expiry_date_str if expiry_date_str else 'None'
+    
+    audit_msg = f"Updated {crs_code} for {emp_label}: Expiry {old_exp} -> {new_exp} ({status_calc})"
+    details_obj = {
+        "employee_id": emp_id,
+        "uuds_no": emp["uuds_no"] if emp else "",
+        "employee_name": emp["full_name"] if emp else "",
+        "course_id": course_id,
+        "course_code": crs_code,
+        "course_name": crs_name,
+        "previous_expiry": old_rec["expiry_date"] if old_rec else None,
+        "new_expiry": expiry_date_str,
+        "previous_status": old_rec["status"] if old_rec else "Not Recorded",
+        "new_status": status_calc,
+        "completion_date": completion_date_str,
+        "notes": notes_str
+    }
+    log_audit(user["username"], audit_msg, "training_record", emp_id, json.dumps(details_obj))
     return {"message": "Record saved successfully", "status": status_calc}
 
 # ----------------- Training Compliance Matrix Routes -----------------
@@ -849,10 +894,25 @@ def batch_update_matrix(req: BatchMatrixUpdateRequest, user: dict = Depends(get_
             "notes": notes_str
         }
         
+    cursor.execute("SELECT code, name FROM courses WHERE id = ?", (req.course_id,))
+    crs_info = cursor.fetchone()
+    crs_label = f"{crs_info['code']} ({crs_info['name']})" if crs_info else f"Course #{req.course_id}"
     conn.commit()
     conn.close()
     
-    log_audit(user["username"], f"Batch updated Course {req.course_id} for {len(req.employee_ids)} employees", "course", req.course_id)
+    batch_audit_msg = f"Batch updated {crs_label} for {len(req.employee_ids)} staff members: Expiry={expiry_date_str or 'None'} ({status_calc})"
+    details_obj = {
+        "course_id": req.course_id,
+        "course_code": crs_info["code"] if crs_info else "",
+        "course_name": crs_info["name"] if crs_info else "",
+        "employee_count": len(req.employee_ids),
+        "employee_ids": req.employee_ids,
+        "new_expiry": expiry_date_str,
+        "new_status": status_calc,
+        "completion_date": completion_date_str,
+        "notes": notes_str
+    }
+    log_audit(user["username"], batch_audit_msg, "training_record", req.course_id, json.dumps(details_obj))
     return {
         "message": f"Successfully updated {len(req.employee_ids)} training records",
         "updated_count": len(req.employee_ids),
@@ -1123,6 +1183,122 @@ def reimport_excel_data(user: dict = Depends(require_admin)):
         return {"message": "Data re-imported successfully"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+# ----------------- Audit History / Activity Log Routes -----------------
+@app.get("/api/audit-logs")
+def get_audit_logs(
+    search: Optional[str] = None,
+    category: Optional[str] = "all",
+    user_filter: Optional[str] = "all",
+    timeframe: Optional[str] = "all",
+    limit: int = 200,
+    offset: int = 0,
+    user: dict = Depends(get_current_user)
+):
+    conn = get_db()
+    cursor = conn.cursor()
+    
+    query = "SELECT * FROM audit_logs WHERE 1=1"
+    params = []
+    
+    # Category filter
+    if category and category != "all":
+        if category == "training":
+            query += " AND (entity_type = 'training_record' OR action LIKE '%course%' OR action LIKE '%training%')"
+        elif category == "employee":
+            query += " AND (entity_type = 'employee' AND action NOT LIKE 'Updated course%' AND action NOT LIKE 'Course %')"
+        elif category == "course":
+            query += " AND (entity_type = 'course' AND action NOT LIKE 'Batch updated%')"
+        elif category == "user":
+            query += " AND (entity_type = 'user' OR action LIKE '%user%')"
+        elif category == "email":
+            query += " AND (entity_type = 'email' OR action LIKE '%email%' OR action LIKE '%notice%')"
+        elif category == "system":
+            query += " AND (entity_type = 'system' OR entity_type = 'settings')"
+        else:
+            query += " AND entity_type = ?"
+            params.append(category)
+            
+    # User filter
+    if user_filter and user_filter != "all":
+        query += " AND username = ?"
+        params.append(user_filter)
+        
+    # Timeframe filter
+    if timeframe == "today":
+        query += " AND date(created_at) = date('now')"
+    elif timeframe == "week":
+        query += " AND created_at >= datetime('now', '-7 days')"
+    elif timeframe == "month":
+        query += " AND created_at >= datetime('now', '-30 days')"
+        
+    # Search filter
+    if search and search.strip():
+        term = f"%{search.strip()}%"
+        query += " AND (action LIKE ? OR username LIKE ? OR details LIKE ? OR entity_type LIKE ?)"
+        params.extend([term, term, term, term])
+        
+    # Count total matching query
+    count_sql = "SELECT COUNT(*) FROM (" + query + ")"
+    cursor.execute(count_sql, params)
+    total_count = cursor.fetchone()[0]
+    
+    # Query with sorting and pagination
+    query += " ORDER BY created_at DESC, id DESC LIMIT ? OFFSET ?"
+    params.extend([min(limit, 500), max(offset, 0)])
+    
+    cursor.execute(query, params)
+    logs = [dict(row) for row in cursor.fetchall()]
+    
+    # Calculate global stats
+    cursor.execute("SELECT COUNT(*) FROM audit_logs")
+    total_all = cursor.fetchone()[0]
+    
+    cursor.execute("SELECT COUNT(*) FROM audit_logs WHERE entity_type = 'training_record' OR action LIKE '%course%' OR action LIKE '%training%'")
+    training_count = cursor.fetchone()[0]
+    
+    cursor.execute("SELECT COUNT(*) FROM audit_logs WHERE (entity_type = 'employee' AND action NOT LIKE 'Updated course%' AND action NOT LIKE 'Course %')")
+    employee_count = cursor.fetchone()[0]
+    
+    cursor.execute("SELECT COUNT(*) FROM audit_logs WHERE entity_type = 'course' AND action NOT LIKE 'Batch updated%'")
+    course_count = cursor.fetchone()[0]
+    
+    cursor.execute("SELECT COUNT(*) FROM audit_logs WHERE entity_type = 'user' OR action LIKE '%user%'")
+    user_count = cursor.fetchone()[0]
+
+    cursor.execute("SELECT COUNT(*) FROM audit_logs WHERE entity_type = 'email' OR action LIKE '%email%' OR action LIKE '%notice%'")
+    email_count = cursor.fetchone()[0]
+
+    # Distinct usernames for dropdown
+    cursor.execute("SELECT DISTINCT username FROM audit_logs WHERE username IS NOT NULL AND username != '' ORDER BY username ASC")
+    users_list = [row["username"] for row in cursor.fetchall()]
+    
+    conn.close()
+    
+    return {
+        "logs": logs,
+        "total_count": total_count,
+        "stats": {
+            "total": total_all,
+            "training": training_count,
+            "employees": employee_count,
+            "courses": course_count,
+            "users": user_count,
+            "emails": email_count
+        },
+        "users": users_list
+    }
+
+@app.delete("/api/audit-logs")
+def clear_audit_logs(admin: dict = Depends(require_admin)):
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM audit_logs")
+    conn.commit()
+    conn.close()
+    
+    log_audit(admin.get("username", "admin"), "Cleared audit history logs", "system")
+    return {"message": "Audit history cleared successfully"}
 
 # ----------------- Background Weekly Scheduler -----------------
 def background_scheduler():

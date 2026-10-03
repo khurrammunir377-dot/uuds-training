@@ -109,5 +109,12 @@ export const api = {
   createUser: (data) => apiRequest('/users', { method: 'POST', body: JSON.stringify(data) }),
   updateUser: (userId, data) => apiRequest(`/users/${userId}`, { method: 'PUT', body: JSON.stringify(data) }),
   deleteUser: (userId) => apiRequest(`/users/${userId}`, { method: 'DELETE' }),
+
+  // Audit Logs / Change History
+  getAuditLogs: (params = {}) => {
+    const query = new URLSearchParams(params).toString();
+    return apiRequest(`/audit-logs?${query}`);
+  },
+  clearAuditLogs: () => apiRequest('/audit-logs', { method: 'DELETE' }),
 };
 

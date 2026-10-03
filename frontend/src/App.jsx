@@ -11,6 +11,7 @@ import Notifications from './pages/Notifications';
 import Courses from './pages/Courses';
 import TrainingMatrix from './pages/TrainingMatrix';
 import Settings from './pages/Settings';
+import History from './pages/History';
 import Login from './pages/Login';
 import { api } from './api';
 
@@ -30,9 +31,18 @@ export default function App() {
   const loadCounts = async () => {
     try {
       const stats = await api.getDashboardStats();
+      let historyCount = 'Live';
+      try {
+        const hRes = await api.getAuditLogs({ limit: 1 });
+        if (hRes && hRes.total_count !== undefined) {
+          historyCount = String(hRes.total_count);
+        }
+      } catch (e) {}
+
       setCounts({
         employees: String(stats.active_employees_count || '244'),
-        urgent: String((stats.records.overdue_count || 0) + (stats.records.due_soon_count || 0))
+        urgent: String((stats.records.overdue_count || 0) + (stats.records.due_soon_count || 0)),
+        history: historyCount
       });
     } catch (e) {
       console.error(e);
@@ -72,7 +82,7 @@ export default function App() {
 
         {/* Dynamic Page Content Area */}
         <main className={`flex-1 w-full min-h-0 ${
-          ['matrix', 'employees', 'reminders', 'courses', 'settings'].includes(activeTab)
+          ['matrix', 'employees', 'reminders', 'courses', 'settings', 'history'].includes(activeTab)
             ? 'h-full overflow-hidden p-2 sm:p-3 flex flex-col' 
             : 'overflow-y-auto p-3 sm:p-6'
         }`}>
@@ -101,14 +111,20 @@ export default function App() {
             />
           )}
 
-          {activeTab === 'notifications' && (
-            <Notifications 
+          {activeTab === 'courses' && (
+            <Courses />
+          )}
+
+          {activeTab === 'history' && (
+            <History 
               onSelectEmployee={(id) => setSelectedEmployeeId(id)}
             />
           )}
 
-          {activeTab === 'courses' && (
-            <Courses />
+          {activeTab === 'notifications' && (
+            <Notifications 
+              onSelectEmployee={(id) => setSelectedEmployeeId(id)}
+            />
           )}
 
           {activeTab === 'settings' && (
