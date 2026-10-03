@@ -16,7 +16,8 @@ import {
   User,
   AlertTriangle,
   X,
-  CheckCircle2
+  CheckCircle2,
+  History
 } from 'lucide-react';
 import { api } from '../api';
 import { useToast } from '../components/Toast';
@@ -24,7 +25,7 @@ import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import PageHeader from '../components/PageHeader';
 
-export default function Settings() {
+export default function Settings({ onNavigate }) {
   const { user: currentAuthUser, isAdmin } = useAuth();
   const { isDark } = useTheme();
   const toast = useToast();
@@ -226,6 +227,23 @@ export default function Settings() {
         }
         actions={
           <div className="flex items-center gap-2">
+            {/* Change History Button */}
+            {onNavigate && (
+              <button
+                type="button"
+                onClick={() => onNavigate('history')}
+                className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold border transition shadow-sm ${
+                  isDark 
+                    ? 'bg-slate-800 hover:bg-slate-700 text-sky-400 border-slate-700' 
+                    : 'bg-white hover:bg-slate-100 text-sky-700 border-slate-300'
+                }`}
+                title="View Training Records & System Change History"
+              >
+                <History className="w-4 h-4 text-sky-500" />
+                <span>Change History</span>
+              </button>
+            )}
+
             {/* User Management Button - Strictly Hidden for non-admins */}
             {isAdmin && (
               <button

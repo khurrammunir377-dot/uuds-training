@@ -128,7 +128,7 @@ export default function App() {
           )}
 
           {activeTab === 'settings' && (
-            <Settings />
+            <Settings onNavigate={(tab) => setActiveTab(tab)} />
           )}
         </main>
       </div>
