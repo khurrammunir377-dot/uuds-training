@@ -22,7 +22,12 @@ from pydantic import BaseModel
 from database import get_db, init_db, hash_password, verify_password
 from importer import calculate_status, import_all_data
 from email_service import send_compliance_email, send_manager_email, test_smtp_connection, get_compliance_summary, generate_compliance_html
-from whatsapp_service import whatsapp_service
+
+# Optional WhatsApp service (available in persistent environment; safely bypassed on serverless like Vercel)
+try:
+    from whatsapp_service import whatsapp_service
+except ImportError:
+    whatsapp_service = None
 
 # Initialize DB on startup
 init_db()
@@ -1142,11 +1147,26 @@ def get_email_preview(log_id: int):
 @app.get("/api/whatsapp/status")
 def get_whatsapp_status(user: dict = Depends(get_current_user)):
     """Returns the WhatsApp connection status and current QR code if pairing."""
+    if not whatsapp_service:
+        return {
+            "status": "unavailable",
+            "is_logged_in": False,
+            "is_connected": False,
+            "qr_code": None,
+            "phone_number": None,
+            "push_name": None,
+            "error": "WhatsApp persistent background gateway runs on local server mode. On cloud serverless, use standard WhatsApp dispatch."
+        }
     return whatsapp_service.get_status()
 
 @app.post("/api/whatsapp/connect")
 def start_whatsapp_connection(user: dict = Depends(get_current_user)):
     """Starts or resumes the WhatsApp client to produce QR code or connect."""
+    if not whatsapp_service:
+        raise HTTPException(
+            status_code=503, 
+            detail="WhatsApp background service is not running on this cloud serverless instance."
+        )
     whatsapp_service.start()
     return whatsapp_service.get_status()
 
@@ -1156,6 +1176,12 @@ def send_whatsapp_silent(req: WhatsAppSilentSendRequest, user: dict = Depends(ge
     Sends a WhatsApp compliance message silently through the authenticated session.
     No browser windows or new tabs are opened.
     """
+    if not whatsapp_service:
+        raise HTTPException(
+            status_code=503, 
+            detail="Silent WhatsApp gateway is active on local server mode. Please use the WhatsApp button or run locally."
+        )
+
     if not req.phone or not req.phone.strip():
         raise HTTPException(status_code=400, detail="Mobile number is required")
     if not req.message or not req.message.strip():
@@ -1206,6 +1232,8 @@ def send_whatsapp_silent(req: WhatsAppSilentSendRequest, user: dict = Depends(ge
 @app.post("/api/whatsapp/logout")
 def logout_whatsapp_session(user: dict = Depends(require_admin)):
     """Logs out the active WhatsApp session and resets pairing."""
+    if not whatsapp_service:
+        return {"success": True, "message": "No active session"}
     return whatsapp_service.logout()
 
 # ----------------- Settings Routes -----------------
@@ -1413,11 +1441,12 @@ def background_scheduler():
 if not os.environ.get("VERCEL") and not os.environ.get("AWS_LAMBDA_FUNCTION_NAME"):
     scheduler_thread = threading.Thread(target=background_scheduler, daemon=True)
     scheduler_thread.start()
-    # Auto-initialize WhatsApp client
-    try:
-        whatsapp_service.start()
-    except Exception as e:
-        print(f"Initial WhatsApp start note: {e}")
+    # Auto-initialize WhatsApp client if available
+    if whatsapp_service:
+        try:
+            whatsapp_service.start()
+        except Exception as e:
+            print(f"Initial WhatsApp start note: {e}")
 
 # ----------------- Frontend Static Files Serving -----------------
 frontend_dist = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "frontend", "dist")
