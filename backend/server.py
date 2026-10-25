@@ -22,6 +22,7 @@ from pydantic import BaseModel
 from database import get_db, init_db, hash_password, verify_password
 from importer import calculate_status, import_all_data
 from email_service import send_compliance_email, send_manager_email, test_smtp_connection, get_compliance_summary, generate_compliance_html
+from whatsapp_service import whatsapp_service
 
 # Initialize DB on startup
 init_db()
@@ -140,6 +141,12 @@ class UserUpdateRequest(BaseModel):
     full_name: Optional[str] = None
     email: Optional[str] = None
     password: Optional[str] = None
+
+class WhatsAppSilentSendRequest(BaseModel):
+    phone: str
+    message: str
+    employee_name: Optional[str] = None
+    course_code: Optional[str] = None
 
 # ----------------- Auth Routes -----------------
 @app.post("/api/auth/login")
@@ -1131,6 +1138,76 @@ def get_email_preview(log_id: int):
     html = generate_compliance_html(overdue_items, due_soon_items, stats)
     return HTMLResponse(content=html)
 
+# ----------------- WhatsApp Native Integration Routes -----------------
+@app.get("/api/whatsapp/status")
+def get_whatsapp_status(user: dict = Depends(get_current_user)):
+    """Returns the WhatsApp connection status and current QR code if pairing."""
+    return whatsapp_service.get_status()
+
+@app.post("/api/whatsapp/connect")
+def start_whatsapp_connection(user: dict = Depends(get_current_user)):
+    """Starts or resumes the WhatsApp client to produce QR code or connect."""
+    whatsapp_service.start()
+    return whatsapp_service.get_status()
+
+@app.post("/api/whatsapp/send-silent")
+def send_whatsapp_silent(req: WhatsAppSilentSendRequest, user: dict = Depends(get_current_user)):
+    """
+    Sends a WhatsApp compliance message silently through the authenticated session.
+    No browser windows or new tabs are opened.
+    """
+    if not req.phone or not req.phone.strip():
+        raise HTTPException(status_code=400, detail="Mobile number is required")
+    if not req.message or not req.message.strip():
+        raise HTTPException(status_code=400, detail="Message content is required")
+
+    try:
+        res = whatsapp_service.send_silent_message(req.phone, req.message)
+        
+        # Log to email_logs / notification audit table for record keeping
+        conn = get_db()
+        cursor = conn.cursor()
+        emp_detail = f" for {req.employee_name}" if req.employee_name else ""
+        course_detail = f" [{req.course_code}]" if req.course_code else ""
+        summary = f"Silent WhatsApp Compliance Alert to {res['recipient']}{emp_detail}{course_detail}"
+        
+        cursor.execute("""
+        INSERT INTO email_logs (recipient, subject, status, summary, error_message)
+        VALUES (?, ?, 'Sent', ?, '')
+        """, (res['recipient'], "WhatsApp Compliance Notice", summary))
+        log_id = cursor.lastrowid
+        conn.commit()
+        conn.close()
+
+        log_audit(user["username"], f"Dispatched silent WhatsApp reminder to {res['recipient']}", "whatsapp", log_id)
+        return {
+            "status": "Sent",
+            "recipient": res['recipient'],
+            "summary": summary,
+            "log_id": log_id
+        }
+    except Exception as e:
+        err_msg = str(e)
+        # Log failure
+        try:
+            conn = get_db()
+            cursor = conn.cursor()
+            cursor.execute("""
+            INSERT INTO email_logs (recipient, subject, status, summary, error_message)
+            VALUES (?, ?, 'Failed', ?, ?)
+            """, (req.phone, "WhatsApp Compliance Notice", "Silent WhatsApp dispatch failed", err_msg))
+            conn.commit()
+            conn.close()
+        except Exception:
+            pass
+
+        raise HTTPException(status_code=400, detail=err_msg)
+
+@app.post("/api/whatsapp/logout")
+def logout_whatsapp_session(user: dict = Depends(require_admin)):
+    """Logs out the active WhatsApp session and resets pairing."""
+    return whatsapp_service.logout()
+
 # ----------------- Settings Routes -----------------
 @app.get("/api/settings")
 def get_settings():
@@ -1332,10 +1409,15 @@ def background_scheduler():
             
         time.sleep(600) # Check every 10 mins
 
-# Start background scheduler thread only in persistent server mode (not serverless lambda)
+# Start background scheduler thread and WhatsApp client only in persistent server mode
 if not os.environ.get("VERCEL") and not os.environ.get("AWS_LAMBDA_FUNCTION_NAME"):
     scheduler_thread = threading.Thread(target=background_scheduler, daemon=True)
     scheduler_thread.start()
+    # Auto-initialize WhatsApp client
+    try:
+        whatsapp_service.start()
+    except Exception as e:
+        print(f"Initial WhatsApp start note: {e}")
 
 # ----------------- Frontend Static Files Serving -----------------
 frontend_dist = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "frontend", "dist")

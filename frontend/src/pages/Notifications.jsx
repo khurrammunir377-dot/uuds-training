@@ -15,7 +15,12 @@ import {
   Search,
   ExternalLink,
   ShieldCheck,
-  Smartphone
+  Smartphone,
+  QrCode,
+  Check,
+  LogOut,
+  Power,
+  Zap
 } from 'lucide-react';
 import { api } from '../api';
 import { useToast } from '../components/Toast';
@@ -55,6 +60,115 @@ export default function Notifications({ onSelectEmployee }) {
   const [urgentStaff, setUrgentStaff] = useState([]);
   const [loadingUrgent, setLoadingUrgent] = useState(true);
   const [staffSearch, setStaffSearch] = useState('');
+
+  // WhatsApp Native QR & Silent Dispatch State
+  const [waStatus, setWaStatus] = useState({
+    status: 'disconnected',
+    is_logged_in: false,
+    is_connected: false,
+    qr_code: null,
+    phone_number: null,
+    push_name: null,
+    error: null
+  });
+  const [loadingWaStatus, setLoadingWaStatus] = useState(false);
+  const [showQrModal, setShowQrModal] = useState(false);
+  const [sendingSilentWa, setSendingSilentWa] = useState({}); // { [record_id]: boolean }
+
+  useEffect(() => {
+    loadLogs();
+    loadUrgentStaff();
+    checkWhatsAppStatus();
+
+    // Periodic poll for QR code or status updates if modal open or pairing
+    const timer = setInterval(() => {
+      checkWhatsAppStatus(false);
+    }, 4000);
+
+    return () => clearInterval(timer);
+  }, []);
+
+  const checkWhatsAppStatus = async (showLoading = false) => {
+    if (showLoading) setLoadingWaStatus(true);
+    try {
+      const data = await api.getWhatsAppStatus();
+      if (data) {
+        setWaStatus(data);
+      }
+    } catch (err) {
+      console.warn('Could not poll WhatsApp status:', err.message);
+    } finally {
+      if (showLoading) setLoadingWaStatus(false);
+    }
+  };
+
+  const handleStartWhatsApp = async () => {
+    setLoadingWaStatus(true);
+    setShowQrModal(true);
+    try {
+      const res = await api.connectWhatsApp();
+      setWaStatus(res);
+      toast.info('WhatsApp gateway initialized. Scan QR code to link device.');
+    } catch (err) {
+      toast.error(`WhatsApp connection failed: ${err.message}`);
+    } finally {
+      setLoadingWaStatus(false);
+    }
+  };
+
+  const handleLogoutWhatsApp = async () => {
+    if (!window.confirm('Are you sure you want to disconnect and logout WhatsApp?')) return;
+    setLoadingWaStatus(true);
+    try {
+      await api.logoutWhatsApp();
+      toast.success('WhatsApp session logged out. A new QR code is ready.');
+      checkWhatsAppStatus(true);
+    } catch (err) {
+      toast.error(`Logout failed: ${err.message}`);
+    } finally {
+      setLoadingWaStatus(false);
+    }
+  };
+
+  const handleSendSilentWhatsApp = async (item) => {
+    const rawMobile = item.mobile_no || '';
+    if (!rawMobile) {
+      toast.warning(`No mobile number on file for ${item.full_name}. Please update in profile.`);
+      return;
+    }
+
+    const msg = formatWhatsAppComplianceMessage({
+      fullName: item.full_name,
+      courses: [{
+        code: item.course_code,
+        name: item.course_name,
+        expiry_date: item.expiry_date,
+        status: item.status
+      }]
+    });
+
+    setSendingSilentWa(prev => ({ ...prev, [item.record_id]: true }));
+    try {
+      const res = await api.sendWhatsAppSilent({
+        phone: rawMobile,
+        message: msg,
+        employee_name: item.full_name,
+        course_code: item.course_code
+      });
+
+      toast.success(`WhatsApp compliance notice sent silently to ${item.full_name} (${res.recipient})!`);
+      loadLogs(); // Refresh notification audit trail table
+    } catch (err) {
+      toast.error(`Failed to send silently: ${err.message}`);
+      // If session expired or disconnected, prompt QR modal
+      if (err.message && (err.message.includes('not connected') || err.message.includes('scan the QR'))) {
+        setShowQrModal(true);
+        handleStartWhatsApp();
+      }
+    } finally {
+      setSendingSilentWa(prev => ({ ...prev, [item.record_id]: false }));
+    }
+  };
 
   useEffect(() => {
     loadLogs();
@@ -317,9 +431,25 @@ export default function Notifications({ onSelectEmployee }) {
                   </p>
                 </div>
               </div>
-              <span className="px-2.5 py-1 rounded-full text-[11px] font-mono font-bold bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
-                Direct WhatsApp API
-              </span>
+              <div className="flex items-center gap-2">
+                {waStatus.is_connected && waStatus.is_logged_in ? (
+                  <button
+                    onClick={() => setShowQrModal(true)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-mono font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/25 transition"
+                  >
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                    <span>WhatsApp Connected {waStatus.phone_number ? `(+${waStatus.phone_number})` : ''}</span>
+                  </button>
+                ) : (
+                  <button
+                    onClick={handleStartWhatsApp}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-bold bg-emerald-600 hover:bg-emerald-500 text-white shadow-md shadow-emerald-900/30 transition animate-pulse"
+                  >
+                    <QrCode className="w-3.5 h-3.5" />
+                    <span>Scan WhatsApp QR</span>
+                  </button>
+                )}
+              </div>
             </div>
 
             {/* Template Message Box */}
@@ -371,13 +501,35 @@ export default function Notifications({ onSelectEmployee }) {
                         </div>
                       </div>
 
-                      <button
-                        onClick={() => openWhatsApp(emp)}
-                        className="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-500 shadow shrink-0 transition"
-                      >
-                        <MessageCircle className="w-3 h-3" />
-                        <span>WhatsApp</span>
-                      </button>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        {/* Primary Silent WhatsApp Dispatch Button - Zero Tabs Opened */}
+                        <button
+                          onClick={() => handleSendSilentWhatsApp(emp)}
+                          disabled={sendingSilentWa[emp.record_id]}
+                          title="Send WhatsApp silently without opening any tabs"
+                          className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-500 shadow-md shadow-emerald-900/30 transition disabled:opacity-50"
+                        >
+                          {sendingSilentWa[emp.record_id] ? (
+                            <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                          ) : (
+                            <Zap className="w-3.5 h-3.5 fill-current" />
+                          )}
+                          <span>{sendingSilentWa[emp.record_id] ? 'Sending...' : 'Silent Send'}</span>
+                        </button>
+
+                        {/* Fallback WhatsApp Web Link Button */}
+                        <button
+                          onClick={() => openWhatsApp(emp)}
+                          title="Open in WhatsApp Web / App"
+                          className={`p-1.5 rounded-lg border transition ${
+                            isDark 
+                              ? 'border-slate-700 hover:bg-slate-800 text-slate-300' 
+                              : 'border-slate-300 hover:bg-slate-100 text-slate-600'
+                          }`}
+                        >
+                          <ExternalLink className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     </div>
                   ))
                 )}
@@ -683,6 +835,126 @@ export default function Notifications({ onSelectEmployee }) {
                 </button>
               </div>
             </form>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* WhatsApp QR Authentication Modal */}
+      {showQrModal && typeof document !== 'undefined' && createPortal(
+        <div className="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in">
+          <div className={`border rounded-3xl max-w-md w-full shadow-2xl overflow-hidden my-auto ${
+            isDark ? 'bg-slate-900 border-slate-700 text-slate-100' : 'bg-white border-slate-300 text-slate-900'
+          }`}>
+            <div className="p-5 border-b border-slate-700/30 flex items-center justify-between bg-emerald-600/10">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
+                  <Smartphone className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-emerald-500">WhatsApp QR Sign In</h3>
+                  <p className="text-[11px] text-slate-400">Pair once to send messages silently from inside the app</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowQrModal(false)}
+                className="p-1.5 rounded-xl hover:bg-slate-800 text-slate-400 hover:text-white transition"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-6 flex flex-col items-center text-center space-y-4">
+              {waStatus.is_connected && waStatus.is_logged_in ? (
+                <div className="space-y-4 py-3">
+                  <div className="w-16 h-16 rounded-2xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center mx-auto border-2 border-emerald-500/40">
+                    <CheckCircle2 className="w-10 h-10" />
+                  </div>
+                  <div>
+                    <h4 className="text-lg font-bold text-emerald-500">WhatsApp Linked & Active</h4>
+                    <p className="text-xs text-slate-400 mt-1">
+                      Authenticated as <span className="font-mono font-bold text-white">+{waStatus.phone_number || 'Mobile User'}</span>
+                      {waStatus.push_name ? ` (${waStatus.push_name})` : ''}
+                    </p>
+                  </div>
+                  <div className={`p-3.5 rounded-2xl border text-xs text-left space-y-1.5 ${
+                    isDark ? 'bg-slate-950/80 border-slate-800 text-slate-300' : 'bg-emerald-50/70 border-emerald-200 text-slate-700'
+                  }`}>
+                    <div className="flex items-center gap-1.5 font-bold text-emerald-500">
+                      <Zap className="w-3.5 h-3.5 fill-current" />
+                      <span>Silent Messaging Enabled</span>
+                    </div>
+                    <p className="text-[11px] opacity-90 leading-relaxed">
+                      Clicking <strong>Silent Send</strong> will dispatch compliance alerts directly from this WhatsApp number without opening new browser tabs or apps.
+                    </p>
+                  </div>
+                  <div className="pt-2 flex items-center justify-center gap-3">
+                    <button
+                      onClick={() => setShowQrModal(false)}
+                      className="px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-500 transition shadow-lg shadow-emerald-900/30"
+                    >
+                      Done / Close
+                    </button>
+                    <button
+                      onClick={handleLogoutWhatsApp}
+                      className="px-4 py-2.5 rounded-xl text-xs font-bold text-red-400 hover:text-red-300 hover:bg-red-500/10 border border-red-500/30 transition flex items-center gap-1.5"
+                    >
+                      <LogOut className="w-3.5 h-3.5" />
+                      <span>Disconnect Session</span>
+                    </button>
+                  </div>
+                </div>
+              ) : waStatus.qr_code ? (
+                <div className="space-y-4">
+                  <div className="p-3 bg-white rounded-2xl border-2 border-emerald-500/40 shadow-xl inline-block">
+                    <img 
+                      src={waStatus.qr_code} 
+                      alt="WhatsApp QR Code" 
+                      className="w-56 h-56 object-contain"
+                    />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-bold">Scan with your WhatsApp mobile app</h4>
+                    <ol className="text-xs text-slate-400 mt-2 space-y-1 text-left max-w-xs mx-auto list-decimal pl-5">
+                      <li>Open WhatsApp on your phone</li>
+                      <li>Tap <strong>Menu (⋮)</strong> or <strong>Settings</strong></li>
+                      <li>Select <strong>Linked Devices</strong> & tap <strong>Link a Device</strong></li>
+                      <li>Point your phone camera at this QR code</li>
+                    </ol>
+                  </div>
+                  <div className="flex items-center justify-center gap-2 pt-1">
+                    <button
+                      onClick={handleStartWhatsApp}
+                      disabled={loadingWaStatus}
+                      className="px-4 py-2 rounded-xl text-xs font-semibold border border-slate-700 hover:bg-slate-800 text-slate-300 flex items-center gap-1.5 transition"
+                    >
+                      <RefreshCw className={`w-3.5 h-3.5 ${loadingWaStatus ? 'animate-spin' : ''}`} />
+                      <span>Refresh QR</span>
+                    </button>
+                    <button
+                      onClick={() => setShowQrModal(false)}
+                      className="px-4 py-2 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-white transition"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="py-8 space-y-4">
+                  <RefreshCw className="w-10 h-10 animate-spin text-emerald-500 mx-auto" />
+                  <div>
+                    <h4 className="text-sm font-bold">Connecting WhatsApp Engine...</h4>
+                    <p className="text-xs text-slate-400 mt-1">Generating your secure WhatsApp pairing QR code</p>
+                  </div>
+                  <button
+                    onClick={() => setShowQrModal(false)}
+                    className="px-4 py-2 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-white transition"
+                  >
+                    Close
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>,
         document.body

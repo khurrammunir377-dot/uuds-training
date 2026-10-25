@@ -110,11 +110,17 @@ export const api = {
   updateUser: (userId, data) => apiRequest(`/users/${userId}`, { method: 'PUT', body: JSON.stringify(data) }),
   deleteUser: (userId) => apiRequest(`/users/${userId}`, { method: 'DELETE' }),
 
-  // Audit Logs / Change History
+  // Audit Logs / History Logs
   getAuditLogs: (params = {}) => {
     const query = new URLSearchParams(params).toString();
     return apiRequest(`/audit-logs?${query}`);
   },
   clearAuditLogs: () => apiRequest('/audit-logs', { method: 'DELETE' }),
+
+  // WhatsApp Native QR & Silent Messaging
+  getWhatsAppStatus: () => apiRequest('/whatsapp/status'),
+  connectWhatsApp: () => apiRequest('/whatsapp/connect', { method: 'POST' }),
+  sendWhatsAppSilent: (data) => apiRequest('/whatsapp/send-silent', { method: 'POST', body: JSON.stringify(data) }),
+  logoutWhatsApp: () => apiRequest('/whatsapp/logout', { method: 'POST' }),
 };
 
