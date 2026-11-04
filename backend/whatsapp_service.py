@@ -80,7 +80,7 @@ class WhatsAppService:
                 print("⚡ [WhatsApp Service] New pairing QR generated successfully.")
             except Exception as e:
                 self.last_error = f"QR generation error: {e}"
-                print(f"❌ [WhatsApp Service] Error creating QR image: {e}")
+                print(f"[WhatsApp Service] Error creating QR image: {e}")
 
     def _on_connected(self, client: NewClient, message: ConnectedEv):
         """Triggered upon successful WhatsApp connection and login."""
@@ -98,15 +98,15 @@ class WhatsAppService:
                     if hasattr(me, "PushName") and me.PushName:
                         self.push_name = me.PushName
             except Exception as e:
-                print(f"⚠️ [WhatsApp Service] Note on get_me(): {e}")
+                print(f"[WhatsApp Service] Note on get_me(): {e}")
 
-            print(f"✅ [WhatsApp Service] WhatsApp is CONNECTED and ready! Logged in as: {self.phone_number or 'Authenticated User'}")
+            print(f"[WhatsApp Service] WhatsApp is CONNECTED and ready! Logged in as: {self.phone_number or 'Authenticated User'}")
 
     def _on_disconnected(self, client: NewClient, message: DisconnectedEv):
         with self._lock:
             if self.status == "connected":
                 self.status = "disconnected"
-            print("ℹ️ [WhatsApp Service] WhatsApp client disconnected.")
+            print("[WhatsApp Service] WhatsApp client disconnected.")
 
     def _on_logged_out(self, client: NewClient, message: LoggedOutEv):
         with self._lock:
@@ -114,7 +114,7 @@ class WhatsAppService:
             self.qr_code_data_uri = None
             self.phone_number = None
             self.push_name = None
-            print("🚪 [WhatsApp Service] WhatsApp session logged out.")
+            print("[WhatsApp Service] WhatsApp session logged out.")
 
     def start(self):
         """Initializes client and launches the connection loop in a background daemon thread."""
@@ -126,7 +126,7 @@ class WhatsAppService:
 
         def run_loop():
             try:
-                print(f"🚀 [WhatsApp Service] Initializing neonize client (session: {self.session_db})...")
+                print(f"[WhatsApp Service] Initializing neonize client (session: {self.session_db})...")
                 self.client = NewClient(self.session_db)
                 
                 # Register event callbacks
@@ -145,7 +145,7 @@ class WhatsAppService:
                     self.status = "error"
                     self.last_error = str(e)
                     self.is_starting = False
-                print(f"❌ [WhatsApp Service] Client loop error: {e}")
+                print(f"[WhatsApp Service] Client loop error: {e}")
 
         self.thread = threading.Thread(target=run_loop, name="WhatsAppClientThread", daemon=True)
         self.thread.start()
