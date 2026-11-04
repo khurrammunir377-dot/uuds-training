@@ -268,8 +268,8 @@ export default function Login() {
       </div>
 
       {/* Global Developer Footer */}
-      <footer className="w-full py-3.5 px-4 text-center text-xs font-semibold tracking-wider text-slate-300 border-t border-slate-800/60 bg-slate-950/70 backdrop-blur-md z-10 shrink-0 shadow-lg">
-        *** Designed and developed by | Khurram Munir Basra | UUDS DXB Stores ***
+      <footer className="w-full py-2.5 px-4 text-center text-xs sm:text-sm font-semibold tracking-wide text-slate-300 border-t border-slate-800/80 bg-slate-950/90 backdrop-blur-md z-10 shrink-0 shadow-lg">
+        Designed and Developed by <span className="text-sky-400 font-bold">| Khurram Munir Basra |</span> UUDS DXB Stores
       </footer>
     </div>
   );

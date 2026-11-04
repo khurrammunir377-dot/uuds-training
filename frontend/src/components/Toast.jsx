@@ -32,7 +32,7 @@ export function ToastProvider({ children }) {
     <ToastContext.Provider value={toast}>
       {children}
       {/* Toast container */}
-      <div className="fixed bottom-5 right-5 z-50 flex flex-col gap-2.5 max-w-md w-full pointer-events-none">
+      <div className="fixed bottom-12 right-5 z-50 flex flex-col gap-2.5 max-w-md w-full pointer-events-none">
         {toasts.map((t) => {
           let border = 'border-blue-500/40 bg-slate-900/95 text-blue-200';
           let icon = <Info className="w-5 h-5 text-blue-400 shrink-0" />;

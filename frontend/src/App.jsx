@@ -13,6 +13,7 @@ import TrainingMatrix from './pages/TrainingMatrix';
 import Settings from './pages/Settings';
 import History from './pages/History';
 import Login from './pages/Login';
+import Footer from './components/Footer';
 import { api } from './api';
 
 export default function App() {
@@ -132,6 +133,9 @@ export default function App() {
           )}
         </main>
       </div>
+
+      {/* Global Fixed Bottom Footer */}
+      <Footer />
 
       {/* Staff Profile Modal */}
       {selectedEmployeeId && (
