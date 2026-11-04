@@ -74,68 +74,71 @@ export default function App() {
 
       {/* Main App Container */}
       <div className="flex-1 flex overflow-hidden">
-        {/* Sidebar */}
+        {/* Sidebar - Extends all the way to full bottom */}
         <Sidebar 
           activeTab={activeTab} 
           setActiveTab={setActiveTab} 
           counts={counts}
         />
 
-        {/* Dynamic Page Content Area */}
-        <main className={`flex-1 w-full min-h-0 ${
-          ['matrix', 'employees', 'reminders', 'courses', 'settings', 'history'].includes(activeTab)
-            ? 'h-full overflow-hidden p-2 sm:p-3 flex flex-col' 
-            : 'overflow-y-auto p-3 sm:p-6'
-        }`}>
-          {activeTab === 'dashboard' && (
-            <Dashboard 
-              onNavigate={(tab) => setActiveTab(tab)}
-              onSelectEmployee={(id) => setSelectedEmployeeId(id)}
-            />
-          )}
+        {/* Right Section: Content Area + Fixed Bottom Footer */}
+        <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
+          {/* Dynamic Page Content Area */}
+          <main className={`flex-1 w-full min-h-0 ${
+            ['matrix', 'employees', 'reminders', 'courses', 'settings', 'history'].includes(activeTab)
+              ? 'h-full overflow-hidden p-2 sm:p-3 flex flex-col' 
+              : 'overflow-y-auto p-3 sm:p-6'
+          }`}>
+            {activeTab === 'dashboard' && (
+              <Dashboard 
+                onNavigate={(tab) => setActiveTab(tab)}
+                onSelectEmployee={(id) => setSelectedEmployeeId(id)}
+              />
+            )}
 
-          {activeTab === 'employees' && (
-            <Employees 
-              onSelectEmployee={(id) => setSelectedEmployeeId(id)}
-            />
-          )}
+            {activeTab === 'employees' && (
+              <Employees 
+                onSelectEmployee={(id) => setSelectedEmployeeId(id)}
+              />
+            )}
 
-          {activeTab === 'matrix' && (
-            <TrainingMatrix 
-              onSelectEmployee={(id) => setSelectedEmployeeId(id)}
-            />
-          )}
+            {activeTab === 'matrix' && (
+              <TrainingMatrix 
+                onSelectEmployee={(id) => setSelectedEmployeeId(id)}
+              />
+            )}
 
-          {activeTab === 'reminders' && (
-            <Reminders 
-              onSelectEmployee={(id) => setSelectedEmployeeId(id)}
-            />
-          )}
+            {activeTab === 'reminders' && (
+              <Reminders 
+                onSelectEmployee={(id) => setSelectedEmployeeId(id)}
+              />
+            )}
 
-          {activeTab === 'courses' && (
-            <Courses />
-          )}
+            {activeTab === 'courses' && (
+              <Courses />
+            )}
 
-          {activeTab === 'history' && (
-            <History 
-              onSelectEmployee={(id) => setSelectedEmployeeId(id)}
-            />
-          )}
+            {activeTab === 'history' && (
+              <History 
+                onSelectEmployee={(id) => setSelectedEmployeeId(id)}
+              />
+            )}
 
-          {activeTab === 'notifications' && (
-            <Notifications 
-              onSelectEmployee={(id) => setSelectedEmployeeId(id)}
-            />
-          )}
+            {activeTab === 'notifications' && (
+              <Notifications 
+                onSelectEmployee={(id) => setSelectedEmployeeId(id)}
+              />
+            )}
 
-          {activeTab === 'settings' && (
-            <Settings onNavigate={(tab) => setActiveTab(tab)} />
-          )}
-        </main>
+            {activeTab === 'settings' && (
+              <Settings onNavigate={(tab) => setActiveTab(tab)} />
+            )}
+          </main>
+
+          {/* Global Fixed Bottom Footer (Starts after sidebar, user profile sits to its left at full bottom) */}
+          <Footer />
+        </div>
       </div>
-
-      {/* Global Fixed Bottom Footer */}
-      <Footer />
 
       {/* Staff Profile Modal */}
       {selectedEmployeeId && (
