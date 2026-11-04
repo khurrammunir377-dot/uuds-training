@@ -95,14 +95,14 @@ export default function Sidebar({ activeTab, setActiveTab, counts = {} }) {
   ];
 
   return (
-    <aside className={`w-64 min-w-[16rem] max-w-[16rem] shrink-0 h-full border-r p-4 flex flex-col justify-between overflow-hidden hidden md:flex transition-colors duration-200 z-30 ${
+    <aside className={`w-64 min-w-[16rem] max-w-[16rem] shrink-0 h-full border-r p-3.5 flex flex-col justify-between overflow-hidden hidden md:flex transition-colors duration-200 z-30 ${
       isDark 
         ? 'bg-slate-900/70 backdrop-blur-md border-slate-800/80 text-slate-100' 
         : 'bg-white border-slate-200 text-slate-900 shadow-sm'
     }`}>
       {/* Top Navigation Items */}
       <div className="flex-1 overflow-y-auto space-y-1.5 pr-1 -mr-1">
-        <div className={`px-3 py-2 text-[11px] font-bold tracking-wider uppercase ${isDark ? 'text-slate-400' : 'text-slate-500 font-extrabold'}`}>
+        <div className={`px-3 py-1.5 text-[11px] font-bold tracking-wider uppercase ${isDark ? 'text-slate-400' : 'text-slate-500 font-extrabold'}`}>
           Navigation Menu
         </div>
 
