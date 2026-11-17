@@ -12,6 +12,7 @@ import threading
 import time
 from datetime import datetime, date, timedelta
 from typing import Optional, List
+import math
 
 from fastapi import FastAPI, HTTPException, Depends, Query, Header, Request, status, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
@@ -771,6 +772,8 @@ def get_matrix_data(
     team: Optional[str] = None,
     search: Optional[str] = None,
     course_category: Optional[str] = None,
+    page: Optional[int] = 1,
+    page_size: Optional[int] = 25,
 ):
     conn = get_db()
     cursor = conn.cursor()
@@ -785,47 +788,57 @@ def get_matrix_data(
     cursor.execute(course_query, course_params)
     courses = [dict(row) for row in cursor.fetchall()]
     
-    # 2. Fetch employees matching filters
-    emp_query = """
+    # 2. Count total employees matching filters
+    filter_clauses = ["1=1"]
+    filter_params = []
+    if status and status != "All":
+        filter_clauses.append("employment_status = ?")
+        filter_params.append(status)
+    if team and team != "All":
+        filter_clauses.append("team = ?")
+        filter_params.append(team)
+    if search and search.strip():
+        s = f"%{search.strip()}%"
+        filter_clauses.append("(uuds_no LIKE ? OR full_name LIKE ? OR contingent_id LIKE ? OR position LIKE ?)")
+        filter_params.extend([s, s, s, s])
+        
+    where_sql = " AND ".join(filter_clauses)
+    cursor.execute(f"SELECT COUNT(*) FROM employees WHERE {where_sql}", tuple(filter_params))
+    total_items = cursor.fetchone()[0]
+
+    # 3. Fetch paginated employees
+    emp_params = list(filter_params)
+    emp_query = f"""
     SELECT id, uuds_no, contingent_id, full_name, position, team, employment_status
     FROM employees
-    WHERE 1=1
+    WHERE {where_sql}
+    ORDER BY full_name ASC
     """
-    emp_params = []
-    if status and status != "All":
-        emp_query += " AND employment_status = ?"
-        emp_params.append(status)
-    if team and team != "All":
-        emp_query += " AND team = ?"
-        emp_params.append(team)
-    if search:
-        s = f"%{search.strip()}%"
-        emp_query += " AND (uuds_no LIKE ? OR full_name LIKE ? OR contingent_id LIKE ? OR position LIKE ?)"
-        emp_params.extend([s, s, s, s])
-        
-    emp_query += " ORDER BY full_name ASC"
-    cursor.execute(emp_query, emp_params)
-    employees = [dict(row) for row in cursor.fetchall()]
     
+    if page_size and page_size > 0:
+        p = max(1, page or 1)
+        total_pages = max(1, math.ceil(total_items / page_size))
+        offset = (p - 1) * page_size
+        emp_query += " LIMIT ? OFFSET ?"
+        emp_params.extend([page_size, offset])
+    else:
+        p = 1
+        page_size = total_items
+        total_pages = 1
+        
+    cursor.execute(emp_query, tuple(emp_params))
+    employees = [dict(row) for row in cursor.fetchall()]
     emp_ids = [e["id"] for e in employees]
     
-    # 3. Fetch training records for these employees
+    # 4. Fetch training records for current page employees
     records = {} # key: f"{employee_id}_{course_id}"
-    stats = {
-        "valid": 0,
-        "due_soon": 0,
-        "overdue": 0,
-        "not_recorded": 0,
-        "total_cells": len(employees) * len(courses)
-    }
-    
     if emp_ids:
         placeholders = ",".join("?" * len(emp_ids))
         cursor.execute(f"""
         SELECT id, employee_id, course_id, completion_date, expiry_date, status, notes
         FROM training_records
         WHERE employee_id IN ({placeholders})
-        """, emp_ids)
+        """, tuple(emp_ids))
         for row in cursor.fetchall():
             r = dict(row)
             key = f"{r['employee_id']}_{r['course_id']}"
@@ -837,17 +850,48 @@ def get_matrix_data(
                 "status": st,
                 "notes": r["notes"] or ""
             }
-            if st == "Valid":
-                stats["valid"] += 1
-            elif st == "Due Within 30 Days":
-                stats["due_soon"] += 1
-            elif st == "Overdue":
-                stats["overdue"] += 1
-            else:
-                stats["not_recorded"] += 1
                 
+    # 5. Overall compliance stats for all matching staff
+    stats_clauses = ["1=1"]
+    stats_params = []
+    if status and status != "All":
+        stats_clauses.append("e.employment_status = ?")
+        stats_params.append(status)
+    if team and team != "All":
+        stats_clauses.append("e.team = ?")
+        stats_params.append(team)
+    if search and search.strip():
+        s = f"%{search.strip()}%"
+        stats_clauses.append("(e.uuds_no LIKE ? OR e.full_name LIKE ? OR e.contingent_id LIKE ? OR e.position LIKE ?)")
+        stats_params.extend([s, s, s, s])
+        
+    if course_category and course_category != "All":
+        stats_clauses.append("c.category = ?")
+        stats_params.append(course_category)
+        stats_from = "FROM training_records r JOIN employees e ON e.id = r.employee_id JOIN courses c ON c.id = r.course_id"
+    else:
+        stats_from = "FROM training_records r JOIN employees e ON e.id = r.employee_id"
+        
+    cursor.execute(f"""
+    SELECT 
+        COUNT(CASE WHEN r.status = 'Valid' THEN 1 END) as valid,
+        COUNT(CASE WHEN r.status = 'Due Within 30 Days' THEN 1 END) as due_soon,
+        COUNT(CASE WHEN r.status = 'Overdue' THEN 1 END) as overdue,
+        COUNT(CASE WHEN r.status = 'Not Recorded' THEN 1 END) as not_recorded
+    {stats_from}
+    WHERE {" AND ".join(stats_clauses)}
+    """, tuple(stats_params))
+    st_row = dict(cursor.fetchone())
+    total_cells = total_items * len(courses)
+    stats = {
+        "valid": st_row["valid"] or 0,
+        "due_soon": st_row["due_soon"] or 0,
+        "overdue": st_row["overdue"] or 0,
+        "not_recorded": st_row["not_recorded"] or 0,
+        "total_cells": total_cells
+    }
     recorded_cells = stats["valid"] + stats["due_soon"] + stats["overdue"] + stats["not_recorded"]
-    stats["not_recorded"] += max(0, stats["total_cells"] - recorded_cells)
+    stats["not_recorded"] += max(0, total_cells - recorded_cells)
     
     # Also fetch all distinct teams and statuses for filter dropdowns
     cursor.execute("SELECT DISTINCT team FROM employees WHERE team IS NOT NULL AND team != '' ORDER BY team ASC")
@@ -866,6 +910,12 @@ def get_matrix_data(
         "employees": employees,
         "records": records,
         "stats": stats,
+        "pagination": {
+            "page": p,
+            "page_size": page_size,
+            "total_items": total_items,
+            "total_pages": total_pages
+        },
         "filter_options": {
             "teams": teams,
             "statuses": statuses,

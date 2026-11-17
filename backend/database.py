@@ -139,6 +139,13 @@ def init_db():
     )
     """)
 
+    # Performance indexes
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_tr_emp_course ON training_records(employee_id, course_id)")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_tr_status ON training_records(status)")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_emp_status_team ON employees(employment_status, team)")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_emp_name ON employees(full_name)")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_emp_uuds ON employees(uuds_no)")
+
     # Insert default admin user if not exists
     cursor.execute("SELECT id FROM users WHERE username = 'admin'")
     if not cursor.fetchone():

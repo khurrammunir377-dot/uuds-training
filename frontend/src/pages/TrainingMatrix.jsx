@@ -15,6 +15,10 @@ import {
   Clock, 
   Sparkles, 
   ChevronDown, 
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
   X, 
   Check, 
   Layers, 
@@ -39,6 +43,12 @@ export default function TrainingMatrix({ onSelectEmployee }) {
   const [stats, setStats] = useState({ valid: 0, due_soon: 0, overdue: 0, not_recorded: 0, total_cells: 0 });
   const [filterOptions, setFilterOptions] = useState({ teams: [], statuses: [], categories: [] });
   const [loading, setLoading] = useState(true);
+
+  // Pagination states
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
 
   // Filter states
   const [searchQuery, setSearchQuery] = useState('');
@@ -84,25 +94,28 @@ export default function TrainingMatrix({ onSelectEmployee }) {
   ];
   const years = Array.from({ length: 15 }, (_, i) => String(currentYear - 3 + i));
 
-  // Load Matrix Data
-  useEffect(() => {
-    loadMatrix();
-  }, [statusTab, selectedTeam, selectedCategory]);
-
-  const loadMatrix = async () => {
+  const loadMatrix = async (targetPage = page, targetPageSize = pageSize) => {
     setLoading(true);
     try {
+      const p = targetPageSize === 0 ? 1 : targetPage;
       const data = await api.getMatrixData({
         status: statusTab,
         team: selectedTeam !== 'All' ? selectedTeam : '',
         course_category: selectedCategory !== 'All' ? selectedCategory : '',
-        search: searchQuery
+        search: searchQuery.trim(),
+        page: p,
+        page_size: targetPageSize
       });
       setCourses(data.courses || []);
       setEmployees(data.employees || []);
       setRecords(data.records || {});
       setStats(data.stats || { valid: 0, due_soon: 0, overdue: 0, not_recorded: 0, total_cells: 0 });
       setFilterOptions(data.filter_options || { teams: [], statuses: [], categories: [] });
+      if (data.pagination) {
+        setPage(data.pagination.page || 1);
+        setTotalPages(data.pagination.total_pages || 1);
+        setTotalItems(data.pagination.total_items || 0);
+      }
     } catch (err) {
       console.error(err);
       toast.error('Failed to load training matrix data: ' + err.message);
@@ -111,18 +124,36 @@ export default function TrainingMatrix({ onSelectEmployee }) {
     }
   };
 
-  // Filter employees locally by search query for instant responsiveness
-  const filteredEmployees = useMemo(() => {
-    if (!searchQuery.trim()) return employees;
-    const q = searchQuery.toLowerCase().trim();
-    return employees.filter(emp => 
-      (emp.full_name || '').toLowerCase().includes(q) ||
-      (emp.uuds_no || '').toLowerCase().includes(q) ||
-      (emp.contingent_id || '').toLowerCase().includes(q) ||
-      (emp.position || '').toLowerCase().includes(q) ||
-      (emp.team || '').toLowerCase().includes(q)
-    );
-  }, [employees, searchQuery]);
+  // Reset to page 1 on filter/tab changes
+  useEffect(() => {
+    setPage(1);
+    loadMatrix(1, pageSize);
+  }, [statusTab, selectedTeam, selectedCategory, pageSize]);
+
+  // Debounce search query changes
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setPage(1);
+      loadMatrix(1, pageSize);
+    }, 350);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  const handlePageChange = (newPage) => {
+    const p = Math.max(1, Math.min(totalPages, newPage));
+    setPage(p);
+    loadMatrix(p, pageSize);
+  };
+
+  const handlePageSizeChange = (newSize) => {
+    const size = parseInt(newSize, 10);
+    setPageSize(size);
+    setPage(1);
+    loadMatrix(1, size);
+  };
+
+  // Employees for current page view
+  const filteredEmployees = employees;
 
   // Date Calculation helper
   const calculateExpiry = (completionDateStr, validityMonths = 24) => {
@@ -337,8 +368,29 @@ export default function TrainingMatrix({ onSelectEmployee }) {
   };
 
   // Export to CSV
-  const handleExportCSV = () => {
-    if (!filteredEmployees.length) {
+  const handleExportCSV = async () => {
+    let exportEmps = filteredEmployees;
+    let exportRecs = records;
+
+    if (totalItems > employees.length) {
+      toast.info('Fetching complete records for export...');
+      try {
+        const fullData = await api.getMatrixData({
+          status: statusTab,
+          team: selectedTeam !== 'All' ? selectedTeam : '',
+          course_category: selectedCategory !== 'All' ? selectedCategory : '',
+          search: searchQuery.trim(),
+          page: 1,
+          page_size: 0 // Fetch all matching records
+        });
+        exportEmps = fullData.employees || [];
+        exportRecs = fullData.records || {};
+      } catch (e) {
+        console.error('Failed to fetch full data for export, exporting current page instead', e);
+      }
+    }
+
+    if (!exportEmps.length) {
       toast.warning('No data to export.');
       return;
     }
@@ -352,7 +404,7 @@ export default function TrainingMatrix({ onSelectEmployee }) {
       ...courses.map(c => ({ label: `${c.code} (${c.name})`, key: `course_${c.id}` }))
     ];
 
-    const data = filteredEmployees.map(emp => {
+    const data = exportEmps.map(emp => {
       const row = {
         uuds_no: emp.uuds_no,
         full_name: emp.full_name,
@@ -361,7 +413,7 @@ export default function TrainingMatrix({ onSelectEmployee }) {
         employment_status: emp.employment_status || 'Active'
       };
       courses.forEach(c => {
-        const rec = records[`${emp.id}_${c.id}`];
+        const rec = exportRecs[`${emp.id}_${c.id}`];
         if (rec) {
           row[`course_${c.id}`] = rec.notes === 'YES' ? 'YES' : (rec.expiry_date || 'Not Recorded');
         } else {
@@ -373,7 +425,7 @@ export default function TrainingMatrix({ onSelectEmployee }) {
 
     const filename = `UUDS_Training_Matrix_${statusTab}_${new Date().toISOString().slice(0, 10)}.csv`;
     exportToCSV(data, headers, filename);
-    toast.success('Training matrix exported to CSV successfully!');
+    toast.success(`Training matrix (${exportEmps.length} staff) exported to CSV successfully!`);
   };
 
   // Print as PDF
@@ -606,7 +658,7 @@ export default function TrainingMatrix({ onSelectEmployee }) {
           </div>
 
           <div className="flex items-center gap-2 font-mono text-[11px]">
-            <span>Staff Count: <strong className="text-blue-500">{filteredEmployees.length}</strong></span>
+            <span>Staff Count: <strong className="text-blue-500">{totalItems || filteredEmployees.length}</strong></span>
             <span>•</span>
             <span>Compliance: <strong className="text-emerald-500">{totalCompliancePct}%</strong></span>
           </div>
@@ -764,6 +816,120 @@ export default function TrainingMatrix({ onSelectEmployee }) {
             </table>
           </div>
         )}
+
+        {/* Pagination Bar */}
+        <div className={`p-3 border-t flex flex-col sm:flex-row items-center justify-between gap-3 text-xs select-none ${
+          isDark ? 'border-slate-800 text-slate-400 bg-slate-900/95' : 'border-slate-200 text-slate-600 bg-slate-50'
+        }`}>
+          {/* Left info & Page Size Selector */}
+          <div className="flex flex-wrap items-center gap-3">
+            <div>
+              Showing <strong className={isDark ? 'text-slate-200' : 'text-slate-800'}>
+                {totalItems === 0 ? 0 : (page - 1) * (pageSize || totalItems) + 1}
+              </strong> to <strong className={isDark ? 'text-slate-200' : 'text-slate-800'}>
+                {pageSize === 0 ? totalItems : Math.min(totalItems, page * pageSize)}
+              </strong> of <strong className={isDark ? 'text-slate-200' : 'text-slate-800'}>{totalItems}</strong> staff records
+              {totalPages > 1 && (
+                <span className="ml-1 opacity-70">
+                  (Page <strong>{page}</strong> of <strong>{totalPages}</strong>)
+                </span>
+              )}
+            </div>
+
+            <div className="flex items-center gap-1.5 pl-3 border-l border-slate-700/40">
+              <span className="text-[11px] text-slate-400">Per page:</span>
+              <select
+                value={pageSize}
+                onChange={(e) => handlePageSizeChange(e.target.value)}
+                className={`px-2 py-1 rounded-lg border text-xs font-semibold outline-none cursor-pointer transition ${
+                  isDark
+                    ? 'bg-slate-950 border-slate-700 text-slate-200 focus:border-blue-500'
+                    : 'bg-white border-slate-300 text-slate-800 focus:border-blue-600 shadow-sm'
+                }`}
+              >
+                <option value={25}>25</option>
+                <option value={50}>50</option>
+                <option value={100}>100</option>
+                <option value={0}>All ({totalItems})</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Right Page Navigation */}
+          {totalPages > 1 && pageSize > 0 && (
+            <div className="flex items-center gap-1">
+              <button
+                disabled={page <= 1}
+                onClick={() => handlePageChange(1)}
+                title="First Page"
+                className={`p-1.5 rounded-lg border transition flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed ${
+                  isDark ? 'border-slate-700 bg-slate-800/80 hover:bg-slate-700 text-slate-200' : 'border-slate-300 bg-white hover:bg-slate-100 text-slate-700 shadow-sm'
+                }`}
+              >
+                <ChevronsLeft className="w-3.5 h-3.5" />
+              </button>
+              <button
+                disabled={page <= 1}
+                onClick={() => handlePageChange(page - 1)}
+                title="Previous Page"
+                className={`p-1.5 px-2 rounded-lg border text-xs font-medium transition flex items-center gap-1 disabled:opacity-30 disabled:cursor-not-allowed ${
+                  isDark ? 'border-slate-700 bg-slate-800/80 hover:bg-slate-700 text-slate-200' : 'border-slate-300 bg-white hover:bg-slate-100 text-slate-700 shadow-sm'
+                }`}
+              >
+                <ChevronLeft className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Prev</span>
+              </button>
+
+              <div className="flex items-center gap-1 px-1">
+                {Array.from({ length: totalPages }, (_, i) => i + 1)
+                  .filter(pNum => pNum === 1 || pNum === totalPages || Math.abs(pNum - page) <= 1)
+                  .map((pNum, idx, arr) => {
+                    const prevP = arr[idx - 1];
+                    const showEllipsis = prevP && pNum - prevP > 1;
+                    return (
+                      <React.Fragment key={pNum}>
+                        {showEllipsis && <span className="px-1 text-slate-500 font-mono">...</span>}
+                        <button
+                          onClick={() => handlePageChange(pNum)}
+                          className={`min-w-[28px] h-7 px-1.5 rounded-lg text-xs font-bold font-mono transition ${
+                            page === pNum
+                              ? 'bg-blue-600 text-white shadow-sm ring-1 ring-blue-400'
+                              : isDark
+                              ? 'border border-slate-700/60 bg-slate-800/40 text-slate-300 hover:bg-slate-700'
+                              : 'border border-slate-200 bg-white text-slate-700 hover:bg-slate-100 shadow-sm'
+                          }`}
+                        >
+                          {pNum}
+                        </button>
+                      </React.Fragment>
+                    );
+                  })}
+              </div>
+
+              <button
+                disabled={page >= totalPages}
+                onClick={() => handlePageChange(page + 1)}
+                title="Next Page"
+                className={`p-1.5 px-2 rounded-lg border text-xs font-medium transition flex items-center gap-1 disabled:opacity-30 disabled:cursor-not-allowed ${
+                  isDark ? 'border-slate-700 bg-slate-800/80 hover:bg-slate-700 text-slate-200' : 'border-slate-300 bg-white hover:bg-slate-100 text-slate-700 shadow-sm'
+                }`}
+              >
+                <span className="hidden sm:inline">Next</span>
+                <ChevronRight className="w-3.5 h-3.5" />
+              </button>
+              <button
+                disabled={page >= totalPages}
+                onClick={() => handlePageChange(totalPages)}
+                title="Last Page"
+                className={`p-1.5 rounded-lg border transition flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed ${
+                  isDark ? 'border-slate-700 bg-slate-800/80 hover:bg-slate-700 text-slate-200' : 'border-slate-300 bg-white hover:bg-slate-100 text-slate-700 shadow-sm'
+                }`}
+              >
+                <ChevronsRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Quick Single-Cell Inline Date Editor Modal */}
