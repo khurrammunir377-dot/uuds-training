@@ -14,8 +14,9 @@ export function setAuthToken(token) {
 
 export async function apiRequest(endpoint, options = {}) {
   const token = getAuthToken();
+  const isFormData = options.body instanceof FormData;
   const headers = {
-    'Content-Type': 'application/json',
+    ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
     ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
     ...options.headers,
   };
@@ -91,11 +92,12 @@ export const api = {
   }),
   getEmailLogs: () => apiRequest('/reminders/logs'),
 
-  // Settings
+  // Settings & System
   getSettings: () => apiRequest('/settings'),
   updateSettings: (settings) => apiRequest('/settings', { method: 'PUT', body: JSON.stringify({ settings }) }),
   testSmtp: () => apiRequest('/settings/test-smtp', { method: 'POST' }),
   reimportData: () => apiRequest('/system/re-import', { method: 'POST' }),
+  uploadExcel: (formData) => apiRequest('/system/upload-excel', { method: 'POST', body: formData }),
 
   // Matrix View & Batch Update
   getMatrixData: (params = {}) => {

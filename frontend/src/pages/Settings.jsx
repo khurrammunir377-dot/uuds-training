@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   Settings as SettingsIcon, 
   Mail, 
@@ -17,7 +17,11 @@ import {
   AlertTriangle,
   X,
   CheckCircle2,
-  History
+  History,
+  Upload,
+  FileSpreadsheet,
+  Check,
+  FileCheck
 } from 'lucide-react';
 import { api } from '../api';
 import { useToast } from '../components/Toast';
@@ -52,6 +56,12 @@ export default function Settings({ onNavigate }) {
   });
   const [showPassword, setShowPassword] = useState(false);
   const [submittingUser, setSubmittingUser] = useState(false);
+
+  // Excel Upload State (Admin only)
+  const fileInputRef = useRef(null);
+  const [uploadingExcel, setUploadingExcel] = useState(false);
+  const [uploadResult, setUploadResult] = useState(null);
+  const [showUploadModal, setShowUploadModal] = useState(false);
 
   useEffect(() => {
     loadSettings();
@@ -201,6 +211,42 @@ export default function Settings({ onNavigate }) {
     }
   };
 
+  // Handle Excel File Selection & Upload
+  const handleExcelFileChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Reset input so re-selecting same file triggers onChange
+    e.target.value = '';
+
+    const validExts = ['.xlsx', '.xlsm', '.xltx'];
+    const lowerName = file.name.toLowerCase();
+    if (!validExts.some(ext => lowerName.endsWith(ext))) {
+      toast.error('Please upload a valid Excel spreadsheet (.xlsx, .xlsm).');
+      return;
+    }
+
+    setUploadingExcel(true);
+    setUploadResult(null);
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const res = await api.uploadExcel(formData);
+      setUploadResult(res.details || res);
+      setShowUploadModal(true);
+      toast.success(`Excel file '${file.name}' processed successfully!`);
+      // Reload settings/users if needed
+      loadSettings();
+      if (isAdmin) loadUsers();
+    } catch (err) {
+      toast.error(`Excel upload failed: ${err.message}`);
+    } finally {
+      setUploadingExcel(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="p-16 flex flex-col items-center justify-center gap-3">
@@ -227,6 +273,33 @@ export default function Settings({ onNavigate }) {
         }
         actions={
           <div className="flex items-center gap-2">
+            {/* Hidden Native File Input for Excel Upload */}
+            <input 
+              type="file" 
+              ref={fileInputRef} 
+              onChange={handleExcelFileChange} 
+              accept=".xlsx,.xlsm,.xltx" 
+              className="hidden" 
+            />
+
+            {/* Upload Excel Button - Admin Only */}
+            {isAdmin && (
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploadingExcel}
+                className="flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 shadow-md shadow-emerald-900/30 border border-emerald-500/40 transition disabled:opacity-50"
+                title="Upload Excel schedule, roster, or matrix to automatically match and update all records"
+              >
+                {uploadingExcel ? (
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Upload className="w-4 h-4" />
+                )}
+                <span>{uploadingExcel ? 'Importing Excel...' : 'Upload Excel'}</span>
+              </button>
+            )}
+
             {/* Change History Button */}
             {onNavigate && (
               <button
@@ -487,6 +560,38 @@ export default function Settings({ onNavigate }) {
                 </div>
               </div>
             </div>
+
+            {/* Excel Smart Upload Card */}
+            {isAdmin && (
+              <div className={`mt-3 p-3.5 rounded-2xl border ${
+                isDark 
+                  ? 'bg-gradient-to-br from-emerald-950/30 via-slate-900/90 to-teal-950/20 border-emerald-500/30' 
+                  : 'bg-gradient-to-br from-emerald-50/70 via-white to-teal-50/50 border-emerald-300'
+              }`}>
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <div className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-500">
+                      <FileSpreadsheet className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h3 className="text-xs font-bold text-emerald-500">Universal Excel Importer</h3>
+                      <p className={`text-[10px] ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+                        Upload any schedule, roster, or matrix workbook. Columns & courses auto-match.
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploadingExcel}
+                    className="px-3 py-1.5 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-500 shadow-md shadow-emerald-900/20 transition flex items-center gap-1.5 shrink-0 disabled:opacity-50"
+                  >
+                    {uploadingExcel ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
+                    <span>{uploadingExcel ? 'Importing...' : 'Upload File'}</span>
+                  </button>
+                </div>
+              </div>
+            )}
 
             <div className={`p-3 rounded-xl border text-[11px] leading-relaxed mt-4 ${
               isDark ? 'bg-slate-950/60 border-slate-800 text-slate-400' : 'bg-slate-50 border-slate-200 text-slate-600'
@@ -979,6 +1084,76 @@ export default function Settings({ onNavigate }) {
                 className="px-5 py-2 rounded-xl text-xs font-bold text-white bg-rose-600 hover:bg-rose-500 shadow-md transition disabled:opacity-50"
               >
                 {submittingUser ? 'Deleting...' : 'Delete User'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL 4: EXCEL UPLOAD SUMMARY RESULTS */}
+      {showUploadModal && uploadResult && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+          <div className={`w-full max-w-md p-6 rounded-3xl border shadow-2xl space-y-4 animate-scale-in ${
+            isDark ? 'bg-slate-900 border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-900'
+          }`}>
+            <div className="flex items-center justify-between border-b pb-3 border-slate-700/40">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-2xl bg-emerald-500/15 text-emerald-500 border border-emerald-500/30">
+                  <FileCheck className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-base text-emerald-500">Excel Import Completed</h3>
+                  <p className="text-xs text-slate-400 truncate max-w-[240px]">{uploadResult.filename}</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowUploadModal(false)}
+                className="p-1.5 rounded-xl hover:bg-slate-800 text-slate-400 hover:text-white transition"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2.5 text-xs">
+              <div className={`p-3 rounded-xl border ${isDark ? 'bg-slate-950/60 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
+                <span className="text-[10px] uppercase font-bold text-slate-400">Sheets Processed</span>
+                <div className="text-lg font-black font-mono text-blue-500 mt-0.5">{uploadResult.sheets_processed}</div>
+              </div>
+              <div className={`p-3 rounded-xl border ${isDark ? 'bg-slate-950/60 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
+                <span className="text-[10px] uppercase font-bold text-slate-400">New Staff Added</span>
+                <div className="text-lg font-black font-mono text-emerald-500 mt-0.5">+{uploadResult.employees_created}</div>
+              </div>
+              <div className={`p-3 rounded-xl border ${isDark ? 'bg-slate-950/60 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
+                <span className="text-[10px] uppercase font-bold text-slate-400">Staff Updated</span>
+                <div className="text-lg font-black font-mono text-indigo-400 mt-0.5">{uploadResult.employees_updated}</div>
+              </div>
+              <div className={`p-3 rounded-xl border ${isDark ? 'bg-slate-950/60 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
+                <span className="text-[10px] uppercase font-bold text-slate-400">Training Records Synced</span>
+                <div className="text-lg font-black font-mono text-teal-400 mt-0.5">{uploadResult.records_updated}</div>
+              </div>
+            </div>
+
+            {uploadResult.matched_courses?.length > 0 && (
+              <div className={`p-3 rounded-xl border text-xs space-y-1.5 ${isDark ? 'bg-slate-950/80 border-slate-800' : 'bg-slate-50 border-slate-200'}`}>
+                <span className="text-[10px] uppercase font-bold text-slate-400 block">Auto-Matched Courses ({uploadResult.matched_courses.length})</span>
+                <div className="flex flex-wrap gap-1 max-h-24 overflow-y-auto">
+                  {uploadResult.matched_courses.map((code) => (
+                    <span key={code} className="px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
+                      {code}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-slate-700/40">
+              <button
+                type="button"
+                onClick={() => setShowUploadModal(false)}
+                className="w-full py-2.5 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-500 shadow-lg shadow-emerald-900/30 transition text-center"
+              >
+                Close & View Records
               </button>
             </div>
           </div>

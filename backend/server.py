@@ -13,7 +13,7 @@ import time
 from datetime import datetime, date, timedelta
 from typing import Optional, List
 
-from fastapi import FastAPI, HTTPException, Depends, Query, Header, Request, status
+from fastapi import FastAPI, HTTPException, Depends, Query, Header, Request, status, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
@@ -22,6 +22,7 @@ from pydantic import BaseModel
 from database import get_db, init_db, hash_password, verify_password
 from importer import calculate_status, import_all_data
 from email_service import send_compliance_email, send_manager_email, test_smtp_connection, get_compliance_summary, generate_compliance_html
+from excel_uploader import process_excel_upload
 
 # Optional WhatsApp service (available in persistent environment; safely bypassed on serverless like Vercel)
 try:
@@ -1279,6 +1280,37 @@ def test_smtp(user: dict = Depends(require_admin)):
     
     res = test_smtp_connection(host, port, usr, pwd, tls)
     return res
+
+@app.post("/api/system/upload-excel")
+async def upload_excel_file(file: UploadFile = File(...), user: dict = Depends(require_admin)):
+    """
+    Accepts any Excel workbook format (.xlsx, .xlsm, .xltx),
+    intelligently detects staff and course columns, matches training records,
+    and updates/creates full employee profiles and certification dates.
+    """
+    if not file.filename.lower().endswith(('.xlsx', '.xlsm', '.xltx')):
+        raise HTTPException(status_code=400, detail="Only Excel files (.xlsx, .xlsm, .xltx) are supported")
+        
+    try:
+        contents = await file.read()
+        if not contents:
+            raise HTTPException(status_code=400, detail="Uploaded file is empty")
+            
+        result = process_excel_upload(contents, file.filename, user["username"])
+        
+        log_msg = (
+            f"Uploaded Excel '{file.filename}': "
+            f"{result['employees_created']} new staff, {result['employees_updated']} updated staff, "
+            f"{result['records_updated']} training records matched & updated"
+        )
+        log_audit(user["username"], log_msg, "excel_import")
+        
+        return {
+            "message": "Excel data uploaded and matched successfully",
+            "details": result
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to process Excel file: {str(e)}")
 
 @app.post("/api/system/re-import")
 def reimport_excel_data(user: dict = Depends(require_admin)):
