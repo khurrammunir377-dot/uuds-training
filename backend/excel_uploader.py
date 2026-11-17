@@ -12,11 +12,28 @@ Supports:
 import os
 import re
 import io
+import json
 import openpyxl
 from datetime import datetime, date
 from typing import Dict, Any, List, Optional, Tuple
 from database import get_db
 from importer import parse_date_value, calculate_status, COURSES_CATALOG
+
+def format_date_compliance(d_str: Optional[str]) -> str:
+    if not d_str or str(d_str).strip() in ('None', 'null', '', '-'):
+        return 'None'
+    val = str(d_str).strip()
+    if val.upper() in ('YES', 'NO', 'PLANNED', 'N/A'):
+        return val.upper()
+    try:
+        clean = val.split('T')[0].split(' ')[0]
+        parts = clean.split('-')
+        if len(parts) == 3 and len(parts[0]) == 4:
+            dt = datetime(int(parts[0]), int(parts[1]), int(parts[2]))
+            return dt.strftime("%d-%b-%Y")
+    except Exception:
+        pass
+    return val
 
 COURSE_ALIAS_PATTERNS = [
     (r"easa.*145", "OL-1666"),
@@ -560,6 +577,26 @@ def process_excel_upload(file_bytes: bytes, filename: str, username: str) -> Dic
                     updated_at = CURRENT_TIMESTAMP
                 """, (emp_id, c_id, parsed_dt, computed_status, text_note, username))
                 stats["records_updated"] += 1
+
+                # Log training update to audit history if expiry date or valid note is present
+                if parsed_dt or (text_note and text_note != "Initial requirement"):
+                    exp_fmt = format_date_compliance(parsed_dt)
+                    audit_action = f"Excel update {course_code} for {clean_uuds} - {full_name}: Expiry {exp_fmt} ({computed_status})"
+                    details_obj = {
+                        "employee_id": emp_id,
+                        "uuds_no": clean_uuds,
+                        "employee_name": full_name,
+                        "course_id": c_id,
+                        "course_code": course_code,
+                        "new_expiry": parsed_dt,
+                        "new_expiry_formatted": exp_fmt,
+                        "new_status": computed_status,
+                        "notes": text_note
+                    }
+                    cursor.execute("""
+                    INSERT INTO audit_logs (username, action, entity_type, entity_id, details, created_at)
+                    VALUES (?, ?, 'training_record', ?, ?, CURRENT_TIMESTAMP)
+                    """, (username, audit_action, emp_id, json.dumps(details_obj)))
 
     # Ensure all employees have baseline records for all courses
     cursor.execute("SELECT id FROM employees")
