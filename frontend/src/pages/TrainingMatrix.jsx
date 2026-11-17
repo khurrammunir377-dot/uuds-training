@@ -24,12 +24,14 @@ import {
   Layers, 
   ShieldCheck, 
   ArrowUpDown,
-  FileSpreadsheet
+  FileSpreadsheet,
+  BookOpen
 } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { api } from '../api';
 import { useToast } from '../components/Toast';
 import { exportToCSV, printTableAsPDF } from '../utils/exportUtils';
+import { formatDate } from '../utils/dateUtils';
 import PageHeader from '../components/PageHeader';
 
 export default function TrainingMatrix({ onSelectEmployee }) {
@@ -175,14 +177,8 @@ export default function TrainingMatrix({ onSelectEmployee }) {
     if (notes && String(notes).trim().toUpperCase() === 'YES') {
       return 'YES';
     }
-    if (!dateStr) return 'Not Set';
-    try {
-      const [y, m, d] = dateStr.slice(0, 10).split('-');
-      const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-      return `${parseInt(d, 10)} ${monthNames[parseInt(m, 10) - 1]} ${y}`;
-    } catch (e) {
-      return dateStr;
-    }
+    if (!dateStr || dateStr === 'None' || dateStr === 'null' || dateStr === '-') return 'Not Set';
+    return formatDate(dateStr);
   };
 
   // Open Quick Edit Modal for a single cell
@@ -940,39 +936,51 @@ export default function TrainingMatrix({ onSelectEmployee }) {
           }`}>
             {/* Header */}
             <div className="flex items-start justify-between pb-4 border-b border-slate-700/50">
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-2xl bg-blue-600/20 text-blue-400 border border-blue-500/30">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="p-2.5 rounded-2xl bg-blue-600/20 text-blue-400 border border-blue-500/30 shrink-0">
                   <Calendar className="w-5 h-5" />
                 </div>
-                <div>
-                  <h3 className="text-base font-bold flex items-center gap-2">
-                    Update Training Date
-                    <span className="text-xs px-2 py-0.5 rounded font-mono font-bold bg-blue-500/20 text-blue-400 border border-blue-500/30">
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h3 className="text-base font-extrabold tracking-tight">
+                      Update Training Record
+                    </h3>
+                    <span className="text-xs px-2.5 py-0.5 rounded-md font-mono font-bold bg-blue-500/20 text-blue-400 border border-blue-500/30">
                       {editModal.course.code}
                     </span>
-                  </h3>
-                  <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-600'} mt-0.5 font-medium`}>
-                    {editModal.employee.full_name} • <span className="font-mono text-blue-400">{editModal.employee.uuds_no}</span>
+                  </div>
+                  <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-600'} mt-1 font-medium truncate`}>
+                    {editModal.employee.full_name} • <span className="font-mono text-blue-500 font-bold">{editModal.employee.uuds_no}</span>
                   </p>
                 </div>
               </div>
               <button 
                 onClick={() => setEditModal(prev => ({ ...prev, isOpen: false }))}
-                className="p-1.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition"
+                className="p-1.5 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition shrink-0"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            {/* Course Information Banner */}
-            <div className={`my-4 p-3 rounded-xl border flex items-center justify-between text-xs ${
-              isDark ? 'bg-slate-950/70 border-slate-800' : 'bg-slate-50 border-slate-200'
+            {/* Course Information Banner - Highly Visible in both light & dark mode */}
+            <div className={`my-4 p-3.5 rounded-2xl border flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 shadow-sm ${
+              isDark 
+                ? 'bg-gradient-to-r from-blue-950/60 via-slate-900 to-slate-950 border-blue-500/30' 
+                : 'bg-gradient-to-r from-blue-50 via-sky-50 to-white border-blue-200'
             }`}>
-              <div>
-                <span className="font-semibold text-slate-400">Course Name: </span>
-                <span className="font-bold text-slate-200">{editModal.course.name}</span>
+              <div className="min-w-0">
+                <div className="text-[11px] font-bold uppercase tracking-wider text-blue-500 flex items-center gap-1.5">
+                  <BookOpen className="w-3.5 h-3.5" />
+                  <span>Mandatory Aviation Training Course</span>
+                </div>
+                <div className={`text-sm font-extrabold mt-0.5 ${isDark ? 'text-white' : 'text-slate-900'}`}>
+                  {editModal.course.name}
+                </div>
+                <div className={`text-[11px] font-mono mt-0.5 ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
+                  Course Code: <strong className="text-blue-500">{editModal.course.code}</strong>
+                </div>
               </div>
-              <span className="font-mono font-bold px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+              <span className="font-mono font-bold px-3 py-1.5 rounded-xl bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 shrink-0 self-start sm:self-auto text-xs shadow-sm">
                 Validity: {editModal.course.validity_months || 24} Months
               </span>
             </div>

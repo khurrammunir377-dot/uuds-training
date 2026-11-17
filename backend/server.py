@@ -59,14 +59,41 @@ def create_token(user: dict) -> str:
     return token
 
 def get_current_user(authorization: Optional[str] = Header(None)):
+    fallback = {"id": 1, "username": "admin", "role": "admin", "full_name": "Khurram Munir Basra", "email": "khurram@uuds.ae"}
     if not authorization:
-        # For development / desktop convenience, allow fallback to admin if no header, or check bearer
-        return {"id": 1, "username": "admin", "role": "admin", "full_name": "System Administrator", "email": "admin@uuds.ae"}
+        return fallback
     token = authorization.replace("Bearer ", "").strip()
-    if token in TOKENS:
-        return TOKENS[token]
-    # Default fallback
-    return {"id": 1, "username": "admin", "role": "admin", "full_name": "System Administrator", "email": "admin@uuds.ae"}
+    user_info = TOKENS.get(token)
+    if not user_info:
+        return fallback
+    try:
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute("SELECT id, username, role, full_name, email FROM users WHERE id = ?", (user_info["id"],))
+        db_user = cur.fetchone()
+        conn.close()
+        if db_user:
+            return dict(db_user)
+    except Exception:
+        pass
+    return user_info
+
+def format_compliance_date(d_str: Optional[str]) -> str:
+    """Format dates as strictly DD-MMM-YYYY (e.g. 11-Nov-2026, 16-Jan-2028) for compliance audit display."""
+    if not d_str or str(d_str).strip() in ('None', 'null', '', '-'):
+        return 'None'
+    val = str(d_str).strip()
+    if val.upper() in ('YES', 'NO', 'PLANNED', 'N/A'):
+        return val.upper()
+    try:
+        clean = val.split('T')[0].split(' ')[0]
+        parts = clean.split('-')
+        if len(parts) == 3 and len(parts[0]) == 4:
+            dt = datetime(int(parts[0]), int(parts[1]), int(parts[2]))
+            return dt.strftime("%d-%b-%Y")
+    except Exception:
+        pass
+    return val
 
 def require_admin(user: dict = Depends(get_current_user)):
     if user.get("role") != "admin":
@@ -552,11 +579,13 @@ def get_employee_profile(emp_id: int):
     }
     emp_dict["courses"] = courses
     
-    # Recent audit trail for this employee
+    # Recent audit trail for this employee (both employee bio changes and training updates)
     cursor.execute("""
-    SELECT * FROM audit_logs 
-    WHERE entity_type = 'employee' AND entity_id = ? 
-    ORDER BY created_at DESC LIMIT 15
+    SELECT a.*, COALESCE(u.full_name, a.username) AS full_name 
+    FROM audit_logs a
+    LEFT JOIN users u ON a.username = u.username
+    WHERE (a.entity_type = 'employee' OR a.entity_type = 'training_record') AND a.entity_id = ? 
+    ORDER BY a.created_at DESC, a.id DESC LIMIT 25
     """, (emp_id,))
     emp_dict["audit_logs"] = [dict(row) for row in cursor.fetchall()]
     
@@ -684,9 +713,9 @@ def update_training_record(record_id: int, req: RecordUpdateRequest, user: dict 
     conn.close()
     
     emp_label = f"{record['uuds_no']} - {record['full_name']}"
-    old_exp = record['expiry_date'] if record['expiry_date'] else 'None'
-    new_exp = expiry_date_str if expiry_date_str else 'None'
-    audit_msg = f"Updated course {record['course_code']} ({record['course_name']}) for {emp_label}: Expiry {old_exp} -> {new_exp} ({status_calc})"
+    old_exp_fmt = format_compliance_date(record['expiry_date'])
+    new_exp_fmt = format_compliance_date(expiry_date_str)
+    audit_msg = f"Updated course {record['course_code']} ({record['course_name']}) for {emp_label}: Expiry {old_exp_fmt} -> {new_exp_fmt} ({status_calc})"
     details_obj = {
         "employee_id": record["employee_id"],
         "uuds_no": record["uuds_no"],
@@ -694,7 +723,9 @@ def update_training_record(record_id: int, req: RecordUpdateRequest, user: dict 
         "course_code": record["course_code"],
         "course_name": record["course_name"],
         "previous_expiry": record["expiry_date"],
+        "previous_expiry_formatted": old_exp_fmt,
         "new_expiry": expiry_date_str,
+        "new_expiry_formatted": new_exp_fmt,
         "previous_status": record["status"],
         "new_status": status_calc,
         "completion_date": completion_date_str,
@@ -744,10 +775,10 @@ def update_or_create_employee_course(emp_id: int, course_id: int, req: RecordUpd
     emp_label = f"{emp['uuds_no']} - {emp['full_name']}" if emp else f"Staff #{emp_id}"
     crs_code = crs['code'] if crs else f"Course #{course_id}"
     crs_name = crs['name'] if crs else ""
-    old_exp = old_rec['expiry_date'] if old_rec and old_rec['expiry_date'] else 'None'
-    new_exp = expiry_date_str if expiry_date_str else 'None'
+    old_exp_fmt = format_compliance_date(old_rec['expiry_date']) if old_rec and old_rec['expiry_date'] else 'None'
+    new_exp_fmt = format_compliance_date(expiry_date_str) if expiry_date_str else 'None'
     
-    audit_msg = f"Updated {crs_code} for {emp_label}: Expiry {old_exp} -> {new_exp} ({status_calc})"
+    audit_msg = f"Updated {crs_code} for {emp_label}: Expiry {old_exp_fmt} -> {new_exp_fmt} ({status_calc})"
     details_obj = {
         "employee_id": emp_id,
         "uuds_no": emp["uuds_no"] if emp else "",
@@ -756,7 +787,9 @@ def update_or_create_employee_course(emp_id: int, course_id: int, req: RecordUpd
         "course_code": crs_code,
         "course_name": crs_name,
         "previous_expiry": old_rec["expiry_date"] if old_rec else None,
+        "previous_expiry_formatted": old_exp_fmt,
         "new_expiry": expiry_date_str,
+        "new_expiry_formatted": new_exp_fmt,
         "previous_status": old_rec["status"] if old_rec else "Not Recorded",
         "new_status": status_calc,
         "completion_date": completion_date_str,
@@ -963,7 +996,7 @@ def batch_update_matrix(req: BatchMatrixUpdateRequest, user: dict = Depends(get_
     conn.commit()
     conn.close()
     
-    batch_audit_msg = f"Batch updated {crs_label} for {len(req.employee_ids)} staff members: Expiry={expiry_date_str or 'None'} ({status_calc})"
+    batch_audit_msg = f"Batch updated {crs_label} for {len(req.employee_ids)} staff members: Expiry={format_compliance_date(expiry_date_str)} ({status_calc})"
     details_obj = {
         "course_id": req.course_id,
         "course_code": crs_info["code"] if crs_info else "",
@@ -971,6 +1004,7 @@ def batch_update_matrix(req: BatchMatrixUpdateRequest, user: dict = Depends(get_
         "employee_count": len(req.employee_ids),
         "employee_ids": req.employee_ids,
         "new_expiry": expiry_date_str,
+        "new_expiry_formatted": format_compliance_date(expiry_date_str),
         "new_status": status_calc,
         "completion_date": completion_date_str,
         "notes": notes_str
@@ -1385,45 +1419,51 @@ def get_audit_logs(
     conn = get_db()
     cursor = conn.cursor()
     
-    query = "SELECT * FROM audit_logs WHERE 1=1"
+    query = """
+    SELECT a.id, a.username, a.action, a.entity_type, a.entity_id, a.details, a.created_at,
+           COALESCE(u.full_name, a.username) AS full_name, u.role
+    FROM audit_logs a
+    LEFT JOIN users u ON a.username = u.username
+    WHERE 1=1
+    """
     params = []
     
     # Category filter
     if category and category != "all":
         if category == "training":
-            query += " AND (entity_type = 'training_record' OR action LIKE '%course%' OR action LIKE '%training%')"
+            query += " AND (a.entity_type = 'training_record' OR a.action LIKE '%course%' OR a.action LIKE '%training%')"
         elif category == "employee":
-            query += " AND (entity_type = 'employee' AND action NOT LIKE 'Updated course%' AND action NOT LIKE 'Course %')"
+            query += " AND (a.entity_type = 'employee' AND a.action NOT LIKE 'Updated course%' AND a.action NOT LIKE 'Course %')"
         elif category == "course":
-            query += " AND (entity_type = 'course' AND action NOT LIKE 'Batch updated%')"
+            query += " AND (a.entity_type = 'course' AND a.action NOT LIKE 'Batch updated%')"
         elif category == "user":
-            query += " AND (entity_type = 'user' OR action LIKE '%user%')"
+            query += " AND (a.entity_type = 'user' OR a.action LIKE '%user%')"
         elif category == "email":
-            query += " AND (entity_type = 'email' OR action LIKE '%email%' OR action LIKE '%notice%')"
+            query += " AND (a.entity_type = 'email' OR a.action LIKE '%email%' OR a.action LIKE '%notice%')"
         elif category == "system":
-            query += " AND (entity_type = 'system' OR entity_type = 'settings')"
+            query += " AND (a.entity_type = 'system' OR a.entity_type = 'settings')"
         else:
-            query += " AND entity_type = ?"
+            query += " AND a.entity_type = ?"
             params.append(category)
             
     # User filter
     if user_filter and user_filter != "all":
-        query += " AND username = ?"
+        query += " AND a.username = ?"
         params.append(user_filter)
         
     # Timeframe filter
     if timeframe == "today":
-        query += " AND date(created_at) = date('now')"
+        query += " AND date(a.created_at) = date('now')"
     elif timeframe == "week":
-        query += " AND created_at >= datetime('now', '-7 days')"
+        query += " AND a.created_at >= datetime('now', '-7 days')"
     elif timeframe == "month":
-        query += " AND created_at >= datetime('now', '-30 days')"
+        query += " AND a.created_at >= datetime('now', '-30 days')"
         
     # Search filter
     if search and search.strip():
         term = f"%{search.strip()}%"
-        query += " AND (action LIKE ? OR username LIKE ? OR details LIKE ? OR entity_type LIKE ?)"
-        params.extend([term, term, term, term])
+        query += " AND (a.action LIKE ? OR a.username LIKE ? OR u.full_name LIKE ? OR a.details LIKE ? OR a.entity_type LIKE ?)"
+        params.extend([term, term, term, term, term])
         
     # Count total matching query
     count_sql = "SELECT COUNT(*) FROM (" + query + ")"
@@ -1431,7 +1471,7 @@ def get_audit_logs(
     total_count = cursor.fetchone()[0]
     
     # Query with sorting and pagination
-    query += " ORDER BY created_at DESC, id DESC LIMIT ? OFFSET ?"
+    query += " ORDER BY a.created_at DESC, a.id DESC LIMIT ? OFFSET ?"
     params.extend([min(limit, 500), max(offset, 0)])
     
     cursor.execute(query, params)
@@ -1456,9 +1496,17 @@ def get_audit_logs(
     cursor.execute("SELECT COUNT(*) FROM audit_logs WHERE entity_type = 'email' OR action LIKE '%email%' OR action LIKE '%notice%'")
     email_count = cursor.fetchone()[0]
 
-    # Distinct usernames for dropdown
-    cursor.execute("SELECT DISTINCT username FROM audit_logs WHERE username IS NOT NULL AND username != '' ORDER BY username ASC")
-    users_list = [row["username"] for row in cursor.fetchall()]
+    # Distinct usernames and full names for dropdown
+    cursor.execute("""
+    SELECT DISTINCT a.username, COALESCE(u.full_name, a.username) AS full_name 
+    FROM audit_logs a 
+    LEFT JOIN users u ON a.username = u.username 
+    WHERE a.username IS NOT NULL AND a.username != '' 
+    ORDER BY full_name ASC
+    """)
+    user_rows = cursor.fetchall()
+    users_list = [row["username"] for row in user_rows]
+    operators_list = [{"username": row["username"], "full_name": row["full_name"]} for row in user_rows]
     
     conn.close()
     
@@ -1473,7 +1521,8 @@ def get_audit_logs(
             "users": user_count,
             "emails": email_count
         },
-        "users": users_list
+        "users": users_list,
+        "operators": operators_list
     }
 
 @app.delete("/api/audit-logs")

@@ -144,22 +144,25 @@ export default function Sidebar({ activeTab, setActiveTab, counts = {} }) {
       <div className={`shrink-0 mt-3 pt-3 border-t transition-colors ${
         isDark ? 'border-slate-800' : 'border-slate-200'
       }`}>
-        <div className={`p-3 rounded-2xl border transition-colors ${
+        <div className={`p-2.5 rounded-2xl border transition-colors ${
           isDark 
             ? 'bg-slate-950/80 border-slate-800 text-slate-200' 
             : 'bg-slate-50 border-slate-200 text-slate-900 shadow-sm'
         }`}>
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2.5 min-w-0">
-              <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white font-bold text-xs shadow-md shrink-0">
-                <User className="w-4 h-4" />
+              <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white font-extrabold text-[11px] shadow-md shrink-0 border border-blue-400/30">
+                {user?.full_name 
+                  ? user.full_name.split(' ').filter(Boolean).map(w => w[0]).slice(0, 2).join('').toUpperCase() 
+                  : (user?.username ? user.username.slice(0, 2).toUpperCase() : 'KB')}
               </div>
               <div className="min-w-0">
-                <div className={`text-xs font-bold truncate ${isDark ? 'text-slate-100' : 'text-slate-900'}`}>
-                  {user?.full_name || user?.username || 'Administrator'}
+                <div className={`text-xs font-bold truncate ${isDark ? 'text-slate-100' : 'text-slate-900'}`} title={user?.full_name || user?.username}>
+                  {user?.full_name || (user?.username === 'admin' ? 'Khurram Munir Basra' : user?.username) || 'Khurram Munir Basra'}
                 </div>
-                <div className="text-[10px] font-bold uppercase tracking-wider text-amber-500">
-                  {user?.role || 'Admin'} Access
+                <div className="text-[10px] font-bold uppercase tracking-wider text-amber-500 flex items-center gap-1">
+                  <ShieldCheck className="w-3 h-3 shrink-0" />
+                  <span>{user?.role ? (user.role.charAt(0).toUpperCase() + user.role.slice(1)) : 'Admin'} Access</span>
                 </div>
               </div>
             </div>

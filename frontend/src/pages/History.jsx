@@ -30,7 +30,7 @@ import { useToast } from '../components/Toast';
 import PageHeader from '../components/PageHeader';
 import ConfirmationModal from '../components/ConfirmationModal';
 import { exportToCSV, printTableAsPDF } from '../utils/exportUtils';
-import { formatDate } from '../utils/dateUtils';
+import { formatDate, formatDubaiDateTime, formatActionText } from '../utils/dateUtils';
 
 export default function History({ onSelectEmployee }) {
   const { user, isAdmin } = useAuth();
@@ -92,7 +92,11 @@ export default function History({ onSelectEmployee }) {
       setLogs(res.logs || []);
       setTotalCount(res.total_count || 0);
       if (res.stats) setStats(res.stats);
-      if (res.users) setAvailableUsers(res.users);
+      if (res.operators && res.operators.length > 0) {
+        setAvailableUsers(res.operators);
+      } else if (res.users) {
+        setAvailableUsers(res.users.map(u => ({ username: u, full_name: u })));
+      }
     } catch (err) {
       console.error('Failed to load audit logs:', err);
       toast.error('Failed to load activity logs: ' + err.message);
@@ -122,15 +126,21 @@ export default function History({ onSelectEmployee }) {
       toast.info('No activity logs available to export');
       return;
     }
+    const formattedLogs = logs.map(l => ({
+      ...l,
+      created_at_dubai: formatDubaiDateTime(l.created_at),
+      operator_display: l.full_name ? `${l.full_name} (@${l.username})` : l.username,
+      action_formatted: formatActionText(l.action)
+    }));
     const headers = [
       { label: 'Log ID', key: 'id' },
-      { label: 'Date & Time', key: 'created_at' },
-      { label: 'User / Operator', key: 'username' },
+      { label: 'Date & Time (Dubai GST)', key: 'created_at_dubai' },
+      { label: 'User / Operator', key: 'operator_display' },
       { label: 'Category', key: 'entity_type' },
-      { label: 'Action Summary', key: 'action' },
+      { label: 'Action Summary', key: 'action_formatted' },
       { label: 'Technical Details', key: 'details' }
     ];
-    exportToCSV(logs, headers, `UUDS_Change_History_${new Date().toISOString().split('T')[0]}`);
+    exportToCSV(formattedLogs, headers, `UUDS_Change_History_${new Date().toISOString().split('T')[0]}`);
     toast.success('Exported activity history to CSV');
   };
 
@@ -140,16 +150,16 @@ export default function History({ onSelectEmployee }) {
       toast.info('No activity logs available to print');
       return;
     }
-    const headers = ['Time', 'User', 'Category', 'Action / Event Summary'];
+    const headers = ['Time (Dubai GST)', 'Operator / User', 'Category', 'Action / Event Summary'];
     const rows = logs.map(l => [
-      l.created_at || '-',
-      l.username || 'System',
+      formatDubaiDateTime(l.created_at),
+      l.full_name ? `${l.full_name} (@${l.username})` : (l.username || 'System'),
       (l.entity_type || 'General').toUpperCase(),
-      l.action || '-'
+      formatActionText(l.action) || '-'
     ]);
     printTableAsPDF({
       title: 'UUDS Aviation Training Compliance - History Logs',
-      subtitle: `Exported on ${new Date().toLocaleString('en-GB')} | Total Records: ${logs.length}`,
+      subtitle: `Exported on ${formatDubaiDateTime(new Date())} (Dubai Time) | Total Records: ${logs.length}`,
       headers,
       rows
     });
@@ -212,24 +222,30 @@ export default function History({ onSelectEmployee }) {
     };
   };
 
-  // Helper for friendly timestamp formatting
+  // Helper for friendly timestamp formatting in Dubai Time (GST, UTC+4)
   const formatFriendlyTime = (dateStr) => {
-    if (!dateStr) return { primary: '-', secondary: '' };
+    if (!dateStr) return { relative: '-', exact: '-' };
     try {
-      const date = new Date(dateStr.replace(' ', 'T'));
+      let isoStr = String(dateStr).trim();
+      if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(isoStr)) {
+        isoStr = isoStr.replace(' ', 'T') + 'Z';
+      } else if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/.test(isoStr)) {
+        isoStr = isoStr + 'Z';
+      }
+      const date = new Date(isoStr);
       const now = new Date();
       const diffSec = Math.floor((now - date) / 1000);
 
       let relative = '';
-      if (diffSec < 60) relative = 'Just now';
-      else if (diffSec < 3600) relative = `${Math.floor(diffSec / 60)}m ago`;
-      else if (diffSec < 86400) relative = `${Math.floor(diffSec / 3600)}h ago`;
+      if (diffSec < 60 && diffSec >= 0) relative = 'Just now';
+      else if (diffSec < 3600 && diffSec >= 0) relative = `${Math.floor(diffSec / 60)}m ago`;
+      else if (diffSec < 86400 && diffSec >= 0) relative = `${Math.floor(diffSec / 3600)}h ago`;
       else relative = formatDate(date);
 
-      const timeStr = date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+      const exact = formatDubaiDateTime(dateStr);
       return {
         relative,
-        exact: `${formatDate(date)} ${timeStr}`
+        exact
       };
     } catch {
       return { relative: dateStr, exact: dateStr };
@@ -378,9 +394,15 @@ export default function History({ onSelectEmployee }) {
           }`}
         >
           <option value="all">All Operators</option>
-          {availableUsers.map(u => (
-            <option key={u} value={u}>User: {u}</option>
-          ))}
+          {availableUsers.map(u => {
+            const uName = typeof u === 'string' ? u : u.username;
+            const fName = typeof u === 'string' ? u : (u.full_name || u.username);
+            return (
+              <option key={uName} value={uName}>
+                {fName !== uName ? `${fName} (@${uName})` : `User: ${uName}`}
+              </option>
+            );
+          })}
         </select>
 
         {/* Timeframe Filter Dropdown */}
@@ -481,13 +503,22 @@ export default function History({ onSelectEmployee }) {
 
                       {/* Operator / User Badge */}
                       <td className="py-3 px-4 align-top">
-                        <div className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-slate-500/10 border border-slate-500/20 font-medium">
-                          {log.username === 'admin' || log.username === 'nsilva' ? (
-                            <ShieldCheck className="w-3.5 h-3.5 text-amber-500" />
-                          ) : (
-                            <User className="w-3.5 h-3.5 text-blue-500" />
-                          )}
-                          <span className="font-bold tracking-tight">{log.username || 'system'}</span>
+                        <div className="flex items-center gap-2">
+                          <div className={`w-7 h-7 rounded-lg flex items-center justify-center font-bold text-xs shrink-0 border shadow-sm ${
+                            log.role === 'admin' || log.username === 'admin' || log.username === 'khurram'
+                              ? 'bg-amber-500/15 text-amber-500 border-amber-500/30'
+                              : 'bg-blue-500/10 text-blue-500 border-blue-500/20'
+                          }`}>
+                            {log.full_name ? log.full_name.slice(0, 2).toUpperCase() : (log.username ? log.username.slice(0, 2).toUpperCase() : 'US')}
+                          </div>
+                          <div className="min-w-0">
+                            <div className={`font-bold text-xs truncate max-w-[140px] ${isDark ? 'text-slate-100' : 'text-slate-900'}`} title={log.full_name || log.username}>
+                              {log.full_name || log.username || 'System Administrator'}
+                            </div>
+                            <div className="text-[10px] font-mono text-slate-400">
+                              @{log.username || 'system'}
+                            </div>
+                          </div>
                         </div>
                       </td>
 
@@ -501,9 +532,9 @@ export default function History({ onSelectEmployee }) {
 
                       {/* Action & Changes Summary */}
                       <td className="py-3 px-4 align-top">
-                        <div className="font-medium text-slate-100 dark:text-slate-100 font-sans leading-relaxed">
+                        <div className="font-medium font-sans leading-relaxed">
                           <span className={`${isDark ? 'text-slate-200' : 'text-slate-900'} font-semibold`}>
-                            {log.action}
+                            {formatActionText(log.action)}
                           </span>
                         </div>
 
@@ -515,7 +546,9 @@ export default function History({ onSelectEmployee }) {
                                 isDark ? 'bg-slate-950 border-slate-800 text-sky-300' : 'bg-slate-100 border-slate-200 text-blue-900'
                               }`}>
                                 <Calendar className="w-3 h-3 text-sky-400" />
-                                <span>Expiry: {details.previous_expiry ? `${details.previous_expiry} ➔ ` : ''}{details.new_expiry}</span>
+                                <span>
+                                  Expiry: {details.previous_expiry ? `${formatDate(details.previous_expiry)} ➔ ` : ''}{formatDate(details.new_expiry)}
+                                </span>
                               </div>
                             )}
 

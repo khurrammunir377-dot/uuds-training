@@ -151,7 +151,19 @@ def init_db():
     if not cursor.fetchone():
         cursor.execute("""
         INSERT INTO users (username, password_hash, role, full_name, email)
-        VALUES ('admin', ?, 'admin', 'System Administrator', 'admin@uuds.ae')
+        VALUES ('admin', ?, 'admin', 'Khurram Munir Basra', 'khurram@uuds.ae')
+        """, (hash_password("admin123"),))
+    else:
+        cursor.execute("""
+        UPDATE users SET full_name = 'Khurram Munir Basra', email = 'khurram@uuds.ae' WHERE username = 'admin'
+        """)
+
+    # Insert user khurram
+    cursor.execute("SELECT id FROM users WHERE username = 'khurram'")
+    if not cursor.fetchone():
+        cursor.execute("""
+        INSERT INTO users (username, password_hash, role, full_name, email)
+        VALUES ('khurram', ?, 'admin', 'Khurram Munir Basra', 'khurram@uuds.ae')
         """, (hash_password("admin123"),))
 
     # Insert default viewer user
