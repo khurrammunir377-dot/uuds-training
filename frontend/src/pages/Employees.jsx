@@ -152,8 +152,9 @@ export default function Employees({ onSelectEmployee }) {
   };
 
   const teamsList = [
-    'All', 'Team A', 'Team B', 'Team C', 'Leather', 'P/Booth', 
-    'Work Shop', 'Office', 'Planner', 'Line A', 'Line B', 'A Check', 'Stores'
+    'All', 'Team A', 'Team B', 'Team C', 'A Check', 'Work Shop', 
+    'Leather', 'P/Booth', 'Stores', 'Planner', 'Office', 
+    'Line A', 'Line B', 'Line C', 'Line D', 'DWC TX', 'EK Line'
   ];
 
   // Tabs with dynamic exact counts

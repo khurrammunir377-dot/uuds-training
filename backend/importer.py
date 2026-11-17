@@ -134,6 +134,37 @@ def match_column_to_course_code(header_text):
         
     return None
 
+def clean_team_name(raw_team, raw_pos=""):
+    if not raw_team:
+        return "Work Shop"
+    t = str(raw_team).strip()
+    tl = t.lower()
+    if tl in ["director", "director - onwing", "director-onwing"]: return "Office"
+    if "manager - onwing" in tl or "manager-onwing" in tl: return "Office"
+    if "workshop manager" in tl: return "Work Shop"
+    if "office assistant" in tl: return "Office"
+    if any(k in tl for k in ["training manager", "training coordinator", "training officer"]): return "Office"
+    if tl in ["coordinator", "supervisor"]: return "Office"
+    if any(k in tl for k in ["production coordinator", "production planner", "material planner", "junior production planner", "planning officer"]): return "Planner"
+    if "material coordinator" in tl: return "Stores"
+    if re.match(r"^team[- ]?a$", tl): return "Team A"
+    if re.match(r"^team[- ]?b$", tl): return "Team B"
+    if re.match(r"^team[- ]?c$", tl): return "Team C"
+    if re.match(r"^a[- ]?check$", tl): return "A Check"
+    if "workshop" in tl or "work shop" in tl: return "Work Shop"
+    if "leather" in tl: return "Leather"
+    if "paint" in tl or "p/booth" in tl or "p-booth" in tl: return "P/Booth"
+    if "stores" in tl or tl == "store": return "Stores"
+    if "planner" in tl or "planning" in tl: return "Planner"
+    if re.match(r"^line[- ]?a$", tl): return "Line A"
+    if re.match(r"^line[- ]?b$", tl): return "Line B"
+    if re.match(r"^line[- ]?c$", tl): return "Line C"
+    if re.match(r"^line[- ]?d$", tl): return "Line D"
+    if "ek line" in tl or "line maintenance" in tl or tl == "line": return "EK Line"
+    if "dwc" in tl: return "DWC TX"
+    if "office" in tl: return "Office"
+    return t
+
 def import_all_data(excel_path=None, mobile_excel_path=None):
     init_db()
     conn = get_db()
@@ -331,6 +362,8 @@ def import_all_data(excel_path=None, mobile_excel_path=None):
 
             if not team_str and matched_staff.get("team"):
                 team_str = matched_staff["team"]
+            
+            team_str = clean_team_name(team_str, pos_str)
             
             # Special check for Malith Rangana in UN Paid Leave
             if "malith rangana" in name_str.lower():
