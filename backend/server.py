@@ -1455,7 +1455,7 @@ def get_audit_logs(
         elif category == "course":
             query += " AND (a.entity_type = 'course' AND a.action NOT LIKE 'Batch updated%')"
         elif category == "user":
-            query += " AND (a.entity_type = 'user' OR a.action LIKE '%user%')"
+            query += " AND (a.entity_type = 'user' OR a.action LIKE '%user%' OR a.action = 'User logged in')"
         elif category == "email":
             query += " AND (a.entity_type = 'email' OR a.action LIKE '%email%' OR a.action LIKE '%notice%')"
         elif category == "system":
@@ -1463,6 +1463,10 @@ def get_audit_logs(
         else:
             query += " AND a.entity_type = ?"
             params.append(category)
+    else:
+        # In default "All Activity" view, display all actual training and compliance updates made by ANY ID,
+        # excluding repetitive login connection pings (which are available under the 'Users & Security' tab)
+        query += " AND a.action != 'User logged in'"
             
     # User filter
     if user_filter and user_filter != "all":
@@ -1496,7 +1500,7 @@ def get_audit_logs(
     logs = [dict(row) for row in cursor.fetchall()]
     
     # Calculate global stats
-    cursor.execute("SELECT COUNT(*) FROM audit_logs")
+    cursor.execute("SELECT COUNT(*) FROM audit_logs WHERE action != 'User logged in'")
     total_all = cursor.fetchone()[0]
     
     cursor.execute("SELECT COUNT(*) FROM audit_logs WHERE entity_type = 'training_record' OR action LIKE '%course%' OR action LIKE '%training%'")

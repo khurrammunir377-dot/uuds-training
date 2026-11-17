@@ -393,7 +393,7 @@ export default function History({ onSelectEmployee }) {
               : 'bg-slate-50 border-slate-300 text-slate-700'
           }`}
         >
-          <option value="all">All Operators</option>
+          <option value="all">All Operators (All Updates)</option>
           {availableUsers.map(u => {
             const uName = typeof u === 'string' ? u : u.username;
             const fName = typeof u === 'string' ? u : (u.full_name || u.username);
