@@ -10,21 +10,23 @@ ORIG_DB = os.path.join(os.path.dirname(__file__), "uuds_training.db")
 # In Vercel / serverless environments, root is read-only so use /tmp for writable SQLite
 if os.environ.get("VERCEL") or os.environ.get("AWS_LAMBDA_FUNCTION_NAME"):
     DB_PATH = "/tmp/uuds_training.db"
-    if not os.path.exists(DB_PATH) and os.path.exists(ORIG_DB):
-        try:
-            shutil.copy2(ORIG_DB, DB_PATH)
-        except Exception as e:
-            print("DB copy error:", e)
+    if os.path.exists(ORIG_DB):
+        if not os.path.exists(DB_PATH) or (os.path.getmtime(ORIG_DB) > os.path.getmtime(DB_PATH)):
+            try:
+                shutil.copy2(ORIG_DB, DB_PATH)
+            except Exception as e:
+                print("DB copy error:", e)
 else:
     DB_PATH = ORIG_DB
 
 def get_db():
     if os.environ.get("VERCEL") or os.environ.get("AWS_LAMBDA_FUNCTION_NAME"):
-        if not os.path.exists(DB_PATH) and os.path.exists(ORIG_DB):
-            try:
-                shutil.copy2(ORIG_DB, DB_PATH)
-            except Exception as e:
-                print("DB copy error:", e)
+        if os.path.exists(ORIG_DB):
+            if not os.path.exists(DB_PATH) or (os.path.getmtime(ORIG_DB) > os.path.getmtime(DB_PATH)):
+                try:
+                    shutil.copy2(ORIG_DB, DB_PATH)
+                except Exception as e:
+                    print("DB copy error:", e)
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     return conn
@@ -146,25 +148,35 @@ def init_db():
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_emp_name ON employees(full_name)")
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_emp_uuds ON employees(uuds_no)")
 
-    # Insert default admin user if not exists
-    cursor.execute("SELECT id FROM users WHERE username = 'admin'")
-    if not cursor.fetchone():
+    # Ensure default admin user exists with known password
+    cursor.execute("SELECT id FROM users WHERE LOWER(username) = 'admin'")
+    admin_row = cursor.fetchone()
+    if not admin_row:
         cursor.execute("""
         INSERT INTO users (username, password_hash, role, full_name, email)
         VALUES ('admin', ?, 'admin', 'Khurram Munir Basra', 'khurram@uuds.ae')
         """, (hash_password("admin123"),))
     else:
         cursor.execute("""
-        UPDATE users SET full_name = 'Khurram Munir Basra', email = 'khurram@uuds.ae' WHERE username = 'admin'
-        """)
+        UPDATE users 
+        SET password_hash = ?, full_name = 'Khurram Munir Basra', email = 'khurram@uuds.ae', role = 'admin' 
+        WHERE id = ?
+        """, (hash_password("admin123"), admin_row["id"]))
 
-    # Insert user khurram
-    cursor.execute("SELECT id FROM users WHERE username = 'khurram'")
-    if not cursor.fetchone():
+    # Insert or update user khurram
+    cursor.execute("SELECT id FROM users WHERE LOWER(username) = 'khurram'")
+    khurram_row = cursor.fetchone()
+    if not khurram_row:
         cursor.execute("""
         INSERT INTO users (username, password_hash, role, full_name, email)
         VALUES ('khurram', ?, 'admin', 'Khurram Munir Basra', 'khurram@uuds.ae')
         """, (hash_password("admin123"),))
+    else:
+        cursor.execute("""
+        UPDATE users 
+        SET password_hash = ?, full_name = 'Khurram Munir Basra', email = 'khurram@uuds.ae', role = 'admin' 
+        WHERE id = ?
+        """, (hash_password("admin123"), khurram_row["id"]))
 
     # Insert default viewer user
     cursor.execute("SELECT id FROM users WHERE username = 'viewer'")
