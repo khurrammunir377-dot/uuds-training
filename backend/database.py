@@ -5,9 +5,12 @@ import hashlib
 import json
 from datetime import datetime
 
-ORIG_DB = os.path.join(os.path.dirname(__file__), "uuds_training.db")
+# Turso Cloud Configuration
+TURSO_DATABASE_URL = os.environ.get("TURSO_DATABASE_URL", "https://uuds-training-khurram.aws-ap-south-1.turso.io").strip()
+TURSO_AUTH_TOKEN = os.environ.get("TURSO_AUTH_TOKEN", "eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9.eyJhIjoicnciLCJpYXQiOjE3OTUzNDMzODcsImlkIjoiMDFhMjAyY2QtZDEwMS03NDBhLTkzY2MtMWMyMzdkZjNmOGQxIiwia2lkIjoiR01OZzY4czd0MTkta1B3aUZOX21rQVktaEZ0cDRMaHJUaVl5R2VrSE9aNCIsInJpZCI6IjA2OTYzOGExLTdjMzMtNDY4ZC1hYTE2LTk0MWI5YTI1M2UwMSJ9.DswYCcnFtw_nKs9LN5-3rZfXoBURLZbz1sG8qzsBQ7ya7GfeYQAHP7V3dMUubMJuslAyQT3dsDnjUvqcIx8QDg").strip()
 
-# In Vercel / serverless environments, root is read-only so use /tmp for writable SQLite
+# Local SQLite Fallback
+ORIG_DB = os.path.join(os.path.dirname(__file__), "uuds_training.db")
 if os.environ.get("VERCEL") or os.environ.get("AWS_LAMBDA_FUNCTION_NAME"):
     DB_PATH = "/tmp/uuds_training.db"
     if os.path.exists(ORIG_DB):
@@ -19,7 +22,113 @@ if os.environ.get("VERCEL") or os.environ.get("AWS_LAMBDA_FUNCTION_NAME"):
 else:
     DB_PATH = ORIG_DB
 
+class TursoRow(dict):
+    """Dual-access row wrapper that works as dict, object with index access, and dict(row)."""
+    def __init__(self, cols, vals):
+        super().__init__(zip(cols, vals))
+        self._vals = list(vals)
+
+    def __getitem__(self, item):
+        if isinstance(item, int):
+            return self._vals[item]
+        return super().__getitem__(item)
+
+class TursoCursor:
+    """Cursor wrapper for Turso LibSQL client matching standard SQLite cursor interface."""
+    def __init__(self, client):
+        self._client = client
+        self._res = None
+        self._rows = []
+        self._idx = 0
+        self.lastrowid = None
+        self.rowcount = 0
+        self.description = None
+
+    def execute(self, sql, params=None):
+        if params is None:
+            params = []
+        elif isinstance(params, (tuple, list)):
+            params = list(params)
+        elif isinstance(params, dict):
+            params = list(params.values())
+        else:
+            params = [params]
+
+        res = self._client.execute(sql, params)
+        self._res = res
+        self.lastrowid = getattr(res, "last_insert_rowid", None)
+        self.rowcount = getattr(res, "rows_affected", 0)
+        cols = getattr(res, "columns", ())
+        if cols:
+            self.description = [(c, None, None, None, None, None, None) for c in cols]
+            raw_rows = getattr(res, "rows", [])
+            self._rows = [TursoRow(cols, r) for r in raw_rows]
+        else:
+            self.description = None
+            self._rows = []
+        self._idx = 0
+        return self
+
+    def executemany(self, sql, seq_of_params):
+        count = 0
+        for params in seq_of_params:
+            self.execute(sql, params)
+            count += self.rowcount
+        self.rowcount = count
+        return self
+
+    def fetchone(self):
+        if self._idx < len(self._rows):
+            row = self._rows[self._idx]
+            self._idx += 1
+            return row
+        return None
+
+    def fetchall(self):
+        if self._idx < len(self._rows):
+            rows = self._rows[self._idx:]
+            self._idx = len(self._rows)
+            return rows
+        return []
+
+    def close(self):
+        pass
+
+class TursoConnection:
+    """Database connection for Turso cloud with automatic cleanup and transaction support."""
+    def __init__(self, url, auth_token):
+        clean_url = url
+        if clean_url.startswith("libsql://"):
+            clean_url = "https://" + clean_url[len("libsql://"):]
+        import libsql_client
+        self._client = libsql_client.create_client_sync(url=clean_url, auth_token=auth_token)
+
+    def cursor(self):
+        return TursoCursor(self._client)
+
+    def commit(self):
+        pass
+
+    def rollback(self):
+        pass
+
+    def close(self):
+        try:
+            self._client.close()
+        except Exception:
+            pass
+
+def is_turso_enabled() -> bool:
+    return bool(TURSO_DATABASE_URL and TURSO_AUTH_TOKEN)
+
 def get_db():
+    if is_turso_enabled():
+        try:
+            return TursoConnection(TURSO_DATABASE_URL, TURSO_AUTH_TOKEN)
+        except Exception as e:
+            print(f"[Database] Warning: Turso connection failed ({e}). Falling back to local SQLite.")
+    
+    # Fallback: Local SQLite
     if os.environ.get("VERCEL") or os.environ.get("AWS_LAMBDA_FUNCTION_NAME"):
         if os.path.exists(ORIG_DB):
             if not os.path.exists(DB_PATH) or (os.path.getmtime(ORIG_DB) > os.path.getmtime(DB_PATH)):
