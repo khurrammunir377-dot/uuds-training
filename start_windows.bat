@@ -14,9 +14,17 @@ if %ERRORLEVEL% EQU 0 (
     goto OPEN_WINDOW
 )
 
+:: Detect Python executable
+set "PY_EXE=python"
+if exist "C:\Python314\python.exe" (
+    set "PY_EXE=C:\Python314\python.exe"
+) else if exist "%LocalAppData%\Programs\Python\Python312\python.exe" (
+    set "PY_EXE=%LocalAppData%\Programs\Python\Python312\python.exe"
+)
+
 :: Start FastAPI Backend Server
 echo Starting UUDS Training Compliance Engine on port 5000...
-start "UUDS Training Server" /min python backend\server.py
+start "UUDS Training Server" /min "%PY_EXE%" backend\server.py
 
 echo Waiting for compliance engine to initialize...
 set /a ATTEMPTS=0
@@ -30,7 +38,7 @@ if %ERRORLEVEL% EQU 0 (
 )
 
 set /a ATTEMPTS+=1
-if %ATTEMPTS% LSS 8 (
+if %ATTEMPTS% LSS 15 (
     goto WAIT_PORT
 )
 

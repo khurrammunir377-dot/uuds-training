@@ -17,7 +17,6 @@ import {
   AlertTriangle,
   X,
   CheckCircle2,
-  History,
   Upload,
   FileSpreadsheet,
   Check,
@@ -282,40 +281,7 @@ export default function Settings({ onNavigate }) {
               className="hidden" 
             />
 
-            {/* Upload Excel Button - Admin Only */}
-            {isAdmin && (
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={uploadingExcel}
-                className="flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 shadow-md shadow-emerald-900/30 border border-emerald-500/40 transition disabled:opacity-50"
-                title="Upload Excel schedule, roster, or matrix to automatically match and update all records"
-              >
-                {uploadingExcel ? (
-                  <RefreshCw className="w-4 h-4 animate-spin" />
-                ) : (
-                  <Upload className="w-4 h-4" />
-                )}
-                <span>{uploadingExcel ? 'Importing Excel...' : 'Upload Excel'}</span>
-              </button>
-            )}
 
-            {/* Change History Button */}
-            {onNavigate && (
-              <button
-                type="button"
-                onClick={() => onNavigate('history')}
-                className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold border transition shadow-sm ${
-                  isDark 
-                    ? 'bg-slate-800 hover:bg-slate-700 text-sky-400 border-slate-700' 
-                    : 'bg-white hover:bg-slate-100 text-sky-700 border-slate-300'
-                }`}
-                title="View Training Records & History Logs"
-              >
-                <History className="w-4 h-4 text-sky-500" />
-                <span>History Logs</span>
-              </button>
-            )}
 
             {/* User Management Button - Strictly Hidden for non-admins */}
             {isAdmin && (

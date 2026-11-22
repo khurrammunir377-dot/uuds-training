@@ -6,7 +6,6 @@ import {
   Filter, 
   Download, 
   Printer, 
-  Trash2, 
   User, 
   ShieldCheck, 
   Clock, 
@@ -19,6 +18,9 @@ import {
   AlertTriangle, 
   ArrowRight,
   ChevronRight,
+  ChevronLeft,
+  ChevronsLeft,
+  ChevronsRight,
   ExternalLink,
   Calendar,
   X
@@ -28,7 +30,6 @@ import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { useToast } from '../components/Toast';
 import PageHeader from '../components/PageHeader';
-import ConfirmationModal from '../components/ConfirmationModal';
 import { exportToCSV, printTableAsPDF } from '../utils/exportUtils';
 import { formatDate, formatDubaiDateTime, formatActionText } from '../utils/dateUtils';
 
@@ -51,25 +52,26 @@ export default function History({ onSelectEmployee }) {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  // Filters
+  // Filters & Pagination
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('all');
   const [userFilter, setUserFilter] = useState('all');
   const [timeframe, setTimeframe] = useState('all');
-  const [limit, setLimit] = useState(150);
-
-  // Modal
-  const [showClearConfirm, setShowClearConfirm] = useState(false);
-  const [clearing, setClearing] = useState(false);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(100);
 
   useEffect(() => {
     loadAuditLogs();
-  }, [category, userFilter, timeframe]);
+  }, [page, pageSize, category, userFilter, timeframe]);
 
   // Debounced search
   useEffect(() => {
     const timer = setTimeout(() => {
-      loadAuditLogs();
+      if (page !== 1) {
+        setPage(1);
+      } else {
+        loadAuditLogs();
+      }
     }, 300);
     return () => clearTimeout(timer);
   }, [search]);
@@ -79,9 +81,10 @@ export default function History({ onSelectEmployee }) {
       if (isManualRefresh) setRefreshing(true);
       else setLoading(true);
 
+      const offset = (page - 1) * pageSize;
       const params = {
-        limit,
-        offset: 0
+        limit: pageSize,
+        offset: Math.max(0, offset)
       };
       if (search.trim()) params.search = search.trim();
       if (category !== 'all') params.category = category;
@@ -103,20 +106,6 @@ export default function History({ onSelectEmployee }) {
     } finally {
       setLoading(false);
       setRefreshing(false);
-    }
-  };
-
-  const handleClearHistory = async () => {
-    try {
-      setClearing(true);
-      await api.clearAuditLogs();
-      toast.success('Audit history cleared successfully');
-      setShowClearConfirm(false);
-      loadAuditLogs();
-    } catch (err) {
-      toast.error('Failed to clear history: ' + err.message);
-    } finally {
-      setClearing(false);
     }
   };
 
@@ -252,6 +241,10 @@ export default function History({ onSelectEmployee }) {
     }
   };
 
+  const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
+  const startRecord = totalCount === 0 ? 0 : (page - 1) * pageSize + 1;
+  const endRecord = Math.min(page * pageSize, totalCount);
+
   return (
     <div className="flex flex-col h-full space-y-3 min-h-0">
       {/* Standardized 2-Line Header */}
@@ -297,38 +290,25 @@ export default function History({ onSelectEmployee }) {
               <Printer className="w-4 h-4" />
               <span className="hidden sm:inline">Print / PDF</span>
             </button>
-
-            {isAdmin && (
-              <button
-                onClick={() => setShowClearConfirm(true)}
-                title="Clear all audit logs"
-                className={`p-2 sm:px-3 sm:py-2 rounded-xl text-xs font-bold border flex items-center gap-1.5 transition-all shadow-sm ${
-                  isDark
-                    ? 'bg-rose-950/40 border-rose-800/60 text-rose-400 hover:bg-rose-900/60'
-                    : 'bg-rose-50 border-rose-200 text-rose-700 hover:bg-rose-100'
-                }`}
-              >
-                <Trash2 className="w-4 h-4 text-rose-500" />
-                <span className="hidden sm:inline">Clear</span>
-              </button>
-            )}
           </>
         }
       />
 
-      {/* Control Strip: All Filters in One Line */}
-      <div className={`p-2 sm:px-3 rounded-xl border flex items-center gap-2.5 shrink-0 overflow-x-auto ${
+      {/* Control Strip: One Single Clean Line */}
+      <div className={`p-2 rounded-xl border flex items-center gap-2 shrink-0 ${
         isDark ? 'bg-slate-900/90 border-slate-800' : 'bg-white border-slate-200 shadow-sm'
       }`}>
-        {/* Search Input */}
-        <div className="relative min-w-[190px] sm:w-64 shrink-0">
-          <Search className={`w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 ${isDark ? 'text-slate-400' : 'text-slate-500'}`} />
+        {/* Search Input - Compact Width */}
+        <div className="relative w-40 sm:w-44 lg:w-48 shrink-0">
+          <Search className={`w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 ${isDark ? 'text-slate-400' : 'text-slate-500'}`} />
           <input
             type="text"
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search staff, course, user..."
-            className={`w-full pl-8 pr-7 py-1.5 rounded-lg text-xs font-medium border outline-none transition-all ${
+            onChange={(e) => {
+              setSearch(e.target.value);
+            }}
+            placeholder="Search records..."
+            className={`w-full pl-7 pr-6 py-1 rounded-lg text-xs font-medium border outline-none transition-all ${
               isDark 
                 ? 'bg-slate-950 border-slate-700 text-slate-100 placeholder-slate-500 focus:border-sky-500' 
                 : 'bg-slate-50 border-slate-300 text-slate-900 placeholder-slate-400 focus:border-sky-500'
@@ -336,18 +316,16 @@ export default function History({ onSelectEmployee }) {
           />
           {search && (
             <button 
-              onClick={() => setSearch('')}
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200"
+              onClick={() => { setSearch(''); setPage(1); }}
+              className="absolute right-1.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200"
             >
               <X className="w-3.5 h-3.5" />
             </button>
           )}
         </div>
 
-        <div className={`h-5 w-px shrink-0 ${isDark ? 'bg-slate-800' : 'bg-slate-200'}`} />
-
-        {/* Category Filter Pills in one line */}
-        <div className="flex items-center gap-1.5 shrink-0">
+        {/* Category Filter Pills in Same Line */}
+        <div className="flex items-center gap-1 shrink-0">
           {[
             { id: 'all', label: 'All', count: stats.total },
             { id: 'training', label: 'Training Records', count: stats.training },
@@ -358,8 +336,8 @@ export default function History({ onSelectEmployee }) {
           ].map(tab => (
             <button
               key={tab.id}
-              onClick={() => setCategory(tab.id)}
-              className={`px-2.5 py-1 rounded-lg text-xs font-bold whitespace-nowrap transition-all border flex items-center gap-1.5 shrink-0 ${
+              onClick={() => { setCategory(tab.id); setPage(1); }}
+              className={`px-2 py-1 rounded-lg text-xs font-bold whitespace-nowrap transition-all border flex items-center gap-1 shrink-0 ${
                 category === tab.id
                   ? isDark 
                     ? 'bg-sky-500/20 border-sky-400 text-sky-300 shadow-[0_0_10px_rgba(14,165,233,0.3)]' 
@@ -381,45 +359,46 @@ export default function History({ onSelectEmployee }) {
           ))}
         </div>
 
-        <div className={`h-5 w-px shrink-0 ${isDark ? 'bg-slate-800' : 'bg-slate-200'}`} />
+        {/* User & Timeframe Filters on Same Line */}
+        <div className="flex items-center gap-1.5 ml-auto shrink-0">
+          {/* User Filter Dropdown */}
+          <select
+            value={userFilter}
+            onChange={(e) => { setUserFilter(e.target.value); setPage(1); }}
+            className={`px-2 py-1 rounded-lg text-xs font-bold border outline-none shrink-0 ${
+              isDark 
+                ? 'bg-slate-950 border-slate-700 text-slate-200' 
+                : 'bg-slate-50 border-slate-300 text-slate-700'
+            }`}
+          >
+            <option value="all">All Operators</option>
+            {availableUsers.map(u => {
+              const uName = typeof u === 'string' ? u : u.username;
+              const fName = typeof u === 'string' ? u : (u.full_name || u.username);
+              return (
+                <option key={uName} value={uName}>
+                  {fName !== uName ? `${fName} (@${uName})` : `User: ${uName}`}
+                </option>
+              );
+            })}
+          </select>
 
-        {/* User Filter Dropdown */}
-        <select
-          value={userFilter}
-          onChange={(e) => setUserFilter(e.target.value)}
-          className={`px-2.5 py-1.5 rounded-lg text-xs font-bold border outline-none shrink-0 ${
-            isDark 
-              ? 'bg-slate-950 border-slate-700 text-slate-200' 
-              : 'bg-slate-50 border-slate-300 text-slate-700'
-          }`}
-        >
-          <option value="all">All Operators (All Updates)</option>
-          {availableUsers.map(u => {
-            const uName = typeof u === 'string' ? u : u.username;
-            const fName = typeof u === 'string' ? u : (u.full_name || u.username);
-            return (
-              <option key={uName} value={uName}>
-                {fName !== uName ? `${fName} (@${uName})` : `User: ${uName}`}
-              </option>
-            );
-          })}
-        </select>
-
-        {/* Timeframe Filter Dropdown */}
-        <select
-          value={timeframe}
-          onChange={(e) => setTimeframe(e.target.value)}
-          className={`px-2.5 py-1.5 rounded-lg text-xs font-bold border outline-none shrink-0 ${
-            isDark 
-              ? 'bg-slate-950 border-slate-700 text-slate-200' 
-              : 'bg-slate-50 border-slate-300 text-slate-700'
-          }`}
-        >
-          <option value="all">All Time</option>
-          <option value="today">Today Only</option>
-          <option value="week">Past 7 Days</option>
-          <option value="month">Past 30 Days</option>
-        </select>
+          {/* Timeframe Filter Dropdown */}
+          <select
+            value={timeframe}
+            onChange={(e) => { setTimeframe(e.target.value); setPage(1); }}
+            className={`px-2 py-1 rounded-lg text-xs font-bold border outline-none shrink-0 ${
+              isDark 
+                ? 'bg-slate-950 border-slate-700 text-slate-200' 
+                : 'bg-slate-50 border-slate-300 text-slate-700'
+            }`}
+          >
+            <option value="all">All Time</option>
+            <option value="today">Today</option>
+            <option value="week">Past 7 Days</option>
+            <option value="month">Past 30 Days</option>
+          </select>
+        </div>
       </div>
 
       {/* Main Audit History Table */}
@@ -602,31 +581,107 @@ export default function History({ onSelectEmployee }) {
           )}
         </div>
 
-        {/* Footer: Status & Counts */}
-        <div className={`px-4 py-2.5 border-t flex items-center justify-between text-xs shrink-0 ${
+        {/* Footer: Pagination & Record Summary */}
+        <div className={`px-4 py-2.5 border-t flex flex-wrap items-center justify-between gap-3 text-xs shrink-0 ${
           isDark ? 'bg-slate-950/80 border-slate-800 text-slate-400' : 'bg-slate-50 border-slate-200 text-slate-600'
         }`}>
-          <div>
-            Showing <span className="font-bold text-sky-500">{logs.length}</span> of <span className="font-bold text-sky-500">{totalCount}</span> activity records
+          {/* Left: Record Range, Total Count & Per-Page Selector */}
+          <div className="flex flex-wrap items-center gap-3">
+            <div>
+              Showing <span className="font-bold text-sky-500 font-mono">{startRecord.toLocaleString()} - {endRecord.toLocaleString()}</span> of <span className="font-bold text-sky-500 font-mono">{totalCount.toLocaleString()}</span> activity records
+            </div>
+
+            <div className="flex items-center gap-1.5 pl-3 border-l border-slate-700/30">
+              <span className="text-[11px] font-medium text-slate-400">Per page:</span>
+              <select
+                value={pageSize}
+                onChange={(e) => {
+                  setPageSize(Number(e.target.value));
+                  setPage(1);
+                }}
+                className={`px-2 py-1 rounded-lg text-xs font-bold border outline-none ${
+                  isDark 
+                    ? 'bg-slate-900 border-slate-700 text-slate-200 focus:border-sky-500' 
+                    : 'bg-white border-slate-300 text-slate-700 focus:border-sky-500'
+                }`}
+              >
+                <option value={50}>50</option>
+                <option value={100}>100</option>
+                <option value={200}>200</option>
+                <option value={500}>500</option>
+              </select>
+            </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            <span className="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="font-medium text-[11px]">Audit Engine Active</span>
+          {/* Right: Pagination Controls */}
+          <div className="flex items-center gap-1.5">
+            {/* First Page */}
+            <button
+              onClick={() => setPage(1)}
+              disabled={page <= 1 || loading}
+              title="First Page"
+              className={`p-1.5 rounded-lg border font-bold transition disabled:opacity-40 disabled:cursor-not-allowed ${
+                isDark 
+                  ? 'bg-slate-900 border-slate-700 text-slate-300 hover:bg-slate-800' 
+                  : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-100'
+              }`}
+            >
+              <ChevronsLeft className="w-4 h-4" />
+            </button>
+
+            {/* Prev Page */}
+            <button
+              onClick={() => setPage(p => Math.max(1, p - 1))}
+              disabled={page <= 1 || loading}
+              title="Previous Page"
+              className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg border font-bold transition disabled:opacity-40 disabled:cursor-not-allowed ${
+                isDark 
+                  ? 'bg-slate-900 border-slate-700 text-slate-300 hover:bg-slate-800' 
+                  : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-100'
+              }`}
+            >
+              <ChevronLeft className="w-4 h-4" />
+              <span className="hidden sm:inline">Prev</span>
+            </button>
+
+            {/* Page info badge */}
+            <div className={`px-3 py-1 rounded-lg border text-xs font-bold ${
+              isDark ? 'bg-slate-900 border-slate-700 text-slate-200' : 'bg-white border-slate-300 text-slate-800'
+            }`}>
+              Page <span className="text-sky-500 font-mono">{page}</span> of <span className="font-mono">{totalPages}</span>
+            </div>
+
+            {/* Next Page */}
+            <button
+              onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+              disabled={page >= totalPages || loading}
+              title="Next Page"
+              className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg border font-bold transition disabled:opacity-40 disabled:cursor-not-allowed ${
+                isDark 
+                  ? 'bg-slate-900 border-slate-700 text-slate-300 hover:bg-slate-800' 
+                  : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-100'
+              }`}
+            >
+              <span className="hidden sm:inline">Next</span>
+              <ChevronRight className="w-4 h-4" />
+            </button>
+
+            {/* Last Page */}
+            <button
+              onClick={() => setPage(totalPages)}
+              disabled={page >= totalPages || loading}
+              title="Last Page"
+              className={`p-1.5 rounded-lg border font-bold transition disabled:opacity-40 disabled:cursor-not-allowed ${
+                isDark 
+                  ? 'bg-slate-900 border-slate-700 text-slate-300 hover:bg-slate-800' 
+                  : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-100'
+              }`}
+            >
+              <ChevronsRight className="w-4 h-4" />
+            </button>
           </div>
         </div>
       </div>
-
-      {/* Clear Confirmation Modal */}
-      <ConfirmationModal
-        isOpen={showClearConfirm}
-        onClose={() => setShowClearConfirm(false)}
-        onConfirm={handleClearHistory}
-        title="Clear Activity & Change History?"
-        message="Are you sure you want to permanently clear all audit history records? This action cannot be undone."
-        confirmText={clearing ? 'Clearing...' : 'Clear All Records'}
-        type="danger"
-      />
     </div>
   );
 }
