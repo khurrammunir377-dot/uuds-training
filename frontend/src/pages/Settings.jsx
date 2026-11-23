@@ -215,13 +215,11 @@ export default function Settings({ onNavigate }) {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Reset input so re-selecting same file triggers onChange
-    e.target.value = '';
-
     const validExts = ['.xlsx', '.xlsm', '.xltx'];
     const lowerName = file.name.toLowerCase();
     if (!validExts.some(ext => lowerName.endsWith(ext))) {
       toast.error('Please upload a valid Excel spreadsheet (.xlsx, .xlsm).');
+      if (fileInputRef.current) fileInputRef.current.value = '';
       return;
     }
 
@@ -240,9 +238,11 @@ export default function Settings({ onNavigate }) {
       loadSettings();
       if (isAdmin) loadUsers();
     } catch (err) {
+      console.error('Excel upload error:', err);
       toast.error(`Excel upload failed: ${err.message}`);
     } finally {
       setUploadingExcel(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
 
@@ -260,6 +260,15 @@ export default function Settings({ onNavigate }) {
 
   return (
     <div className="h-full w-full flex flex-col min-h-0 overflow-hidden gap-2.5 animate-fade-in">
+      {/* Hidden Native File Input for Excel Upload */}
+      <input 
+        type="file" 
+        ref={fileInputRef} 
+        onChange={handleExcelFileChange} 
+        accept=".xlsx,.xlsm,.xltx" 
+        className="hidden" 
+      />
+
       {/* Top Standardized Frozen 2-Line Header */}
       <PageHeader
         icon={activeTab === 'users' ? Users : SettingsIcon}
@@ -272,14 +281,6 @@ export default function Settings({ onNavigate }) {
         }
         actions={
           <div className="flex items-center gap-2">
-            {/* Hidden Native File Input for Excel Upload */}
-            <input 
-              type="file" 
-              ref={fileInputRef} 
-              onChange={handleExcelFileChange} 
-              accept=".xlsx,.xlsm,.xltx" 
-              className="hidden" 
-            />
 
 
 

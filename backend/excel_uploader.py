@@ -358,21 +358,47 @@ def process_excel_upload(file_bytes: bytes, filename: str, username: str) -> Dic
     conn = get_db()
     cursor = conn.cursor()
 
-    # Ensure all courses are registered
-    for c in COURSES_CATALOG:
-        cursor.execute("""
-        INSERT INTO courses (code, name, category, validity_months, description)
-        VALUES (?, ?, ?, ?, ?)
-        ON CONFLICT(code) DO UPDATE SET
-            name = excluded.name,
-            category = excluded.category,
-            validity_months = excluded.validity_months,
-            description = excluded.description
-        """, (c["code"], c["name"], c["category"], c["validity_months"], c["desc"]))
+    # 1. Ensure all courses are registered (batched)
+    course_upsert_sql = """
+    INSERT INTO courses (code, name, category, validity_months, description)
+    VALUES (?, ?, ?, ?, ?)
+    ON CONFLICT(code) DO UPDATE SET
+        name = excluded.name,
+        category = excluded.category,
+        validity_months = excluded.validity_months,
+        description = excluded.description
+    """
+    course_stmts = [
+        (course_upsert_sql, (c["code"], c["name"], c["category"], c["validity_months"], c["desc"]))
+        for c in COURSES_CATALOG
+    ]
+    if hasattr(conn, "batch_execute"):
+        conn.batch_execute(course_stmts)
+    else:
+        cursor.executemany(course_upsert_sql, [s[1] for s in course_stmts])
     conn.commit()
 
     cursor.execute("SELECT id, code FROM courses")
     course_map = {row["code"]: row["id"] for row in cursor.fetchall()}
+
+    # 2. Pre-fetch all existing employees into in-memory dictionaries for instant O(1) matching
+    cursor.execute("SELECT id, uuds_no, contingent_id, full_name, position, team, mobile_no, dxb_start_date, employment_status FROM employees")
+    all_employees = cursor.fetchall()
+    
+    emp_by_id = {}
+    emp_by_uuds = {}
+    emp_by_contingent = {}
+    emp_by_name = {}
+    
+    for r in all_employees:
+        e_id = r["id"]
+        emp_by_id[e_id] = dict(r)
+        if r["uuds_no"]:
+            emp_by_uuds[str(r["uuds_no"]).strip().upper()] = e_id
+        if r["contingent_id"]:
+            emp_by_contingent[str(r["contingent_id"]).strip().upper()] = e_id
+        if r["full_name"] and len(str(r["full_name"]).strip()) > 3:
+            emp_by_name[str(r["full_name"]).strip().lower()] = e_id
 
     stats = {
         "sheets_processed": 0,
@@ -407,8 +433,11 @@ def process_excel_upload(file_bytes: bytes, filename: str, username: str) -> Dic
             temp_struct = detect_sheet_structure(wb[s_name], course_map)
             if temp_struct["roles"]["course_columns"]:
                 master_courses_format_a = temp_struct["roles"]["course_columns"].copy()
-                # If Format A starts at col 8, Format B starts at col 7 (1 column shift to left)
                 master_courses_format_b = {col_idx - 1: code for col_idx, code in master_courses_format_a.items() if col_idx >= 8}
+
+    pending_employee_updates = []
+    pending_training_records = []
+    pending_audit_logs = []
 
     for sheet_name in wb.sheetnames:
         ws = wb[sheet_name]
@@ -466,29 +495,18 @@ def process_excel_upload(file_bytes: bytes, filename: str, username: str) -> Dic
             # Canonicalize Team and Position
             clean_team, clean_pos = clean_team_and_position(raw_team, raw_pos)
 
-            # Match employee
+            # Match employee in-memory
             emp_id = None
-            if clean_uuds:
-                cursor.execute("SELECT id, uuds_no, team, position FROM employees WHERE uuds_no = ? OR uuds_no = ?", (clean_uuds, raw_uuds))
-                row = cursor.fetchone()
-                if row:
-                    emp_id = row["id"]
-            
-            if not emp_id and raw_contingent:
-                cursor.execute("SELECT id, uuds_no, team, position FROM employees WHERE contingent_id = ?", (raw_contingent,))
-                row = cursor.fetchone()
-                if row:
-                    emp_id = row["id"]
-                    if not clean_uuds:
-                        clean_uuds = row["uuds_no"]
-
-            if not emp_id and raw_name and len(raw_name) > 3:
-                cursor.execute("SELECT id, uuds_no, team, position FROM employees WHERE LOWER(full_name) = LOWER(?)", (raw_name,))
-                row = cursor.fetchone()
-                if row:
-                    emp_id = row["id"]
-                    if not clean_uuds:
-                        clean_uuds = row["uuds_no"]
+            if clean_uuds and clean_uuds.upper() in emp_by_uuds:
+                emp_id = emp_by_uuds[clean_uuds.upper()]
+            elif raw_contingent and str(raw_contingent).strip().upper() in emp_by_contingent:
+                emp_id = emp_by_contingent[str(raw_contingent).strip().upper()]
+                if not clean_uuds and emp_id in emp_by_id:
+                    clean_uuds = emp_by_id[emp_id].get("uuds_no")
+            elif raw_name and raw_name.strip().lower() in emp_by_name:
+                emp_id = emp_by_name[raw_name.strip().lower()]
+                if not clean_uuds and emp_id in emp_by_id:
+                    clean_uuds = emp_by_id[emp_id].get("uuds_no")
 
             # If still not found and no clean_uuds, create a synthetic ID
             if not clean_uuds:
@@ -502,37 +520,45 @@ def process_excel_upload(file_bytes: bytes, filename: str, username: str) -> Dic
             emp_status = raw_status if raw_status else default_status
 
             if emp_id:
-                # Update existing employee
+                # Update existing employee only if values changed
+                cur = emp_by_id.get(emp_id, {})
                 update_fields = []
                 params = []
 
-                if raw_name:
+                if raw_name and raw_name != cur.get("full_name"):
                     update_fields.append("full_name = ?")
                     params.append(raw_name)
-                if raw_contingent:
+                    cur["full_name"] = raw_name
+                if raw_contingent and raw_contingent != cur.get("contingent_id"):
                     update_fields.append("contingent_id = ?")
                     params.append(raw_contingent)
-                if clean_team:
+                    cur["contingent_id"] = raw_contingent
+                if clean_team and clean_team != cur.get("team"):
                     update_fields.append("team = ?")
                     params.append(clean_team)
-                if clean_pos:
+                    cur["team"] = clean_team
+                if clean_pos and clean_pos != cur.get("position"):
                     update_fields.append("position = ?")
                     params.append(clean_pos)
-                if raw_mobile:
+                    cur["position"] = clean_pos
+                if raw_mobile and raw_mobile != cur.get("mobile_no"):
                     update_fields.append("mobile_no = ?")
                     params.append(raw_mobile)
+                    cur["mobile_no"] = raw_mobile
                     stats["mobile_numbers_updated"] += 1
-                if start_date_str:
+                if start_date_str and start_date_str != cur.get("dxb_start_date"):
                     update_fields.append("dxb_start_date = ?")
                     params.append(start_date_str)
-                if emp_status:
+                    cur["dxb_start_date"] = start_date_str
+                if emp_status and emp_status != cur.get("employment_status"):
                     update_fields.append("employment_status = ?")
                     params.append(emp_status)
+                    cur["employment_status"] = emp_status
 
                 if update_fields:
                     update_fields.append("updated_at = CURRENT_TIMESTAMP")
                     params.append(emp_id)
-                    cursor.execute(f"UPDATE employees SET {', '.join(update_fields)} WHERE id = ?", params)
+                    pending_employee_updates.append((f"UPDATE employees SET {', '.join(update_fields)} WHERE id = ?", params))
                     stats["employees_updated"] += 1
             else:
                 # Create new employee
@@ -554,6 +580,24 @@ def process_excel_upload(file_bytes: bytes, filename: str, username: str) -> Dic
                 if raw_mobile:
                     stats["mobile_numbers_updated"] += 1
 
+                # Update in-memory dicts
+                emp_by_id[emp_id] = {
+                    "id": emp_id,
+                    "uuds_no": clean_uuds,
+                    "contingent_id": raw_contingent,
+                    "full_name": raw_name or "Staff Member",
+                    "position": clean_pos,
+                    "team": clean_team,
+                    "mobile_no": raw_mobile,
+                    "dxb_start_date": start_date_str,
+                    "employment_status": emp_status
+                }
+                emp_by_uuds[clean_uuds.upper()] = emp_id
+                if raw_contingent:
+                    emp_by_contingent[str(raw_contingent).strip().upper()] = emp_id
+                if raw_name:
+                    emp_by_name[raw_name.strip().lower()] = emp_id
+
             # Process course training dates for this row
             for col_idx, course_code in roles["course_columns"].items():
                 if col_idx >= len(row_cells):
@@ -563,10 +607,13 @@ def process_excel_upload(file_bytes: bytes, filename: str, username: str) -> Dic
                     continue
 
                 cell_val = row_cells[col_idx].value
+                if cell_val is None or str(cell_val).strip() in ("", "-", "None", "null"):
+                    continue
+
                 parsed_dt, text_note = parse_date_value(cell_val)
                 computed_status = calculate_status(parsed_dt, text_note)
 
-                cursor.execute("""
+                upsert_tr_sql = """
                 INSERT INTO training_records (employee_id, course_id, expiry_date, status, notes, updated_by)
                 VALUES (?, ?, ?, ?, ?, ?)
                 ON CONFLICT(employee_id, course_id) DO UPDATE SET
@@ -575,17 +622,19 @@ def process_excel_upload(file_bytes: bytes, filename: str, username: str) -> Dic
                     notes = coalesce(excluded.notes, training_records.notes),
                     updated_by = excluded.updated_by,
                     updated_at = CURRENT_TIMESTAMP
-                """, (emp_id, c_id, parsed_dt, computed_status, text_note, username))
+                """
+                pending_training_records.append((upsert_tr_sql, (emp_id, c_id, parsed_dt, computed_status, text_note, username)))
                 stats["records_updated"] += 1
 
                 # Log training update to audit history if expiry date or valid note is present
                 if parsed_dt or (text_note and text_note != "Initial requirement"):
                     exp_fmt = format_date_compliance(parsed_dt)
-                    audit_action = f"Excel update {course_code} for {clean_uuds} - {full_name}: Expiry {exp_fmt} ({computed_status})"
+                    emp_display_name = raw_name or (emp_by_id.get(emp_id, {}).get("full_name") or "")
+                    audit_action = f"Excel update {course_code} for {clean_uuds} - {emp_display_name}: Expiry {exp_fmt} ({computed_status})"
                     details_obj = {
                         "employee_id": emp_id,
                         "uuds_no": clean_uuds,
-                        "employee_name": full_name,
+                        "employee_name": emp_display_name,
                         "course_id": c_id,
                         "course_code": course_code,
                         "new_expiry": parsed_dt,
@@ -593,22 +642,38 @@ def process_excel_upload(file_bytes: bytes, filename: str, username: str) -> Dic
                         "new_status": computed_status,
                         "notes": text_note
                     }
-                    cursor.execute("""
-                    INSERT INTO audit_logs (username, action, entity_type, entity_id, details, created_at)
-                    VALUES (?, ?, 'training_record', ?, ?, CURRENT_TIMESTAMP)
-                    """, (username, audit_action, emp_id, json.dumps(details_obj)))
+                    pending_audit_logs.append((
+                        "INSERT INTO audit_logs (username, action, entity_type, entity_id, details, created_at) VALUES (?, ?, 'training_record', ?, ?, CURRENT_TIMESTAMP)",
+                        (username, audit_action, emp_id, json.dumps(details_obj))
+                    ))
 
-    # Ensure all employees have baseline records for all courses
-    cursor.execute("SELECT id FROM employees")
-    all_emp_ids = [r["id"] for r in cursor.fetchall()]
-    all_course_ids = list(course_map.values())
+    # Fast batch execution
+    if hasattr(conn, "batch_execute"):
+        if pending_employee_updates:
+            conn.batch_execute(pending_employee_updates, chunk_size=100)
+        if pending_training_records:
+            conn.batch_execute(pending_training_records, chunk_size=100)
+        if pending_audit_logs:
+            conn.batch_execute(pending_audit_logs, chunk_size=100)
+    else:
+        for s, p in pending_employee_updates:
+            cursor.execute(s, p)
+        for s, p in pending_training_records:
+            cursor.execute(s, p)
+        for s, p in pending_audit_logs:
+            cursor.execute(s, p)
 
-    for e_id in all_emp_ids:
-        for c_id in all_course_ids:
-            cursor.execute("""
-            INSERT OR IGNORE INTO training_records (employee_id, course_id, status, notes, updated_by)
-            VALUES (?, ?, 'Not Recorded', 'Initial requirement', 'excel_upload')
-            """, (e_id, c_id))
+    # 3. Ensure all employees have baseline records for all courses in ONE fast CROSS JOIN query
+    cursor.execute("""
+    INSERT OR IGNORE INTO training_records (employee_id, course_id, status, notes, updated_by)
+    SELECT e.id, c.id, 'Not Recorded', 'Initial requirement', 'excel_upload'
+    FROM employees e
+    CROSS JOIN courses c
+    WHERE NOT EXISTS (
+        SELECT 1 FROM training_records tr 
+        WHERE tr.employee_id = e.id AND tr.course_id = c.id
+    )
+    """)
 
     conn.commit()
     conn.close()

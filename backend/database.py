@@ -70,10 +70,22 @@ class TursoCursor:
         return self
 
     def executemany(self, sql, seq_of_params):
+        if not seq_of_params:
+            return self
+        params_list = list(seq_of_params)
         count = 0
-        for params in seq_of_params:
-            self.execute(sql, params)
-            count += self.rowcount
+        chunk_size = 100
+        for i in range(0, len(params_list), chunk_size):
+            chunk = params_list[i:i + chunk_size]
+            stmts = [(sql, list(p) if isinstance(p, (tuple, list)) else [p]) for p in chunk]
+            if hasattr(self._client, "batch"):
+                res_list = self._client.batch(stmts)
+                for r in res_list:
+                    count += getattr(r, "rows_affected", 0)
+            else:
+                for s, p in stmts:
+                    res = self._client.execute(s, p)
+                    count += getattr(res, "rows_affected", 0)
         self.rowcount = count
         return self
 
@@ -105,6 +117,34 @@ class TursoConnection:
 
     def cursor(self):
         return TursoCursor(self._client)
+
+    def batch_execute(self, statements, chunk_size=100):
+        """Execute a sequence of (sql, params) tuples or raw sql strings in fast batches."""
+        if not statements:
+            return 0
+        total = 0
+        for i in range(0, len(statements), chunk_size):
+            chunk = statements[i:i + chunk_size]
+            stmts = []
+            for item in chunk:
+                if isinstance(item, tuple):
+                    sql, params = item
+                    stmts.append((sql, list(params) if isinstance(params, (tuple, list)) else [params]))
+                else:
+                    stmts.append(item)
+            if hasattr(self._client, "batch"):
+                res_list = self._client.batch(stmts)
+                for r in res_list:
+                    total += getattr(r, "rows_affected", 0)
+            else:
+                cursor = self.cursor()
+                for s in stmts:
+                    if isinstance(s, tuple):
+                        cursor.execute(s[0], s[1])
+                    else:
+                        cursor.execute(s)
+                    total += cursor.rowcount
+        return total
 
     def commit(self):
         pass
@@ -138,6 +178,18 @@ def get_db():
                     print("DB copy error:", e)
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
+    def _sqlite_batch_execute(statements, chunk_size=100):
+        c = conn.cursor()
+        total = 0
+        for item in statements:
+            if isinstance(item, tuple):
+                c.execute(item[0], item[1])
+            else:
+                c.execute(item)
+            total += c.rowcount
+        conn.commit()
+        return total
+    conn.batch_execute = _sqlite_batch_execute
     return conn
 
 def hash_password(password: str) -> str:
