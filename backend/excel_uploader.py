@@ -44,18 +44,12 @@ COURSE_ALIAS_PATTERNS = [
     (r"fuel.*tank", "OL-1678"),
     (r"ewis", "OL-1653"),
     (r"(cyber.*sec|cyber)", "OL-1395"),
-    (r"data.*privacy.*refresher", "OL-2208"),
     (r"data.*privacy", "OL-1732"),
     (r"(working.*height|height)", "OL-2550"),
     (r"fundamental.*human.*factor", "OL-723"),
     (r"(continuation.*human|continuation.*hf|continuation.*safety)", "OL-498"),
     (r"(induction|gen-?101)", "GEN-101"),
     (r"(competency|gen-?102)", "GEN-102"),
-    (r"etops", "OL-1968"),
-    (r"workshop", "OL-1965"),
-    (r"airside.*safety", "OL-1090"),
-    (r"(retrofit|falcon)", "OL-2669"),
-    (r"communicable.*disease", "OL-2136"),
     (r"(safety.*policy.*and.*you|emirates.*safety.*policy)", "OL-2529"),
 ]
 

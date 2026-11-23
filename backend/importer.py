@@ -6,26 +6,20 @@ from datetime import datetime, date, timedelta
 from database import get_db, init_db
 
 COURSES_CATALOG = [
-    {"code": "OL-1237", "name": "SMS for All", "category": "Safety Management", "validity_months": 24, "desc": "Emirates Group SMS training for all personnel"},
-    {"code": "OL-723", "name": "Fundamentals of Human Factors", "category": "Human Factors", "validity_months": 24, "desc": "Human Factors fundamentals in aviation maintenance"},
     {"code": "OL-1666", "name": "EASA Regulations - Initial/Continuation training", "category": "Regulations", "validity_months": 24, "desc": "EASA Part 145 regulatory requirements"},
     {"code": "OL-1667", "name": "UAE GCAA Aviation Legislation", "category": "Regulations", "validity_months": 24, "desc": "UAE GCAA CAR 145 aviation legislation"},
-    {"code": "OL-1653", "name": "EWIS 3, 4 & 5 - Initial/Continuation training", "category": "Technical", "validity_months": 24, "desc": "Electrical Wiring Interconnection System"},
     {"code": "OL-1073", "name": "Reduced Vertical Separation Minimum (RVSM)", "category": "Technical", "validity_months": 24, "desc": "RVSM operational and maintenance compliance"},
-    {"code": "OL-1678", "name": "Fuel Tank Safety Phase 1 and Phase 2", "category": "Technical", "validity_months": 24, "desc": "Fuel Tank Safety Phase 1 and 2 regulations"},
+    {"code": "GEN-101", "name": "Induction Safety Briefing", "category": "Onboarding", "validity_months": 36, "desc": "Company induction, hangar safety, security orientation"},
     {"code": "OL-1707", "name": "Emirates Engineering Procedures", "category": "Procedures", "validity_months": 24, "desc": "EK SOPs and department working procedures"},
-    {"code": "OL-2550", "name": "Working at Heights", "category": "Safety", "validity_months": 24, "desc": "Aviation ramp and hangar working at heights safety"},
+    {"code": "OL-1237", "name": "SMS for All", "category": "Safety Management", "validity_months": 24, "desc": "Emirates Group SMS training for all personnel"},
+    {"code": "OL-1678", "name": "Fuel Tank Safety Phase 1 and Phase 2", "category": "Technical", "validity_months": 24, "desc": "Fuel Tank Safety Phase 1 and 2 regulations"},
+    {"code": "OL-1653", "name": "EWIS 3, 4 & 5 - Initial/Continuation training", "category": "Technical", "validity_months": 24, "desc": "Electrical Wiring Interconnection System"},
     {"code": "OL-1395", "name": "An Introduction to Cyber Security", "category": "IT & Security", "validity_months": 12, "desc": "Aviation cybersecurity awareness and protocols"},
     {"code": "OL-1732", "name": "Data Privacy Basics", "category": "IT & Security", "validity_months": 12, "desc": "General data protection and Emirates privacy policy"},
-    {"code": "OL-2136", "name": "Communicable Disease", "category": "Health & Safety", "validity_months": 24, "desc": "Health precautions and contagious illness awareness"},
-    {"code": "OL-2529", "name": "The Emirates Group Safety Policy and You", "category": "Safety Management", "validity_months": 24, "desc": "Corporate safety culture, obligations and reporting"},
-    {"code": "OL-1968", "name": "ETOPS Generic and Type Initial/Continuation", "category": "Technical", "validity_months": 24, "desc": "Extended-range Twin-engine Operational Performance"},
-    {"code": "OL-1965", "name": "Workshop Procedures", "category": "Procedures", "validity_months": 24, "desc": "Workshop tooling, safety and maintenance documentation"},
-    {"code": "OL-1090", "name": "Emirates Airside Safety", "category": "Safety", "validity_months": 24, "desc": "Airside driving, ramp etiquette, and safety guidelines"},
+    {"code": "OL-2550", "name": "Working at Heights", "category": "Safety", "validity_months": 24, "desc": "Aviation ramp and hangar working at heights safety"},
+    {"code": "OL-723", "name": "Fundamentals of Human Factors", "category": "Human Factors", "validity_months": 24, "desc": "Human Factors fundamentals in aviation maintenance"},
     {"code": "OL-498", "name": "Continuation Training in Safety and Human Factors", "category": "Human Factors", "validity_months": 24, "desc": "Recurrent 24-month refresher following initial HF"},
-    {"code": "OL-2669", "name": "B777 Retrofit - Falcon Project", "category": "Aircraft Specific", "validity_months": 24, "desc": "Falcon Project Boeing 777 cabin reconfiguration"},
-    {"code": "OL-2208", "name": "Data Privacy Basics - Refresher", "category": "IT & Security", "validity_months": 12, "desc": "Annual refresher for Data Privacy Basics"},
-    {"code": "GEN-101", "name": "Induction Safety Briefing", "category": "Onboarding", "validity_months": 36, "desc": "Company induction, hangar safety, security orientation"},
+    {"code": "OL-2529", "name": "The Emirates Group Safety Policy and You", "category": "Safety Management", "validity_months": 24, "desc": "Corporate safety culture, obligations and reporting"},
     {"code": "GEN-102", "name": "Competency Assessment", "category": "Assessment", "validity_months": 24, "desc": "Technical skills and authorization competency assessment"},
 ]
 
@@ -123,14 +117,6 @@ def match_column_to_course_code(header_text):
         return "GEN-101"
     if "competency" in h:
         return "GEN-102"
-    if "etops" in h:
-        return "OL-1968"
-    if "workshop" in h:
-        return "OL-1965"
-    if "airside" in h:
-        return "OL-1090"
-    if "retrofit" in h or "falcon" in h:
-        return "OL-2669"
         
     return None
 
