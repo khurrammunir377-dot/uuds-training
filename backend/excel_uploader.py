@@ -47,7 +47,7 @@ COURSE_ALIAS_PATTERNS = [
     (r"data.*privacy", "OL-1732"),
     (r"(working.*height|height)", "OL-2550"),
     (r"fundamental.*human.*factor", "OL-723"),
-    (r"(continuation.*human|continuation.*hf|continuation.*safety)", "OL-498"),
+    (r"conti.*(?:safety|hf|human)", "OL-498"),
     (r"(induction|gen-?101)", "GEN-101"),
     (r"(competency|gen-?102)", "GEN-102"),
     (r"(safety.*policy.*and.*you|emirates.*safety.*policy)", "OL-2529"),
@@ -169,6 +169,11 @@ def match_course_code(header: str, existing_codes: Dict[str, int]) -> Optional[s
     if not header:
         return None
     h = header.strip()
+    h_lower = h.lower()
+    
+    # Explicit exclusions: ignore S/N, other trainings/qualifications, notes, etc.
+    if h_lower in ['s/n', 'sn', 'no', 'sr', 'sr.', 'notes', 'remarks', 'other trainings/qualifications', 'other trainings']:
+        return None
     
     # 1. Direct code check (e.g. "OL-1237" or "GEN-101")
     for code in existing_codes.keys():
@@ -176,18 +181,18 @@ def match_course_code(header: str, existing_codes: Dict[str, int]) -> Optional[s
             return code
             
     # 2. Known regex alias patterns
-    h_lower = h.lower()
     for pattern, code in COURSE_ALIAS_PATTERNS:
         if re.search(pattern, h_lower):
             if code in existing_codes:
                 return code
 
-    # 3. Fuzzy match against course catalog names
-    for c in COURSES_CATALOG:
-        c_name = c["name"].lower()
-        if c_name in h_lower or h_lower in c_name:
-            if c["code"] in existing_codes:
-                return c["code"]
+    # 3. Fuzzy match against course catalog names (only substantial text, never single digits)
+    if len(h_lower) >= 5 and not h_lower.isdigit():
+        for c in COURSES_CATALOG:
+            c_name = c["name"].lower()
+            if c_name in h_lower or h_lower in c_name:
+                if c["code"] in existing_codes:
+                    return c["code"]
 
     return None
 
@@ -209,21 +214,10 @@ def detect_sheet_structure(ws, course_map: Dict[str, int], default_course_column
         "course_columns": {} # col_index -> course_code
     }
     
-    max_scan_row = min(7, ws.max_row + 1)
-    
-    # 1. Scan rows 1-6 for course headers across any row
-    for r in range(1, max_scan_row):
-        for c_idx in range(ws.max_column):
-            cell_val = normalize_text(ws.cell(r, c_idx + 1).value)
-            if cell_val:
-                code = match_course_code(cell_val, course_map)
-                if code and c_idx not in roles["course_columns"]:
-                    roles["course_columns"][c_idx] = code
-
-    # 2. Scan data rows directly to find the TRUE column containing UUDS-xxx
+    # 1. Scan data rows directly to find the TRUE column containing UUDS-xxx and determine data start row
     data_uuds_col = None
-    data_start_row = 1
-    for r in range(1, max_scan_row):
+    data_start_row = 3
+    for r in range(1, min(10, ws.max_row + 1)):
         for c in range(1, min(15, ws.max_column + 1)):
             v = str(ws.cell(r, c).value or "").strip()
             if re.match(r"^UUDS\s*[-_]?\s*\d+", v, re.IGNORECASE):
@@ -232,6 +226,17 @@ def detect_sheet_structure(ws, course_map: Dict[str, int], default_course_column
                 break
         if data_uuds_col is not None:
             break
+
+    # 2. Scan ONLY rows prior to data_start_row for course headers
+    for r in range(1, data_start_row):
+        for c_idx in range(ws.max_column):
+            cell_val = normalize_text(ws.cell(r, c_idx + 1).value)
+            if cell_val:
+                code = match_course_code(cell_val, course_map)
+                if code and c_idx not in roles["course_columns"]:
+                    # Never overwrite an already matched course with a different column
+                    if code not in roles["course_columns"].values():
+                        roles["course_columns"][c_idx] = code
 
     # 3. If data_uuds_col matches one of the canonical company formats:
     if data_uuds_col == 7:
