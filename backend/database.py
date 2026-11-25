@@ -327,6 +327,9 @@ def init_db():
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_emp_status_team ON employees(employment_status, team)")
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_emp_name ON employees(full_name)")
     cursor.execute("CREATE INDEX IF NOT EXISTS idx_emp_uuds ON employees(uuds_no)")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_audit_created ON audit_logs(created_at DESC, id DESC)")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_audit_username ON audit_logs(username)")
+    cursor.execute("CREATE INDEX IF NOT EXISTS idx_audit_entity ON audit_logs(entity_type)")
 
     # Ensure default admin user exists with known password
     cursor.execute("SELECT id FROM users WHERE LOWER(username) = 'admin'")

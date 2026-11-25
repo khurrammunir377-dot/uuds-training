@@ -154,7 +154,7 @@ export default function Employees({ onSelectEmployee }) {
   const teamsList = [
     'All', 'Team A', 'Team B', 'Team C', 'A Check', 'Work Shop', 
     'Leather', 'P/Booth', 'Stores', 'Planner', 'Office', 
-    'Line A', 'Line B', 'Line C', 'Line D', 'DWC TX', 'EK Line'
+    'Line A', 'Line B', 'Line C', 'Line D'
   ];
 
   // Tabs with dynamic exact counts
@@ -239,8 +239,8 @@ export default function Employees({ onSelectEmployee }) {
       <PageHeader
         icon={Users}
         theme="blue"
-        title="Technical Staff Database"
-        subtitle={`Managing ${totalCount} technical employees with individual course certification records.`}
+        title="UUDS DXB Staff Database"
+        subtitle={`Managing ${totalCount} UUDS DXB staff members with individual course certification records.`}
         actions={
           <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
             {/* Export Buttons */}
@@ -292,78 +292,84 @@ export default function Employees({ onSelectEmployee }) {
         }
       />
 
-      {/* Employment Status Tabs with live counts - Frozen */}
-      <div className={`shrink-0 flex items-center gap-2 overflow-x-auto pb-1 border-b text-xs font-bold ${isDark ? 'border-slate-800' : 'border-slate-200'}`}>
-        {tabs.map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => { setStatusTab(tab.id); setPage(1); }}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl whitespace-nowrap transition-all ${
-              statusTab === tab.id
-                ? isDark 
-                  ? 'bg-blue-600/20 text-blue-400 border border-blue-500/40 shadow-sm font-extrabold' 
-                  : 'bg-blue-100 text-blue-800 border border-blue-300 shadow-sm font-extrabold'
-                : isDark 
-                  ? 'text-slate-400 hover:text-white hover:bg-slate-800/60' 
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200'
-            }`}
-          >
-            <span>{tab.label}</span>
-            <span className={`px-2 py-0.5 rounded-full text-[11px] font-mono font-bold ${
-              statusTab === tab.id 
-                ? 'bg-blue-600 text-white' 
-                : isDark ? 'bg-slate-800 text-slate-400' : 'bg-slate-200 text-slate-700'
-            }`}>
-              {tab.count}
-            </span>
-          </button>
-        ))}
-      </div>
-
-      {/* Search & Filter Bar - Frozen */}
-      <div className="shrink-0 grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <div className="relative">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
-          <input
-            type="text"
-            placeholder="Search by UUDS No, Name, Staff No, Mobile..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className={`w-full pl-10 pr-4 py-2 rounded-xl text-xs border focus:outline-none focus:border-blue-500 ${
-              isDark ? 'bg-slate-900/90 border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-900'
-            }`}
-          />
+      {/* Employment Status Tabs & Filters Bar - Unified Single Row */}
+      <div className={`shrink-0 flex items-center justify-between gap-3 flex-wrap border-b pb-2 ${isDark ? 'border-slate-800' : 'border-slate-200'}`}>
+        {/* Left Side: Status Tabs with live counts */}
+        <div className="flex items-center gap-1.5 overflow-x-auto">
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => { setStatusTab(tab.id); setPage(1); }}
+              className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl whitespace-nowrap text-xs font-bold transition-all ${
+                statusTab === tab.id
+                  ? isDark 
+                    ? 'bg-blue-600/20 text-blue-400 border border-blue-500/40 shadow-sm font-extrabold' 
+                    : 'bg-blue-100 text-blue-800 border border-blue-300 shadow-sm font-extrabold'
+                  : isDark 
+                    ? 'text-slate-400 hover:text-white hover:bg-slate-800/60' 
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200'
+              }`}
+            >
+              <span>{tab.label}</span>
+              <span className={`px-1.5 py-0.5 rounded-full text-[11px] font-mono font-bold ${
+                statusTab === tab.id 
+                  ? 'bg-blue-600 text-white' 
+                  : isDark ? 'bg-slate-800 text-slate-400' : 'bg-slate-200 text-slate-700'
+              }`}>
+                {tab.count}
+              </span>
+            </button>
+          ))}
         </div>
 
-        <div className="relative">
-          <select
-            value={teamFilter}
-            onChange={(e) => { setTeamFilter(e.target.value); setPage(1); }}
-            className={`w-full px-3.5 py-2 rounded-xl text-xs border focus:outline-none focus:border-blue-500 ${
-              isDark ? 'bg-slate-900/90 border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-900'
-            }`}
-          >
-            <option value="All">All Departments / Teams</option>
-            {teamsList.filter(t => t !== 'All').map(t => (
-              <option key={t} value={t}>{t}</option>
-            ))}
-          </select>
-        </div>
+        {/* Right Side: 3 Compact Filter Fields on the same line */}
+        <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+          {/* Search Box */}
+          <div className="relative w-44 sm:w-56">
+            <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5" />
+            <input
+              type="text"
+              placeholder="Search staff, UUDS, mobile..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className={`w-full pl-8 pr-2.5 py-1.5 rounded-xl text-xs border focus:outline-none focus:border-blue-500 ${
+                isDark ? 'bg-slate-900/90 border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-900'
+              }`}
+            />
+          </div>
 
-        <div className="relative">
-          <select
-            value={complianceFilter}
-            onChange={(e) => { setComplianceFilter(e.target.value); setPage(1); }}
-            className={`w-full px-3.5 py-2 rounded-xl text-xs border focus:outline-none focus:border-blue-500 ${
-              isDark ? 'bg-slate-900/90 border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-900'
-            }`}
-          >
-            <option value="All">All Compliance States</option>
-            <option value="Overdue">Has Overdue Courses</option>
-            <option value="Due Soon">Due Within 30 Days</option>
-            <option value="Valid">100% Fully Compliant</option>
-            <option value="Not Recorded">Has Unrecorded Training</option>
-          </select>
+          {/* Teams Filter Dropdown */}
+          <div className="relative w-32 sm:w-36">
+            <select
+              value={teamFilter}
+              onChange={(e) => { setTeamFilter(e.target.value); setPage(1); }}
+              className={`w-full px-2.5 py-1.5 rounded-xl text-xs border focus:outline-none focus:border-blue-500 font-medium ${
+                isDark ? 'bg-slate-900/90 border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-900'
+              }`}
+            >
+              <option value="All">All Teams</option>
+              {teamsList.filter(t => t !== 'All').map(t => (
+                <option key={t} value={t}>{t}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Compliance State Filter Dropdown */}
+          <div className="relative w-36 sm:w-40">
+            <select
+              value={complianceFilter}
+              onChange={(e) => { setComplianceFilter(e.target.value); setPage(1); }}
+              className={`w-full px-2.5 py-1.5 rounded-xl text-xs border focus:outline-none focus:border-blue-500 font-medium ${
+                isDark ? 'bg-slate-900/90 border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-900'
+              }`}
+            >
+              <option value="All">All Compliance</option>
+              <option value="Overdue">Has Overdue</option>
+              <option value="Due Soon">Due in 30 Days</option>
+              <option value="Valid">100% Compliant</option>
+              <option value="Not Recorded">Not Recorded</option>
+            </select>
+          </div>
         </div>
       </div>
 

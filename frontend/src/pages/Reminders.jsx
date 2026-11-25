@@ -175,149 +175,124 @@ export default function Reminders({ onSelectEmployee }) {
         }
       />
 
-      {/* 4 Summary KPI Cards */}
-      <div className="shrink-0 grid grid-cols-2 lg:grid-cols-4 gap-2.5">
-        {/* Total Urgent */}
-        <div className={`p-3 rounded-2xl border shadow-sm ${
-          isDark ? 'bg-slate-900/80 border-slate-800' : 'bg-white border-slate-200'
-        }`}>
-          <div className="flex items-center justify-between">
-            <span className={`text-[11px] font-bold uppercase tracking-wider ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
-              Total Urgent Actions
-            </span>
-            <AlertTriangle className="w-4 h-4 text-blue-500" />
-          </div>
-          <div className="mt-2 flex items-baseline gap-2">
-            <span className={`text-2xl font-extrabold font-mono ${isDark ? 'text-slate-100' : 'text-slate-900'}`}>
+      {/* Unified Interactive KPI & Filter Toolbar */}
+      <div className={`shrink-0 flex items-center justify-between gap-3 flex-wrap p-2.5 rounded-2xl border ${
+        isDark ? 'bg-slate-900/60 border-slate-800' : 'bg-white border-slate-200 shadow-sm'
+      }`}>
+        {/* Interactive KPI Filter Tabs */}
+        <div className="flex items-center gap-2 overflow-x-auto">
+          {/* All Urgent */}
+          <button
+            onClick={() => setFilterType('All')}
+            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
+              filterType === 'All'
+                ? isDark
+                  ? 'bg-blue-600/20 text-blue-400 border border-blue-500/40 shadow-sm font-extrabold'
+                  : 'bg-blue-100 text-blue-800 border border-blue-300 shadow-sm font-extrabold'
+                : isDark
+                  ? 'text-slate-400 hover:text-white hover:bg-slate-800/60'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+            }`}
+          >
+            <AlertTriangle className="w-3.5 h-3.5 text-blue-500" />
+            <span>All Urgent</span>
+            <span className={`px-2 py-0.5 rounded-full text-[11px] font-mono font-bold ${
+              filterType === 'All'
+                ? 'bg-blue-600 text-white'
+                : isDark ? 'bg-slate-800 text-slate-300' : 'bg-slate-200 text-slate-700'
+            }`}>
               {reminders.length}
             </span>
-            <span className={`text-[11px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>records</span>
-          </div>
-        </div>
+          </button>
 
-        {/* Critical Overdue */}
-        <div 
-          onClick={() => setFilterType('Overdue')}
-          className={`cursor-pointer p-3 rounded-2xl border transition shadow-sm ${
-            filterType === 'Overdue'
-              ? 'border-red-500 ring-2 ring-red-500/20'
-              : isDark ? 'bg-slate-900/80 border-red-500/30' : 'bg-white border-red-200'
-          }`}
-        >
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-red-500">
-              Critical Overdue
-            </span>
-            <XCircle className="w-4 h-4 text-red-500 animate-pulse" />
-          </div>
-          <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-2xl font-extrabold font-mono text-red-500">
+          {/* Critical Overdue */}
+          <button
+            onClick={() => setFilterType('Overdue')}
+            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
+              filterType === 'Overdue'
+                ? 'bg-red-500/20 text-red-500 border border-red-500/40 shadow-sm font-extrabold'
+                : isDark
+                  ? 'text-red-400 hover:text-white hover:bg-red-500/10'
+                  : 'text-red-600 hover:text-red-800 hover:bg-red-50'
+            }`}
+          >
+            <XCircle className="w-3.5 h-3.5 text-red-500" />
+            <span>Critical Overdue</span>
+            <span className={`px-2 py-0.5 rounded-full text-[11px] font-mono font-bold ${
+              filterType === 'Overdue'
+                ? 'bg-red-600 text-white'
+                : overdueCount > 0
+                  ? 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300'
+                  : isDark ? 'bg-slate-800 text-slate-400' : 'bg-slate-200 text-slate-600'
+            }`}>
               {overdueCount}
             </span>
-            <span className={`text-[11px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>expired</span>
-          </div>
-        </div>
+          </button>
 
-        {/* Due in 30 Days */}
-        <div 
-          onClick={() => setFilterType('Due Soon')}
-          className={`cursor-pointer p-3 rounded-2xl border transition shadow-sm ${
-            filterType === 'Due Soon'
-              ? 'border-amber-500 ring-2 ring-amber-500/20'
-              : isDark ? 'bg-slate-900/80 border-amber-500/30' : 'bg-white border-amber-200'
-          }`}
-        >
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-amber-500">
-              Due Within 30 Days
-            </span>
-            <Clock className="w-4 h-4 text-amber-500" />
-          </div>
-          <div className="mt-2 flex items-baseline gap-2">
-            <span className="text-2xl font-extrabold font-mono text-amber-500">
+          {/* Due in 30 Days */}
+          <button
+            onClick={() => setFilterType('Due Soon')}
+            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
+              filterType === 'Due Soon'
+                ? 'bg-amber-500/20 text-amber-500 border border-amber-500/40 shadow-sm font-extrabold'
+                : isDark
+                  ? 'text-amber-400 hover:text-white hover:bg-amber-500/10'
+                  : 'text-amber-700 hover:text-amber-900 hover:bg-amber-50'
+            }`}
+          >
+            <Clock className="w-3.5 h-3.5 text-amber-500" />
+            <span>Due in 30 Days</span>
+            <span className={`px-2 py-0.5 rounded-full text-[11px] font-mono font-bold ${
+              filterType === 'Due Soon'
+                ? 'bg-amber-600 text-white'
+                : dueSoonCount > 0
+                  ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300'
+                  : isDark ? 'bg-slate-800 text-slate-400' : 'bg-slate-200 text-slate-600'
+            }`}>
               {dueSoonCount}
             </span>
-            <span className={`text-[11px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>approaching</span>
-          </div>
-        </div>
+          </button>
 
-        {/* Affected Personnel */}
-        <div className={`p-3 rounded-2xl border shadow-sm ${
-          isDark ? 'bg-slate-900/80 border-slate-800' : 'bg-white border-slate-200'
-        }`}>
-          <div className="flex items-center justify-between">
-            <span className={`text-[11px] font-bold uppercase tracking-wider ${isDark ? 'text-slate-400' : 'text-slate-600'}`}>
-              Affected Staff
-            </span>
-            <Users className="w-4 h-4 text-indigo-500" />
-          </div>
-          <div className="mt-2 flex items-baseline gap-2">
-            <span className={`text-2xl font-extrabold font-mono ${isDark ? 'text-slate-100' : 'text-slate-900'}`}>
-              {uniquePersonnel}
-            </span>
-            <span className={`text-[11px] ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>technicians</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Filter Tabs & Search Bar - Frozen */}
-      <div className="shrink-0 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0">
-          <div className={`flex items-center gap-1.5 border p-1 rounded-xl text-xs font-bold ${
-            isDark ? 'bg-slate-900 border-slate-800' : 'bg-white border-slate-300 shadow-sm'
+          {/* Affected Staff Info Badge */}
+          <div className={`hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold ${
+            isDark ? 'bg-slate-800/80 text-slate-300' : 'bg-slate-100 text-slate-700'
           }`}>
-            <button
-              onClick={() => setFilterType('All')}
-              className={`px-3 py-1.5 rounded-lg transition ${
-                filterType === 'All' ? 'bg-blue-600 text-white shadow' : isDark ? 'text-slate-400 hover:text-white' : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              All Urgent ({reminders.length})
-            </button>
-            <button
-              onClick={() => setFilterType('Overdue')}
-              className={`px-3 py-1.5 rounded-lg transition ${
-                filterType === 'Overdue' ? 'bg-red-600 text-white shadow' : 'text-red-500 hover:text-red-400'
-              }`}
-            >
-              🚨 Overdue ({overdueCount})
-            </button>
-            <button
-              onClick={() => setFilterType('Due Soon')}
-              className={`px-3 py-1.5 rounded-lg transition ${
-                filterType === 'Due Soon' ? 'bg-amber-600 text-white shadow' : 'text-amber-500 hover:text-amber-400'
-              }`}
-            >
-              ⚠️ Due in 30 Days ({dueSoonCount})
-            </button>
+            <Users className="w-3.5 h-3.5 text-indigo-500" />
+            <span>Affected Staff:</span>
+            <span className="font-mono font-bold text-indigo-500">{uniquePersonnel}</span>
           </div>
-
-          {teams.length > 2 && (
-            <select
-              value={teamFilter}
-              onChange={(e) => setTeamFilter(e.target.value)}
-              className={`px-3 py-2 rounded-xl text-xs border font-medium ${
-                isDark ? 'bg-slate-900 border-slate-800 text-white' : 'bg-white border-slate-300 text-slate-900'
-              }`}
-            >
-              {teams.map((t) => (
-                <option key={t} value={t}>{t === 'All' ? 'All Departments' : t}</option>
-              ))}
-            </select>
-          )}
         </div>
 
-        <div className="relative max-w-xs w-full">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
-          <input
-            type="text"
-            placeholder="Search by staff, UUDS, course, mobile..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className={`w-full pl-9 pr-3 py-2 rounded-xl text-xs border focus:outline-none focus:border-blue-500 ${
-              isDark ? 'bg-slate-900 border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-900'
-            }`}
-          />
+        {/* Right Side: Department Filter & Search */}
+        <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+          {teams.length > 2 && (
+            <div className="relative w-36 sm:w-40">
+              <select
+                value={teamFilter}
+                onChange={(e) => setTeamFilter(e.target.value)}
+                className={`w-full px-2.5 py-1.5 rounded-xl text-xs border font-medium focus:outline-none focus:border-blue-500 ${
+                  isDark ? 'bg-slate-900 border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-900'
+                }`}
+              >
+                {teams.map((t) => (
+                  <option key={t} value={t}>{t === 'All' ? 'All Departments' : t}</option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          <div className="relative w-44 sm:w-56">
+            <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5" />
+            <input
+              type="text"
+              placeholder="Search staff, UUDS, course..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className={`w-full pl-8 pr-2.5 py-1.5 rounded-xl text-xs border focus:outline-none focus:border-blue-500 ${
+                isDark ? 'bg-slate-900 border-slate-700 text-white' : 'bg-white border-slate-300 text-slate-900'
+              }`}
+            />
+          </div>
         </div>
       </div>
 

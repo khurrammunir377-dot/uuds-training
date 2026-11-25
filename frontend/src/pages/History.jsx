@@ -58,7 +58,7 @@ export default function History({ onSelectEmployee }) {
   const [userFilter, setUserFilter] = useState('all');
   const [timeframe, setTimeframe] = useState('all');
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(100);
+  const [pageSize, setPageSize] = useState(50);
 
   useEffect(() => {
     loadAuditLogs();

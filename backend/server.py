@@ -13,6 +13,9 @@ import time
 from datetime import datetime, date, timedelta
 from typing import Optional, List
 import math
+import hmac
+import hashlib
+import base64
 
 from fastapi import FastAPI, HTTPException, Depends, Query, Header, Request, status, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
@@ -74,33 +77,97 @@ app.add_middleware(
 def api_root():
     return {"status": "online", "service": "UUDS Aviation Training Compliance API", "version": "1.0.0"}
 
-# ----------------- JWT / Simple Token Auth -----------------
+# ----------------- JWT / Stateless Token Auth -----------------
 TOKENS = {} # token -> {user_id, username, role, full_name, email}
+AUTH_SECRET_KEY = os.environ.get("JWT_SECRET", "uuds_secret_auth_token_key_2026_fixed_signature")
 
 def create_token(user: dict) -> str:
-    token = f"uuds_token_{user['id']}_{int(time.time())}_{os.urandom(8).hex()}"
+    """Create a stateless HMAC-signed authentication token that persists across all serverless containers."""
+    payload = {
+        "id": user["id"],
+        "username": user["username"],
+        "role": user.get("role", "user"),
+        "full_name": user.get("full_name") or user["username"],
+        "email": user.get("email") or "",
+        "ts": int(time.time()),
+        "exp": int(time.time()) + (30 * 86400) # 30 days validity
+    }
+    raw_json = json.dumps(payload, separators=(',', ':'))
+    b64_payload = base64.urlsafe_b64encode(raw_json.encode('utf-8')).decode('utf-8').rstrip('=')
+    signature = hmac.new(AUTH_SECRET_KEY.encode('utf-8'), b64_payload.encode('utf-8'), hashlib.sha256).hexdigest()
+    token = f"{b64_payload}.{signature}"
     TOKENS[token] = user
     return token
+
+def decode_token(token: str) -> Optional[dict]:
+    """Verify and decode a stateless HMAC-signed token or fallback to DB lookup."""
+    if not token or not isinstance(token, str):
+        return None
+    token = token.strip()
+    
+    # 1. Fast in-memory check
+    if token in TOKENS:
+        return TOKENS[token]
+        
+    # 2. Stateless HMAC signed token (payload.signature)
+    if "." in token:
+        try:
+            parts = token.split(".")
+            if len(parts) == 2:
+                b64_payload, signature = parts
+                expected_sig = hmac.new(AUTH_SECRET_KEY.encode('utf-8'), b64_payload.encode('utf-8'), hashlib.sha256).hexdigest()
+                if hmac.compare_digest(signature, expected_sig):
+                    padding = 4 - (len(b64_payload) % 4)
+                    if padding != 4:
+                        b64_payload += "=" * padding
+                    raw_json = base64.urlsafe_b64decode(b64_payload.encode('utf-8')).decode('utf-8')
+                    payload = json.loads(raw_json)
+                    if payload.get("exp", 0) > time.time():
+                        user_data = {
+                            "id": payload["id"],
+                            "username": payload["username"],
+                            "role": payload.get("role", "user"),
+                            "full_name": payload.get("full_name", payload["username"]),
+                            "email": payload.get("email", "")
+                        }
+                        TOKENS[token] = user_data
+                        return user_data
+        except Exception as e:
+            print(f"[Auth] Token decode error: {e}")
+            
+    # 3. Legacy token format fallback: uuds_token_{user_id}_{timestamp}_{random}
+    if token.startswith("uuds_token_"):
+        try:
+            parts = token.split("_")
+            if len(parts) >= 3 and parts[2].isdigit():
+                user_id = int(parts[2])
+                conn = get_db()
+                cur = conn.cursor()
+                cur.execute("SELECT id, username, role, full_name, email FROM users WHERE id = ?", (user_id,))
+                db_user = cur.fetchone()
+                conn.close()
+                if db_user:
+                    user_data = dict(db_user)
+                    TOKENS[token] = user_data
+                    return user_data
+        except Exception as e:
+            print(f"[Auth] Legacy token lookup error: {e}")
+            
+    return None
 
 def get_current_user(authorization: Optional[str] = Header(None)):
     fallback = {"id": 1, "username": "admin", "role": "admin", "full_name": "Khurram Munir Basra", "email": "khurram@uuds.ae"}
     if not authorization:
         return fallback
     token = authorization.replace("Bearer ", "").strip()
-    user_info = TOKENS.get(token)
-    if not user_info:
+    if not token:
         return fallback
-    try:
-        conn = get_db()
-        cur = conn.cursor()
-        cur.execute("SELECT id, username, role, full_name, email FROM users WHERE id = ?", (user_info["id"],))
-        db_user = cur.fetchone()
-        conn.close()
-        if db_user:
-            return dict(db_user)
-    except Exception:
-        pass
-    return user_info
+        
+    user_info = decode_token(token)
+    if user_info:
+        return user_info
+        
+    return fallback
 
 def format_compliance_date(d_str: Optional[str]) -> str:
     """Format dates as strictly DD-MMM-YYYY (e.g. 11-Nov-2026, 16-Jan-2028) for compliance audit display."""
@@ -134,6 +201,7 @@ def log_audit(username: str, action: str, entity_type: str = None, entity_id: in
         """, (username, action, entity_type, entity_id, details))
         conn.commit()
         conn.close()
+        invalidate_api_cache("audit_global_stats_operators")
     except Exception as e:
         print(f"Error logging audit: {e}")
 
@@ -1562,62 +1630,74 @@ def get_audit_logs(
         query += " AND (a.action LIKE ? OR a.username LIKE ? OR u.full_name LIKE ? OR a.details LIKE ? OR a.entity_type LIKE ?)"
         params.extend([term, term, term, term, term])
         
+    # Retrieve or compute global stats and operators list (cached for 60 seconds)
+    cached_meta = get_cached_result("audit_global_stats_operators", ttl_seconds=60.0)
+    if cached_meta:
+        stats = cached_meta["stats"]
+        users_list = cached_meta["users_list"]
+        operators_list = cached_meta["operators_list"]
+    else:
+        # Fetch all 6 counts in ONE fast aggregated query
+        cursor.execute("""
+        SELECT 
+            COUNT(CASE WHEN action != 'User logged in' THEN 1 END) AS total_all,
+            COUNT(CASE WHEN entity_type = 'training_record' OR action LIKE '%course%' OR action LIKE '%training%' THEN 1 END) AS training_count,
+            COUNT(CASE WHEN (entity_type = 'employee' AND action NOT LIKE 'Updated course%' AND action NOT LIKE 'Course %') THEN 1 END) AS employee_count,
+            COUNT(CASE WHEN entity_type = 'course' AND action NOT LIKE 'Batch updated%' THEN 1 END) AS course_count,
+            COUNT(CASE WHEN entity_type = 'user' OR action LIKE '%user%' THEN 1 END) AS user_count,
+            COUNT(CASE WHEN entity_type = 'email' OR action LIKE '%email%' OR action LIKE '%notice%' THEN 1 END) AS email_count
+        FROM audit_logs
+        """)
+        row = cursor.fetchone()
+        stats = {
+            "total": row[0] or 0,
+            "training": row[1] or 0,
+            "employees": row[2] or 0,
+            "courses": row[3] or 0,
+            "users": row[4] or 0,
+            "emails": row[5] or 0
+        }
+        
+        # Distinct usernames and full names for dropdown
+        cursor.execute("""
+        SELECT DISTINCT a.username, COALESCE(u.full_name, a.username) AS full_name 
+        FROM audit_logs a 
+        LEFT JOIN users u ON a.username = u.username 
+        WHERE a.username IS NOT NULL AND a.username != '' 
+        ORDER BY full_name ASC
+        """)
+        user_rows = cursor.fetchall()
+        users_list = [r["username"] for r in user_rows]
+        operators_list = [{"username": r["username"], "full_name": r["full_name"]} for r in user_rows]
+        
+        set_cached_result("audit_global_stats_operators", {
+            "stats": stats,
+            "users_list": users_list,
+            "operators_list": operators_list
+        }, ttl_seconds=60.0)
+
     # Count total matching query
-    count_sql = "SELECT COUNT(*) FROM (" + query + ")"
-    cursor.execute(count_sql, params)
-    total_count = cursor.fetchone()[0]
+    is_default_filter = (not search or not search.strip()) and (not category or category == "all") and (not user_filter or user_filter == "all") and (not timeframe or timeframe == "all")
+    if is_default_filter:
+        total_count = stats["total"]
+    else:
+        count_sql = "SELECT COUNT(*) FROM (" + query + ")"
+        cursor.execute(count_sql, params)
+        total_count = cursor.fetchone()[0]
     
-    # Query with sorting and pagination
+    # Query with sorting and pagination using idx_audit_created
     query += " ORDER BY a.created_at DESC, a.id DESC LIMIT ? OFFSET ?"
     params.extend([min(limit, 500), max(offset, 0)])
     
     cursor.execute(query, params)
     logs = [dict(row) for row in cursor.fetchall()]
     
-    # Calculate global stats
-    cursor.execute("SELECT COUNT(*) FROM audit_logs WHERE action != 'User logged in'")
-    total_all = cursor.fetchone()[0]
-    
-    cursor.execute("SELECT COUNT(*) FROM audit_logs WHERE entity_type = 'training_record' OR action LIKE '%course%' OR action LIKE '%training%'")
-    training_count = cursor.fetchone()[0]
-    
-    cursor.execute("SELECT COUNT(*) FROM audit_logs WHERE (entity_type = 'employee' AND action NOT LIKE 'Updated course%' AND action NOT LIKE 'Course %')")
-    employee_count = cursor.fetchone()[0]
-    
-    cursor.execute("SELECT COUNT(*) FROM audit_logs WHERE entity_type = 'course' AND action NOT LIKE 'Batch updated%'")
-    course_count = cursor.fetchone()[0]
-    
-    cursor.execute("SELECT COUNT(*) FROM audit_logs WHERE entity_type = 'user' OR action LIKE '%user%'")
-    user_count = cursor.fetchone()[0]
-
-    cursor.execute("SELECT COUNT(*) FROM audit_logs WHERE entity_type = 'email' OR action LIKE '%email%' OR action LIKE '%notice%'")
-    email_count = cursor.fetchone()[0]
-
-    # Distinct usernames and full names for dropdown
-    cursor.execute("""
-    SELECT DISTINCT a.username, COALESCE(u.full_name, a.username) AS full_name 
-    FROM audit_logs a 
-    LEFT JOIN users u ON a.username = u.username 
-    WHERE a.username IS NOT NULL AND a.username != '' 
-    ORDER BY full_name ASC
-    """)
-    user_rows = cursor.fetchall()
-    users_list = [row["username"] for row in user_rows]
-    operators_list = [{"username": row["username"], "full_name": row["full_name"]} for row in user_rows]
-    
     conn.close()
     
     return {
         "logs": logs,
         "total_count": total_count,
-        "stats": {
-            "total": total_all,
-            "training": training_count,
-            "employees": employee_count,
-            "courses": course_count,
-            "users": user_count,
-            "emails": email_count
-        },
+        "stats": stats,
         "users": users_list,
         "operators": operators_list
     }
