@@ -1,5 +1,11 @@
 const API_BASE = '/api';
 
+const clientCache = new Map();
+
+export function clearApiCache() {
+  clientCache.clear();
+}
+
 export function getAuthToken() {
   return localStorage.getItem('uuds_auth_token') || '';
 }
@@ -10,10 +16,23 @@ export function setAuthToken(token) {
   } else {
     localStorage.removeItem('uuds_auth_token');
   }
+  clearApiCache();
 }
 
 export async function apiRequest(endpoint, options = {}) {
   const token = getAuthToken();
+  const isGet = !options.method || options.method.toUpperCase() === 'GET';
+  const cacheKey = `${endpoint}_${token || ''}`;
+
+  if (isGet && !options.noCache) {
+    const cached = clientCache.get(cacheKey);
+    if (cached && Date.now() < cached.expireAt) {
+      return cached.data;
+    }
+  } else if (!isGet) {
+    clearApiCache();
+  }
+
   const isFormData = options.body instanceof FormData;
   const headers = {
     ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
@@ -43,6 +62,13 @@ export async function apiRequest(endpoint, options = {}) {
   if (!response.ok) {
     const errorMsg = data?.detail || data?.message || 'API request failed';
     throw new Error(errorMsg);
+  }
+
+  if (isGet && response.ok) {
+    clientCache.set(cacheKey, {
+      data,
+      expireAt: Date.now() + 15000 // 15s in-memory cache
+    });
   }
 
   return data;
@@ -124,5 +150,8 @@ export const api = {
   connectWhatsApp: () => apiRequest('/whatsapp/connect', { method: 'POST' }),
   sendWhatsAppSilent: (data) => apiRequest('/whatsapp/send-silent', { method: 'POST', body: JSON.stringify(data) }),
   logoutWhatsApp: () => apiRequest('/whatsapp/logout', { method: 'POST' }),
+
+  // Cache helper
+  clearCache: clearApiCache,
 };
 

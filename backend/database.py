@@ -106,14 +106,35 @@ class TursoCursor:
     def close(self):
         pass
 
-class TursoConnection:
-    """Database connection for Turso cloud with automatic cleanup and transaction support."""
-    def __init__(self, url, auth_token):
+_SHARED_TURSO_CLIENT = None
+
+def get_shared_turso_client(url: str, auth_token: str):
+    global _SHARED_TURSO_CLIENT
+    if _SHARED_TURSO_CLIENT is None:
         clean_url = url
         if clean_url.startswith("libsql://"):
             clean_url = "https://" + clean_url[len("libsql://"):]
         import libsql_client
-        self._client = libsql_client.create_client_sync(url=clean_url, auth_token=auth_token)
+        _SHARED_TURSO_CLIENT = libsql_client.create_client_sync(url=clean_url, auth_token=auth_token)
+    return _SHARED_TURSO_CLIENT
+
+def reset_turso_client():
+    global _SHARED_TURSO_CLIENT
+    if _SHARED_TURSO_CLIENT is not None:
+        try:
+            _SHARED_TURSO_CLIENT.close()
+        except Exception:
+            pass
+        _SHARED_TURSO_CLIENT = None
+
+class TursoConnection:
+    """Database connection for Turso cloud with automatic cleanup and transaction support."""
+    def __init__(self, url, auth_token):
+        try:
+            self._client = get_shared_turso_client(url, auth_token)
+        except Exception:
+            reset_turso_client()
+            self._client = get_shared_turso_client(url, auth_token)
 
     def cursor(self):
         return TursoCursor(self._client)
@@ -153,10 +174,8 @@ class TursoConnection:
         pass
 
     def close(self):
-        try:
-            self._client.close()
-        except Exception:
-            pass
+        # Keep client connection pool alive for maximum speed
+        pass
 
 def is_turso_enabled() -> bool:
     return bool(TURSO_DATABASE_URL and TURSO_AUTH_TOKEN)

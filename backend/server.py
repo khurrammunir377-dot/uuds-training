@@ -34,6 +34,30 @@ except ImportError:
 # Initialize DB on startup
 init_db()
 
+# In-memory query cache for high-speed page loading
+_QUERY_CACHE = {}
+
+def get_cached_result(key: str, ttl_seconds: float = 20.0):
+    entry = _QUERY_CACHE.get(key)
+    if entry:
+        val, expire_at = entry
+        if time.time() < expire_at:
+            return val
+        _QUERY_CACHE.pop(key, None)
+    return None
+
+def set_cached_result(key: str, value, ttl_seconds: float = 20.0):
+    _QUERY_CACHE[key] = (value, time.time() + ttl_seconds)
+
+def invalidate_api_cache(prefix: str = None):
+    global _QUERY_CACHE
+    if prefix:
+        keys_to_del = [k for k in list(_QUERY_CACHE.keys()) if k.startswith(prefix)]
+        for k in keys_to_del:
+            _QUERY_CACHE.pop(k, None)
+    else:
+        _QUERY_CACHE.clear()
+
 app = FastAPI(title="UUDS Aviation Training Compliance Tracker API", version="1.0.0")
 
 app.add_middleware(
@@ -261,6 +285,7 @@ def create_user(req: UserCreateRequest, admin: dict = Depends(require_admin)):
     new_id = cursor.lastrowid
     conn.commit()
     conn.close()
+    invalidate_api_cache()
     log_audit(admin.get("username", "admin"), f"Created user '{username}' ({role})", "user", new_id)
     return {
         "id": new_id, 
@@ -351,12 +376,17 @@ def delete_user(user_id: int, admin: dict = Depends(require_admin)):
     cursor.execute("DELETE FROM users WHERE id = ?", (user_id,))
     conn.commit()
     conn.close()
+    invalidate_api_cache()
     log_audit(admin.get("username", "admin"), f"Deleted user '{target['username']}'", "user", user_id)
     return {"success": True, "message": f"User '{target['username']}' deleted successfully."}
 
 # ----------------- Dashboard Routes -----------------
 @app.get("/api/dashboard/stats")
 def get_dashboard_stats():
+    cached = get_cached_result("dashboard_stats", ttl_seconds=20.0)
+    if cached is not None:
+        return cached
+
     conn = get_db()
     cursor = conn.cursor()
     
@@ -379,8 +409,11 @@ def get_dashboard_stats():
     active_employees_count = cursor.fetchone()[0]
     
     # Employee count by status
+    standard_statuses = ["Active", "UN Paid Leave", "DWC TX", "RESIGN", "Redundancy", "Non Tec."]
+    status_counts = {s: 0 for s in standard_statuses}
     cursor.execute("SELECT employment_status, COUNT(*) as cnt FROM employees GROUP BY employment_status")
-    status_counts = {row["employment_status"]: row["cnt"] for row in cursor.fetchall()}
+    for row in cursor.fetchall():
+        status_counts[row["employment_status"]] = row["cnt"]
     
     # Team compliance breakdown for active staff
     cursor.execute("""
@@ -432,21 +465,28 @@ def get_dashboard_stats():
     LIMIT 10
     """)
     urgent_records = [dict(row) for row in cursor.fetchall()]
+
+    # Total courses count
+    cursor.execute("SELECT COUNT(*) FROM courses")
+    total_courses_count = cursor.fetchone()[0]
     
     total_recs = record_stats.get("total_records", 0)
     valid_recs = record_stats.get("valid_count", 0)
     compliance_rate = round((valid_recs / total_recs * 100), 1) if total_recs > 0 else 0
     
     conn.close()
-    return {
+    result = {
         "active_employees_count": active_employees_count,
         "compliance_rate": compliance_rate,
         "records": record_stats,
         "employee_statuses": status_counts,
         "teams": teams,
         "top_overdue_courses": top_overdue_courses,
-        "urgent_records": urgent_records
+        "urgent_records": urgent_records,
+        "total_courses": total_courses_count
     }
+    set_cached_result("dashboard_stats", result, ttl_seconds=20.0)
+    return result
 
 # ----------------- Employees Routes -----------------
 @app.get("/api/employees")
@@ -458,6 +498,11 @@ def list_employees(
     page: int = 1,
     page_size: int = 25
 ):
+    cache_key = f"employees_{status}_{team}_{search}_{compliance_filter}_{page}_{page_size}"
+    cached = get_cached_result(cache_key, ttl_seconds=15.0)
+    if cached is not None:
+        return cached
+
     conn = get_db()
     cursor = conn.cursor()
     
@@ -525,13 +570,16 @@ def list_employees(
             emp["badge_status"] = "Valid"
             
     # Get counts for all tabs
+    standard_statuses = ["Active", "UN Paid Leave", "DWC TX", "RESIGN", "Redundancy", "Non Tec."]
+    tab_counts = {s: 0 for s in standard_statuses}
     cursor.execute("SELECT employment_status, COUNT(*) as cnt FROM employees GROUP BY employment_status")
-    tab_counts = {row["employment_status"]: row["cnt"] for row in cursor.fetchall()}
+    for row in cursor.fetchall():
+        tab_counts[row["employment_status"]] = row["cnt"]
     cursor.execute("SELECT COUNT(*) FROM employees")
     tab_counts["All"] = cursor.fetchone()[0]
     
     conn.close()
-    return {
+    result = {
         "items": employees,
         "total": total_count,
         "page": page,
@@ -539,6 +587,8 @@ def list_employees(
         "total_pages": (total_count + page_size - 1) // page_size if page_size > 0 else 1,
         "status_counts": tab_counts
     }
+    set_cached_result(cache_key, result, ttl_seconds=15.0)
+    return result
 
 @app.get("/api/employees/{emp_id}")
 def get_employee_profile(emp_id: int):
@@ -637,6 +687,8 @@ def create_employee(req: EmployeeCreateRequest, user: dict = Depends(get_current
         
     conn.commit()
     conn.close()
+    invalidate_api_cache()
+    invalidate_api_cache()
     
     log_audit(user["username"], f"Created employee {uuds} - {req.full_name}", "employee", emp_id)
     return {"message": "Employee created successfully", "id": emp_id}
@@ -669,6 +721,8 @@ def update_employee(emp_id: int, req: EmployeeCreateRequest, user: dict = Depend
     
     conn.commit()
     conn.close()
+    invalidate_api_cache()
+    invalidate_api_cache()
     
     log_audit(user["username"], f"Updated employee {req.uuds_no} ({req.full_name})", "employee", emp_id)
     return {"message": "Employee updated successfully"}
@@ -687,6 +741,8 @@ def delete_employee(emp_id: int, user: dict = Depends(require_admin)):
     cursor.execute("DELETE FROM employees WHERE id = ?", (emp_id,))
     conn.commit()
     conn.close()
+    invalidate_api_cache()
+    invalidate_api_cache()
     
     log_audit(user["username"], f"Deleted employee {emp['uuds_no']} ({emp['full_name']})", "employee", emp_id)
     return {"message": "Employee deleted successfully"}
@@ -729,6 +785,7 @@ def update_training_record(record_id: int, req: RecordUpdateRequest, user: dict 
     
     conn.commit()
     conn.close()
+    invalidate_api_cache()
     
     emp_label = f"{record['uuds_no']} - {record['full_name']}"
     old_exp_fmt = format_compliance_date(record['expiry_date'])
@@ -789,6 +846,7 @@ def update_or_create_employee_course(emp_id: int, course_id: int, req: RecordUpd
     
     conn.commit()
     conn.close()
+    invalidate_api_cache()
     
     emp_label = f"{emp['uuds_no']} - {emp['full_name']}" if emp else f"Staff #{emp_id}"
     crs_code = crs['code'] if crs else f"Course #{course_id}"
@@ -826,6 +884,11 @@ def get_matrix_data(
     page: Optional[int] = 1,
     page_size: Optional[int] = 25,
 ):
+    cache_key = f"matrix_{status}_{team}_{search}_{course_category}_{page}_{page_size}"
+    cached = get_cached_result(cache_key, ttl_seconds=15.0)
+    if cached is not None:
+        return cached
+
     conn = get_db()
     cursor = conn.cursor()
     
@@ -973,6 +1036,8 @@ def get_matrix_data(
             "categories": categories
         }
     }
+    set_cached_result(cache_key, result, ttl_seconds=15.0)
+    return result
 
 @app.post("/api/matrix/batch-update")
 def batch_update_matrix(req: BatchMatrixUpdateRequest, user: dict = Depends(get_current_user)):
@@ -1013,6 +1078,7 @@ def batch_update_matrix(req: BatchMatrixUpdateRequest, user: dict = Depends(get_
     crs_label = f"{crs_info['code']} ({crs_info['name']})" if crs_info else f"Course #{req.course_id}"
     conn.commit()
     conn.close()
+    invalidate_api_cache()
     
     batch_audit_msg = f"Batch updated {crs_label} for {len(req.employee_ids)} staff members: Expiry={format_compliance_date(expiry_date_str)} ({status_calc})"
     details_obj = {
@@ -1038,6 +1104,10 @@ def batch_update_matrix(req: BatchMatrixUpdateRequest, user: dict = Depends(get_
 # ----------------- Courses Catalogue Routes -----------------
 @app.get("/api/courses")
 def list_courses():
+    cached = get_cached_result("courses_list", ttl_seconds=60.0)
+    if cached is not None:
+        return cached
+
     conn = get_db()
     cursor = conn.cursor()
     
@@ -1057,6 +1127,7 @@ def list_courses():
     """)
     courses = [dict(row) for row in cursor.fetchall()]
     conn.close()
+    set_cached_result("courses_list", courses, ttl_seconds=60.0)
     return courses
 
 @app.post("/api/courses")
@@ -1087,6 +1158,7 @@ def create_course(req: CourseCreateRequest, user: dict = Depends(require_admin))
             
     conn.commit()
     conn.close()
+    invalidate_api_cache()
     
     log_audit(user["username"], f"Created course {code} ({req.name})", "course", course_id)
     return {"message": "Course created successfully", "id": course_id}
@@ -1113,6 +1185,7 @@ def update_course(course_id: int, req: CourseCreateRequest, user: dict = Depends
     
     conn.commit()
     conn.close()
+    invalidate_api_cache()
     
     log_audit(user["username"], f"Updated course {req.code}", "course", course_id)
     return {"message": "Course updated successfully"}
@@ -1133,6 +1206,7 @@ def delete_course(course_id: int, user: dict = Depends(require_admin)):
     
     conn.commit()
     conn.close()
+    invalidate_api_cache()
     
     log_audit(user["username"], f"Deleted course {c['code']} ({c['name']})", "course", course_id)
     return {"message": "Course deleted successfully"}
@@ -1362,6 +1436,7 @@ def update_settings(req: SettingsUpdateRequest, user: dict = Depends(require_adm
         
     conn.commit()
     conn.close()
+    invalidate_api_cache()
     
     log_audit(user["username"], "Updated application settings", "settings")
     return {"message": "Settings updated successfully"}
@@ -1554,6 +1629,7 @@ def clear_audit_logs(admin: dict = Depends(require_admin)):
     cursor.execute("DELETE FROM audit_logs")
     conn.commit()
     conn.close()
+    invalidate_api_cache()
     
     log_audit(admin.get("username", "admin"), "Cleared audit history logs", "system")
     return {"message": "Audit history cleared successfully"}

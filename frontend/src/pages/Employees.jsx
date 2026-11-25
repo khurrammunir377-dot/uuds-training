@@ -158,15 +158,16 @@ export default function Employees({ onSelectEmployee }) {
   ];
 
   // Tabs with dynamic exact counts
-  const tabs = [
-    { id: 'Active', label: 'Active Roster', count: statusCounts['Active'] ?? 244 },
-    { id: 'UN Paid Leave', label: 'Unpaid Leave', count: statusCounts['UN Paid Leave'] ?? 32 },
-    { id: 'DWC TX', label: 'DWC TX', count: statusCounts['DWC TX'] ?? 18 },
-    { id: 'RESIGN', label: 'Resigned', count: statusCounts['RESIGN'] ?? 151 },
-    { id: 'Redundancy', label: 'Redundancy', count: statusCounts['Redundancy'] ?? 35 },
-    { id: 'Non Tec.', label: 'Non Technical', count: statusCounts['Non Tec.'] ?? 1 },
-    { id: 'All', label: 'All Database', count: statusCounts['All'] ?? 481 },
+  const allTabs = [
+    { id: 'Active', label: 'Active Roster', count: statusCounts['Active'] ?? 249 },
+    { id: 'UN Paid Leave', label: 'Unpaid Leave', count: statusCounts['UN Paid Leave'] ?? 0 },
+    { id: 'DWC TX', label: 'DWC TX', count: statusCounts['DWC TX'] ?? 0 },
+    { id: 'RESIGN', label: 'Resigned', count: statusCounts['RESIGN'] ?? 0 },
+    { id: 'Redundancy', label: 'Redundancy', count: statusCounts['Redundancy'] ?? 0 },
+    { id: 'Non Tec.', label: 'Non Technical', count: statusCounts['Non Tec.'] ?? 0 },
+    { id: 'All', label: 'All Database', count: statusCounts['All'] ?? (statusCounts['Active'] ?? 249) },
   ];
+  const tabs = allTabs.filter(tab => tab.id === 'Active' || tab.id === 'All' || tab.id === statusTab || tab.count > 0);
 
   const fetchAllFilteredEmployees = async () => {
     const params = {

@@ -21,7 +21,17 @@ export default function App() {
   const { isDark } = useTheme();
   const [activeTab, setActiveTab] = useState('dashboard');
   const [selectedEmployeeId, setSelectedEmployeeId] = useState(null);
-  const [counts, setCounts] = useState({ employees: '244', urgent: '167' });
+  const [counts, setCounts] = useState({ employees: '249', urgent: '146', courses: '15' });
+  const [visitedTabs, setVisitedTabs] = useState(new Set(['dashboard']));
+
+  useEffect(() => {
+    setVisitedTabs(prev => {
+      if (prev.has(activeTab)) return prev;
+      const next = new Set(prev);
+      next.add(activeTab);
+      return next;
+    });
+  }, [activeTab]);
 
   useEffect(() => {
     if (user) {
@@ -41,8 +51,9 @@ export default function App() {
       } catch (e) {}
 
       setCounts({
-        employees: String(stats.active_employees_count || '244'),
-        urgent: String((stats.records.overdue_count || 0) + (stats.records.due_soon_count || 0)),
+        employees: String(stats.active_employees_count || '249'),
+        urgent: String((stats.records?.overdue_count || 0) + (stats.records?.due_soon_count || 0)),
+        courses: String(stats.total_courses || '15'),
         history: historyCount
       });
     } catch (e) {
@@ -83,55 +94,67 @@ export default function App() {
 
         {/* Right Section: Content Area + Fixed Bottom Footer */}
         <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
-          {/* Dynamic Page Content Area */}
-          <main className={`flex-1 w-full min-h-0 ${
-            ['matrix', 'employees', 'reminders', 'courses', 'settings', 'history'].includes(activeTab)
-              ? 'h-full overflow-hidden p-2 sm:p-3 flex flex-col' 
-              : 'overflow-y-auto p-3 sm:p-6'
-          }`}>
-            {activeTab === 'dashboard' && (
-              <Dashboard 
-                onNavigate={(tab) => setActiveTab(tab)}
-                onSelectEmployee={(id) => setSelectedEmployeeId(id)}
-              />
+          {/* Dynamic Page Content Area with Keep-Alive for Instant 0ms Tab Switching */}
+          <main className="flex-1 w-full min-h-0 relative overflow-hidden flex flex-col">
+            {visitedTabs.has('dashboard') && (
+              <div className={`h-full w-full overflow-y-auto p-3 sm:p-6 ${activeTab === 'dashboard' ? '' : 'hidden'}`}>
+                <Dashboard 
+                  onNavigate={(tab) => setActiveTab(tab)}
+                  onSelectEmployee={(id) => setSelectedEmployeeId(id)}
+                />
+              </div>
             )}
 
-            {activeTab === 'employees' && (
-              <Employees 
-                onSelectEmployee={(id) => setSelectedEmployeeId(id)}
-              />
+            {visitedTabs.has('employees') && (
+              <div className={`h-full w-full p-2 sm:p-3 flex flex-col min-h-0 overflow-hidden ${activeTab === 'employees' ? '' : 'hidden'}`}>
+                <Employees 
+                  onSelectEmployee={(id) => setSelectedEmployeeId(id)}
+                />
+              </div>
             )}
 
-            {activeTab === 'matrix' && (
-              <TrainingMatrix 
-                onSelectEmployee={(id) => setSelectedEmployeeId(id)}
-              />
+            {visitedTabs.has('matrix') && (
+              <div className={`h-full w-full p-2 sm:p-3 flex flex-col min-h-0 overflow-hidden ${activeTab === 'matrix' ? '' : 'hidden'}`}>
+                <TrainingMatrix 
+                  onSelectEmployee={(id) => setSelectedEmployeeId(id)}
+                />
+              </div>
             )}
 
-            {activeTab === 'reminders' && (
-              <Reminders 
-                onSelectEmployee={(id) => setSelectedEmployeeId(id)}
-              />
+            {visitedTabs.has('reminders') && (
+              <div className={`h-full w-full p-2 sm:p-3 flex flex-col min-h-0 overflow-hidden ${activeTab === 'reminders' ? '' : 'hidden'}`}>
+                <Reminders 
+                  onSelectEmployee={(id) => setSelectedEmployeeId(id)}
+                />
+              </div>
             )}
 
-            {activeTab === 'courses' && (
-              <Courses />
+            {visitedTabs.has('courses') && (
+              <div className={`h-full w-full p-2 sm:p-3 flex flex-col min-h-0 overflow-hidden ${activeTab === 'courses' ? '' : 'hidden'}`}>
+                <Courses />
+              </div>
             )}
 
-            {activeTab === 'history' && (
-              <History 
-                onSelectEmployee={(id) => setSelectedEmployeeId(id)}
-              />
+            {visitedTabs.has('history') && (
+              <div className={`h-full w-full p-2 sm:p-3 flex flex-col min-h-0 overflow-hidden ${activeTab === 'history' ? '' : 'hidden'}`}>
+                <History 
+                  onSelectEmployee={(id) => setSelectedEmployeeId(id)}
+                />
+              </div>
             )}
 
-            {activeTab === 'notifications' && (
-              <Notifications 
-                onSelectEmployee={(id) => setSelectedEmployeeId(id)}
-              />
+            {visitedTabs.has('notifications') && (
+              <div className={`h-full w-full p-3 sm:p-6 overflow-y-auto ${activeTab === 'notifications' ? '' : 'hidden'}`}>
+                <Notifications 
+                  onSelectEmployee={(id) => setSelectedEmployeeId(id)}
+                />
+              </div>
             )}
 
-            {activeTab === 'settings' && (
-              <Settings onNavigate={(tab) => setActiveTab(tab)} />
+            {visitedTabs.has('settings') && (
+              <div className={`h-full w-full p-2 sm:p-3 flex flex-col min-h-0 overflow-hidden ${activeTab === 'settings' ? '' : 'hidden'}`}>
+                <Settings onNavigate={(tab) => setActiveTab(tab)} />
+              </div>
             )}
           </main>
 

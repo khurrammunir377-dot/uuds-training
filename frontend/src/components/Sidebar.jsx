@@ -35,7 +35,7 @@ export default function Sidebar({ activeTab, setActiveTab, counts = {} }) {
       icon: Users, 
       iconColor: 'text-purple-500', 
       activeBg: isDark ? 'bg-purple-600/20 text-purple-400 border-purple-500/30' : 'bg-purple-50 text-purple-700 border-purple-200',
-      badge: counts.employees || '244', 
+      badge: counts.employees || '249', 
       badgeColor: isDark ? 'bg-purple-500/15 text-purple-400 border border-purple-500/30' : 'bg-purple-100 text-purple-800 font-bold' 
     },
     { 
@@ -53,7 +53,7 @@ export default function Sidebar({ activeTab, setActiveTab, counts = {} }) {
       icon: AlertTriangle, 
       iconColor: 'text-rose-500', 
       activeBg: isDark ? 'bg-rose-600/20 text-rose-400 border-rose-500/30' : 'bg-rose-50 text-rose-700 border-rose-200',
-      badge: counts.urgent || '167', 
+      badge: counts.urgent || '0', 
       badgeColor: 'bg-rose-500/20 text-rose-500 border border-rose-500/30 font-bold' 
     },
     { 
@@ -62,7 +62,7 @@ export default function Sidebar({ activeTab, setActiveTab, counts = {} }) {
       icon: BookOpen, 
       iconColor: 'text-emerald-500', 
       activeBg: isDark ? 'bg-emerald-600/20 text-emerald-400 border-emerald-500/30' : 'bg-emerald-50 text-emerald-700 border-emerald-200',
-      badge: '21', 
+      badge: counts.courses || '15', 
       badgeColor: isDark ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30' : 'bg-emerald-100 text-emerald-800 font-bold' 
     },
     { 
