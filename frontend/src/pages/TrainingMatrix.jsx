@@ -25,7 +25,8 @@ import {
   ShieldCheck, 
   ArrowUpDown,
   FileSpreadsheet,
-  BookOpen
+  BookOpen,
+  Users
 } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { api } from '../api';
