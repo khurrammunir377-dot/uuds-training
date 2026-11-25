@@ -26,8 +26,33 @@ export async function apiRequest(endpoint, options = {}) {
 
   if (isGet && !options.noCache) {
     const cached = clientCache.get(cacheKey);
-    if (cached && Date.now() < cached.expireAt) {
-      return cached.data;
+    if (cached) {
+      const isFresh = Date.now() < cached.expireAt;
+      if (isFresh) {
+        return cached.data;
+      }
+      // Stale-While-Revalidate: return cached data immediately for instant blinking speed,
+      // and silently update cache in the background
+      if (Date.now() < cached.staleUntil) {
+        fetch(`${API_BASE}${endpoint}`, {
+          ...options,
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+            ...options.headers,
+          }
+        }).then(async res => {
+          if (res.ok) {
+            const freshData = await res.json();
+            clientCache.set(cacheKey, {
+              data: freshData,
+              expireAt: Date.now() + 60000,
+              staleUntil: Date.now() + 300000
+            });
+          }
+        }).catch(() => {});
+        return cached.data;
+      }
     }
   } else if (!isGet) {
     clearApiCache();
@@ -67,7 +92,8 @@ export async function apiRequest(endpoint, options = {}) {
   if (isGet && response.ok) {
     clientCache.set(cacheKey, {
       data,
-      expireAt: Date.now() + 15000 // 15s in-memory cache
+      expireAt: Date.now() + 60000, // 60s fresh
+      staleUntil: Date.now() + 300000 // 5m stale window
     });
   }
 

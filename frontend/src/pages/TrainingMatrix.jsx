@@ -487,10 +487,23 @@ export default function TrainingMatrix({ onSelectEmployee }) {
         title="Training Compliance Matrix"
         subtitle="Interactive certification matrix to inspect and quickly update course expiry dates across all staff."
         actions={
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            {/* Live Staff Count & Compliance Badges in Header */}
+            <div className={`flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-bold ${
+              isDark ? 'bg-slate-900/90 border-slate-700 text-slate-200' : 'bg-white border-slate-200 text-slate-800 shadow-sm'
+            }`}>
+              <Users className="w-3.5 h-3.5 text-blue-500" />
+              <span>Staff:</span>
+              <span className="font-mono text-blue-500 font-extrabold">{totalItems || filteredEmployees.length}</span>
+              <span className="text-slate-400">|</span>
+              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+              <span>Compliance:</span>
+              <span className="font-mono text-emerald-500 font-extrabold">{totalCompliancePct}%</span>
+            </div>
+
             <button
               onClick={handleExportCSV}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-500 shadow-md shadow-emerald-900/25 border border-emerald-500/30 transition"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-500 shadow-sm border border-emerald-500/30 transition"
             >
               <Download className="w-3.5 h-3.5 text-white" />
               <span>Export CSV</span>
@@ -498,7 +511,7 @@ export default function TrainingMatrix({ onSelectEmployee }) {
 
             <button
               onClick={handlePrint}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-white bg-rose-600 hover:bg-rose-500 shadow-md shadow-rose-900/25 border border-rose-500/30 transition"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-white bg-rose-600 hover:bg-rose-500 shadow-sm border border-rose-500/30 transition"
             >
               <Printer className="w-3.5 h-3.5 text-white" />
               <span>Export PDF</span>
@@ -507,46 +520,91 @@ export default function TrainingMatrix({ onSelectEmployee }) {
             <button
               onClick={loadMatrix}
               title="Reload matrix data"
-              className={`p-2 rounded-xl border transition ${
+              className={`p-1.5 rounded-xl border transition ${
                 isDark 
                   ? 'bg-slate-800 hover:bg-slate-700 border-slate-700 text-slate-300 hover:text-white' 
                   : 'bg-slate-100 hover:bg-slate-200 border-slate-300 text-slate-700 hover:text-black'
               }`}
             >
-              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin text-blue-500' : ''}`} />
+              <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin text-blue-500' : ''}`} />
             </button>
           </div>
         }
       />
 
-      {/* Filter Controls Row */}
-      <div className={`shrink-0 px-4 py-2.5 rounded-xl border transition-all duration-200 ${
+      {/* Filter Controls Row - Single Unified Line */}
+      <div className={`shrink-0 px-3.5 py-2 rounded-xl border transition-all duration-200 ${
         isDark ? 'bg-slate-900/90 border-slate-800 text-slate-100' : 'bg-white border-slate-200 text-slate-900 shadow-sm'
       }`}>
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-2.5">
-          {/* Status Tabs */}
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-2.5">
+          {/* Status Filter Buttons (Interactive Compliance Filter Tabs) */}
           <div className="flex flex-wrap items-center gap-1.5">
-            {['Active', 'All', 'Unpaid Leave', 'DWC TX', 'Non-Technical', 'RESIGN'].map(tab => (
-              <button
-                key={tab}
-                onClick={() => setStatusTab(tab)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
-                  statusTab === tab
-                    ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30'
-                    : isDark
-                      ? 'bg-slate-800/60 text-slate-400 hover:text-white hover:bg-slate-800'
-                      : 'bg-slate-100 text-slate-600 hover:text-slate-900 hover:bg-slate-200'
-                }`}
-              >
-                {tab === 'RESIGN' ? 'Resigned' : tab}
-              </button>
-            ))}
+            <button
+              onClick={() => setComplianceHighlight('All')}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                complianceHighlight === 'All'
+                  ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30'
+                  : isDark
+                    ? 'bg-slate-800/80 text-slate-300 hover:text-white hover:bg-slate-800 border border-slate-700'
+                    : 'bg-slate-100 text-slate-700 hover:text-slate-900 hover:bg-slate-200 border border-slate-200'
+              }`}
+            >
+              All Records ({stats.total_cells})
+            </button>
+
+            <button 
+              onClick={() => setComplianceHighlight(complianceHighlight === 'Valid' ? 'All' : 'Valid')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border transition ${
+                complianceHighlight === 'Valid'
+                  ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/30 border-emerald-500'
+                  : isDark ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20' : 'border-emerald-300 bg-emerald-50 text-emerald-800 hover:bg-emerald-100'
+              }`}
+            >
+              <span className={`w-2 h-2 rounded-full ${complianceHighlight === 'Valid' ? 'bg-white' : 'bg-emerald-500'}`} />
+              <span>Valid ({stats.valid})</span>
+            </button>
+
+            <button 
+              onClick={() => setComplianceHighlight(complianceHighlight === 'Due Soon' ? 'All' : 'Due Soon')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border transition ${
+                complianceHighlight === 'Due Soon'
+                  ? 'bg-amber-600 text-white shadow-md shadow-amber-600/30 border-amber-500'
+                  : isDark ? 'border-amber-500/30 bg-amber-500/10 text-amber-400 hover:bg-amber-500/20' : 'border-amber-300 bg-amber-50 text-amber-900 hover:bg-amber-100'
+              }`}
+            >
+              <span className={`w-2 h-2 rounded-full ${complianceHighlight === 'Due Soon' ? 'bg-white' : 'bg-amber-500 animate-pulse'}`} />
+              <span>Due Soon ({stats.due_soon})</span>
+            </button>
+
+            <button 
+              onClick={() => setComplianceHighlight(complianceHighlight === 'Overdue' ? 'All' : 'Overdue')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border transition ${
+                complianceHighlight === 'Overdue'
+                  ? 'bg-rose-600 text-white shadow-md shadow-rose-600/30 border-rose-500'
+                  : isDark ? 'border-rose-500/30 bg-rose-500/10 text-rose-400 hover:bg-rose-500/20' : 'border-rose-300 bg-rose-50 text-rose-900 hover:bg-rose-100'
+              }`}
+            >
+              <span className={`w-2 h-2 rounded-full ${complianceHighlight === 'Overdue' ? 'bg-white' : 'bg-rose-500'}`} />
+              <span>Overdue ({stats.overdue})</span>
+            </button>
+
+            <button 
+              onClick={() => setComplianceHighlight(complianceHighlight === 'Not Recorded' ? 'All' : 'Not Recorded')}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border transition ${
+                complianceHighlight === 'Not Recorded'
+                  ? 'bg-slate-700 text-white shadow-md border-slate-600'
+                  : isDark ? 'border-slate-700 bg-slate-800 text-slate-400 hover:bg-slate-700' : 'border-slate-300 bg-slate-100 text-slate-700 hover:bg-slate-200'
+              }`}
+            >
+              <span className={`w-2 h-2 rounded-full ${complianceHighlight === 'Not Recorded' ? 'bg-white' : 'bg-slate-500'}`} />
+              <span>Not Recorded ({stats.not_recorded})</span>
+            </button>
           </div>
 
           {/* Search & Selectors */}
           <div className="flex flex-wrap items-center gap-2">
             {/* Search Input */}
-            <div className="relative min-w-[220px]">
+            <div className="relative min-w-[200px]">
               <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
               <input
                 type="text"
@@ -600,63 +658,6 @@ export default function TrainingMatrix({ onSelectEmployee }) {
                 <option key={cat} value={cat}>{cat}</option>
               ))}
             </select>
-          </div>
-        </div>
-
-        {/* Status Legend Bar */}
-        <div className={`mt-2 pt-2 border-t border-slate-700/40 flex flex-wrap items-center justify-between text-xs gap-2 ${
-          isDark ? 'text-slate-400' : 'text-slate-600'
-        }`}>
-          <div className="flex flex-wrap items-center gap-4">
-            <span className="font-bold text-slate-500 uppercase tracking-wider text-[10px]">
-              Status Legend:
-            </span>
-
-            <button 
-              onClick={() => setComplianceHighlight(complianceHighlight === 'Valid' ? 'All' : 'Valid')}
-              className={`flex items-center gap-1.5 px-2 py-0.5 rounded-lg border transition ${
-                complianceHighlight === 'Valid' ? 'ring-2 ring-emerald-500 font-bold' : ''
-              } ${isDark ? 'border-emerald-500/20 bg-emerald-500/10 text-emerald-400' : 'border-emerald-300 bg-emerald-50 text-emerald-800'}`}
-            >
-              <span className="w-2 h-2 rounded-full bg-emerald-500" />
-              <span>Valid ({stats.valid})</span>
-            </button>
-
-            <button 
-              onClick={() => setComplianceHighlight(complianceHighlight === 'Due Soon' ? 'All' : 'Due Soon')}
-              className={`flex items-center gap-1.5 px-2 py-0.5 rounded-lg border transition ${
-                complianceHighlight === 'Due Soon' ? 'ring-2 ring-amber-500 font-bold' : ''
-              } ${isDark ? 'border-amber-500/20 bg-amber-500/10 text-amber-400' : 'border-amber-300 bg-amber-50 text-amber-900'}`}
-            >
-              <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
-              <span>Due Soon ({stats.due_soon})</span>
-            </button>
-
-            <button 
-              onClick={() => setComplianceHighlight(complianceHighlight === 'Overdue' ? 'All' : 'Overdue')}
-              className={`flex items-center gap-1.5 px-2 py-0.5 rounded-lg border transition ${
-                complianceHighlight === 'Overdue' ? 'ring-2 ring-rose-500 font-bold' : ''
-              } ${isDark ? 'border-rose-500/20 bg-rose-500/10 text-rose-400' : 'border-rose-300 bg-rose-50 text-rose-900'}`}
-            >
-              <span className="w-2 h-2 rounded-full bg-rose-500" />
-              <span>Overdue ({stats.overdue})</span>
-            </button>
-
-            <button 
-              onClick={() => setComplianceHighlight(complianceHighlight === 'Not Recorded' ? 'All' : 'Not Recorded')}
-              className={`flex items-center gap-1.5 px-2 py-0.5 rounded-lg border transition ${
-                complianceHighlight === 'Not Recorded' ? 'ring-2 ring-slate-500 font-bold' : ''
-              } ${isDark ? 'border-slate-700 bg-slate-800 text-slate-400' : 'border-slate-300 bg-slate-100 text-slate-700'}`}
-            >
-              <span className="w-2 h-2 rounded-full bg-slate-500" />
-              <span>Not Recorded ({stats.not_recorded})</span>
-            </button>
-          </div>
-
-          <div className="flex items-center gap-2 font-mono text-[11px]">
-            <span>Staff Count: <strong className="text-blue-500">{totalItems || filteredEmployees.length}</strong></span>
-            <span>•</span>
-            <span>Compliance: <strong className="text-emerald-500">{totalCompliancePct}%</strong></span>
           </div>
         </div>
       </div>

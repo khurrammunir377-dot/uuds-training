@@ -78,24 +78,19 @@ export default function Dashboard({ onNavigate, onSelectEmployee }) {
       <PageHeader
         icon={Sparkles}
         theme="sky"
-        title="Technical Manpower Compliance Overview"
+        title="UUDS DXB Manpower Compliance Overview"
         subtitle={`Tracking ${active_employees_count} active staff across ${stats?.total_courses || 15} mandatory aviation safety, GCAA, and EASA Part 145 courses.`}
         actions={
           <div className="flex items-center gap-2 sm:gap-3">
             <button
-              onClick={() => onNavigate('employees')}
-              className={`flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-semibold border transition ${
-                isDark ? 'bg-slate-800 hover:bg-slate-700 border-slate-700 text-white' : 'bg-white hover:bg-slate-100 border-slate-300 text-slate-800 shadow-sm'
-              }`}
-            >
-              <Users className="w-4 h-4 text-blue-500" />
-              <span>Staff Roster</span>
-            </button>
-            <button
               onClick={() => onNavigate('reminders')}
-              className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-xs font-semibold text-white shadow-lg transition"
+              className="relative flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-black text-white bg-gradient-to-r from-rose-600 via-red-600 to-amber-600 hover:from-rose-500 hover:to-amber-500 shadow-xl shadow-rose-600/40 ring-2 ring-rose-400/80 animate-pulse transition-all transform hover:scale-105 active:scale-95"
             >
-              <AlertTriangle className="w-4 h-4" />
+              <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-3 w-3 bg-rose-500"></span>
+              </span>
+              <AlertTriangle className="w-4 h-4 text-white animate-bounce" />
               <span>Urgent Matrix ({((records?.overdue_count || 0) + (records?.due_soon_count || 0)).toLocaleString()})</span>
             </button>
           </div>

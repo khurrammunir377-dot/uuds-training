@@ -430,6 +430,10 @@ def delete_user(user_id: int, admin: dict = Depends(require_admin)):
         conn.close()
         raise HTTPException(status_code=404, detail="User not found.")
         
+    if target["username"].lower() == "admin" or target["id"] == 1:
+        conn.close()
+        raise HTTPException(status_code=400, detail="The master admin account is permanently protected and cannot be deleted by anyone.")
+
     if target["username"] == admin.get("username"):
         conn.close()
         raise HTTPException(status_code=400, detail="You cannot delete your own currently active account.")
@@ -451,7 +455,7 @@ def delete_user(user_id: int, admin: dict = Depends(require_admin)):
 # ----------------- Dashboard Routes -----------------
 @app.get("/api/dashboard/stats")
 def get_dashboard_stats():
-    cached = get_cached_result("dashboard_stats", ttl_seconds=20.0)
+    cached = get_cached_result("dashboard_stats", ttl_seconds=60.0)
     if cached is not None:
         return cached
 
@@ -553,7 +557,7 @@ def get_dashboard_stats():
         "urgent_records": urgent_records,
         "total_courses": total_courses_count
     }
-    set_cached_result("dashboard_stats", result, ttl_seconds=20.0)
+    set_cached_result("dashboard_stats", result, ttl_seconds=60.0)
     return result
 
 # ----------------- Employees Routes -----------------
@@ -567,7 +571,7 @@ def list_employees(
     page_size: int = 25
 ):
     cache_key = f"employees_{status}_{team}_{search}_{compliance_filter}_{page}_{page_size}"
-    cached = get_cached_result(cache_key, ttl_seconds=15.0)
+    cached = get_cached_result(cache_key, ttl_seconds=60.0)
     if cached is not None:
         return cached
 
@@ -655,7 +659,7 @@ def list_employees(
         "total_pages": (total_count + page_size - 1) // page_size if page_size > 0 else 1,
         "status_counts": tab_counts
     }
-    set_cached_result(cache_key, result, ttl_seconds=15.0)
+    set_cached_result(cache_key, result, ttl_seconds=60.0)
     return result
 
 @app.get("/api/employees/{emp_id}")
@@ -953,7 +957,7 @@ def get_matrix_data(
     page_size: Optional[int] = 25,
 ):
     cache_key = f"matrix_{status}_{team}_{search}_{course_category}_{page}_{page_size}"
-    cached = get_cached_result(cache_key, ttl_seconds=15.0)
+    cached = get_cached_result(cache_key, ttl_seconds=60.0)
     if cached is not None:
         return cached
 
@@ -1104,7 +1108,7 @@ def get_matrix_data(
             "categories": categories
         }
     }
-    set_cached_result(cache_key, result, ttl_seconds=15.0)
+    set_cached_result(cache_key, result, ttl_seconds=60.0)
     return result
 
 @app.post("/api/matrix/batch-update")

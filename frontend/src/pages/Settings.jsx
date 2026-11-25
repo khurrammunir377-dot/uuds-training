@@ -713,23 +713,30 @@ export default function Settings({ onNavigate }) {
                                 <Edit2 className="w-3.5 h-3.5" />
                               </button>
 
-                              <button
-                                onClick={() => {
-                                  setSelectedUser(u);
-                                  setShowDeleteModal(true);
-                                }}
-                                disabled={isCurrent}
-                                title={isCurrent ? 'Cannot delete currently active account' : 'Delete User Account'}
-                                className={`p-1.5 rounded-lg border transition ${
-                                  isCurrent
-                                    ? 'opacity-30 cursor-not-allowed border-slate-700 text-slate-500'
-                                    : isDark 
-                                      ? 'bg-slate-800 hover:bg-rose-950 border-slate-700 text-rose-400 hover:border-rose-800' 
-                                      : 'bg-slate-100 hover:bg-rose-50 border-slate-300 text-rose-600 hover:border-rose-300'
-                                }`}
-                              >
-                                <Trash2 className="w-3.5 h-3.5" />
-                              </button>
+                              {(() => {
+                                const isAdminMaster = u.username.toLowerCase() === 'admin' || u.id === 1;
+                                const isDeleteDisabled = isCurrent || isAdminMaster;
+                                return (
+                                  <button
+                                    onClick={() => {
+                                      if (isAdminMaster) return;
+                                      setSelectedUser(u);
+                                      setShowDeleteModal(true);
+                                    }}
+                                    disabled={isDeleteDisabled}
+                                    title={isAdminMaster ? 'Primary Administrator account is protected and cannot be deleted' : isCurrent ? 'Cannot delete currently active account' : 'Delete User Account'}
+                                    className={`p-1.5 rounded-lg border transition ${
+                                      isDeleteDisabled
+                                        ? 'opacity-25 cursor-not-allowed border-slate-700 text-slate-500'
+                                        : isDark 
+                                          ? 'bg-slate-800 hover:bg-rose-950 border-slate-700 text-rose-400 hover:border-rose-800' 
+                                          : 'bg-slate-100 hover:bg-rose-50 border-slate-300 text-rose-600 hover:border-rose-300'
+                                    }`}
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </button>
+                                );
+                              })()}
                             </div>
                           </td>
                         </tr>

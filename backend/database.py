@@ -346,30 +346,7 @@ def init_db():
         WHERE id = ?
         """, (hash_password("admin123"), admin_row["id"]))
 
-    # Insert or update user khurram
-    cursor.execute("SELECT id FROM users WHERE LOWER(username) = 'khurram'")
-    khurram_row = cursor.fetchone()
-    if not khurram_row:
-        cursor.execute("""
-        INSERT INTO users (username, password_hash, role, full_name, email)
-        VALUES ('khurram', ?, 'admin', 'Khurram Munir Basra', 'khurram@uuds.ae')
-        """, (hash_password("admin123"),))
-    else:
-        cursor.execute("""
-        UPDATE users 
-        SET password_hash = ?, full_name = 'Khurram Munir Basra', email = 'khurram@uuds.ae', role = 'admin' 
-        WHERE id = ?
-        """, (hash_password("admin123"), khurram_row["id"]))
-
-    # Insert default viewer user
-    cursor.execute("SELECT id FROM users WHERE username = 'viewer'")
-    if not cursor.fetchone():
-        cursor.execute("""
-        INSERT INTO users (username, password_hash, role, full_name, email)
-        VALUES ('viewer', ?, 'user', 'Compliance Viewer', 'viewer@uuds.ae')
-        """, (hash_password("viewer123"),))
-
-    # Insert user nsilva
+    # Ensure user nsilva exists
     cursor.execute("SELECT id FROM users WHERE username = 'nsilva'")
     if not cursor.fetchone():
         cursor.execute("""
@@ -382,18 +359,8 @@ def init_db():
         WHERE username = 'nsilva'
         """, (hash_password("abc@123"),))
 
-    # Insert user test
-    cursor.execute("SELECT id FROM users WHERE username = 'test'")
-    if not cursor.fetchone():
-        cursor.execute("""
-        INSERT INTO users (username, password_hash, role, full_name, email)
-        VALUES ('test', ?, 'admin', 'Test User', 'test@uuds.ae')
-        """, (hash_password("Sha@#157"),))
-    else:
-        cursor.execute("""
-        UPDATE users SET password_hash = ?, role = 'admin', full_name = 'Test User', email = 'test@uuds.ae'
-        WHERE username = 'test'
-        """, (hash_password("Sha@#157"),))
+    # Remove any extra legacy/test users so strictly only admin and nsilva exist
+    cursor.execute("DELETE FROM users WHERE LOWER(username) NOT IN ('admin', 'nsilva')")
 
     # Default settings
     default_settings = [
