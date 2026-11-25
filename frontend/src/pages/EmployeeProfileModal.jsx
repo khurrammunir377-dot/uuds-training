@@ -543,7 +543,7 @@ export default function EmployeeProfileModal({ employeeId, onClose, onRefresh })
               </div>
 
               <div className="text-[11px] font-mono text-slate-400 hidden sm:block">
-                <span>Total 21 Mandatories • Fast Certificate Updater</span>
+                <span>Total 15 Mandatories • Fast Certificate Updater</span>
               </div>
             </div>
 
